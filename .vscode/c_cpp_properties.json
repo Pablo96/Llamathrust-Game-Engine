@@ -1,13 +1,14 @@
 {
     "configurations": [
         {
-            "name": "Win32",
+            "name": "Win32_DEBUG",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/../include",
-                "${workspaceFolder}/../external/log-c"
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/external/log-c"
             ],
             "defines": [
+                "LT_DEBUG",
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
