@@ -1,5 +1,3 @@
-:: Log-C static library
-
 :: Engine Executable
 clang ^
 -std=c17 ^
