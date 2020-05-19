@@ -1,0 +1,4 @@
+bin/
+resources/
+*.obj
+*.o
