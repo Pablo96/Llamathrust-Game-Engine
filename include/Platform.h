@@ -1,3 +1,5 @@
+#include "Common.h"
+
 #ifdef _WIN64
     #define LT_WINDOWS
 #elif defined(_WIN32)
@@ -11,4 +13,4 @@
 #endif
 
 // Creates a window (width, height, title)
-static void (*create_window)(int, int, const char*);
+static void (*create_window)(int32, int32, const char*);
