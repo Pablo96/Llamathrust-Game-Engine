@@ -8,24 +8,28 @@
 
 int main(int argc, const char** argv)
 {
-    printf("Running program: %s\n", argv[0]);
+    // Get handle to this executable
+    hInstance = GetModuleHandle(NULL);
 
+    //-----------------------------------------------------------------
     // Parse command line arguments
+    //-----------------------------------------------------------------
     if (argc > 1) {
+#ifdef LT_DEBUG
         printf("Command line arguments parsed!.\n");
+#endif
     }
-    printf("\n");
-    
+
     //-----------------------------------------------------------------
     // Check if is the only instance running
     //-----------------------------------------------------------------
 
     // Try to open the mutex.
-    HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, 0, "LlamathrustMutex");
+    HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, "LlamathrustMutex");
 
     // If mutex doesnt exists create it and run the engine
     if (!hMutex)
-      hMutex = CreateMutex(0, 0, "LlamathrustMutex");
+      hMutex = CreateMutex(NULL, FALSE, "LlamathrustMutex");
     // Else there is an instance of the engine running
     else {
         printf("Instance already running\n");
@@ -35,22 +39,10 @@ int main(int argc, const char** argv)
     //-----------------------------------------------------------------
     // Start setting app the platform layer
     //-----------------------------------------------------------------
-
-    // Get handle to this executable
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-    
-    // Register the window classes.
-    const char CLASS_NAME[]  = "GameWindow";
-    WNDCLASS wc = {0};
-    wc.lpfnWndProc   = WindowProcGame;
-    wc.hInstance     = hInstance;
-    wc.lpszClassName = CLASS_NAME;
-
-    RegisterClass(&wc);
-    printf("Window class \"%s\" registered.\n", CLASS_NAME);
+    Win32RegisterWindowClasses();
 
     // Create main editor window or game window
-    HWND wndHandle = Win32CreateWindow(hInstance, CLASS_NAME, 720, 480, "Game x64 (llamathrust) [clang]");
+    HWND wndHandle = Win32CreateWindow(GAME_CLASS_NAME, 720, 480, "Game x64 (llamathrust) [clang]");
     ShowWindow(wndHandle, SW_SHOW);
 
     // Set platform functions pointers
@@ -92,12 +84,11 @@ int main(int argc, const char** argv)
 
 void PlatformCreateWindow(int in_width, int in_height, const char* in_title)
 {
-    HINSTANCE hInstance = GetModuleHandleW(NULL);
-    HWND wndHandle = Win32CreateWindow(hInstance, "EditorWindow", in_width, in_height, in_title);
+    HWND wndHandle = Win32CreateWindow(EDITOR_CLASS_NAME, in_width, in_height, in_title);
     ShowWindow(wndHandle, SW_SHOW);
 }
 
-HWND Win32CreateWindow(HINSTANCE hInstance, const char* in_wndClassName, int width, int height, const char* title)
+HWND Win32CreateWindow(const char* in_wndClassName, int width, int height, const char* title)
 {
     HWND hwnd = CreateWindowEx(
     0,                              // Optional window styles.
@@ -120,6 +111,22 @@ HWND Win32CreateWindow(HINSTANCE hInstance, const char* in_wndClassName, int wid
 
     printf("Window of class \"%s\" created.\n", in_wndClassName);
     return hwnd;
+}
+
+void Win32RegisterWindowClasses() {
+    // Register the game window class.
+    WNDCLASS wc = {0};
+    wc.lpfnWndProc   = WindowProcGame;
+    wc.hInstance     = hInstance;
+    wc.lpszClassName = GAME_CLASS_NAME;
+
+    if (!RegisterClass(&wc)) {
+        printf("Error: Could not register Window Class \"%s\".\n", GAME_CLASS_NAME);
+    }
+
+#ifdef LT_DEBUG
+    printf("Window class \"%s\" registered.\n", GAME_CLASS_NAME);
+#endif
 }
 
 LRESULT CALLBACK WindowProcGame(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
