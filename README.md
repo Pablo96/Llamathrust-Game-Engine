@@ -13,3 +13,9 @@ Windows 10 x64: WIP
 Linux 4+ x64: Not implemented
 
 Android 4.4+ x64: Not implemented
+
+# Errors list
+0   | No errors
+1   | Couldn't create the window
+48  | Instance already running
+

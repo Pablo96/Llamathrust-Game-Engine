@@ -9,7 +9,20 @@ int main(int argc, const char** argv)
 {
     printf("Running program: %s\n\n", argv[0]);
     
-    HINSTANCE hInstance = GetModuleHandleW(NULL);
+    // Try to open the mutex.
+    HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, 0, "LlamathrustMutex");
+
+    // If mutex doesnt exists create it and run the engine
+    if (!hMutex)
+      hMutex = CreateMutex(0, 0, "LlamathrustMutex");
+    // Else there is an instance of the engine running
+    else {
+        printf("Instance already running\n");
+        return 48;
+    }
+
+    // Get handle to this executable?
+    HINSTANCE hInstance = GetModuleHandle(NULL);
     
     // Register the window classes.
     const char CLASS_NAME[]  = "GameWindow";
@@ -21,7 +34,7 @@ int main(int argc, const char** argv)
     RegisterClass(&wc);
     printf("Window class \"%s\" registered.\n", CLASS_NAME);
 
-    
+    // Create main editor window or game window
     HWND wndHandle = Win32CreateWindow(hInstance, CLASS_NAME, 720, 480, "Game x64 (llamathrust) [clang]");
     ShowWindow(wndHandle, SW_SHOW);
 
