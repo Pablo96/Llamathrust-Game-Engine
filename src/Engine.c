@@ -3,6 +3,9 @@
 
 void Engine_Start() {
     log_trace("Engine is starting...\n");
+
+    // Initialize GraphicsAPI
+
     log_info("Engine started!\n");
 }
 
