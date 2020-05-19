@@ -1,7 +1,6 @@
 #include "Win32.h"
 #include "../Engine.h"
 #include <log.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #ifdef LT_WINDOWS

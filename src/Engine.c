@@ -1,5 +1,4 @@
 #include "Engine.h"
-#include <stdio.h>
 #include <log.h>
 
 void Engine_Start() {
