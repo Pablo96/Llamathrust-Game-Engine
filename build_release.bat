@@ -1,6 +1,6 @@
 clang ^
 -std=c17 ^
--DLT_DEBUG ^
+-DLT_RELEASE ^
 -I"./include" ^
 -o "bin/engine.exe" ^
 -m64 ^
@@ -11,8 +11,5 @@ clang ^
 -fsave-optimization-record=yaml ^
 -foptimization-record-file="bin/optimizations.yml" ^
 -Weverything ^
--Wno-unused-parameter ^
--fshow-source-location ^
--Og ^
--H ^
+-O3  ^
 ./src/Engine.c ./src/platform/Win32.c

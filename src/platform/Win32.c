@@ -8,6 +8,13 @@
 
 int main(int argc, const char** argv)
 {
+#if defined(LT_DEBUG)
+    printf("Debug Version\n");
+#elif defined(LT_RELEASE)
+    printf("Release Version\n");
+#else
+    printf("Other Version\n");
+#endif
     printf("Running program: %s\n\n", argv[0]);
     
     // Try to open the mutex.
