@@ -1,4 +1,5 @@
 #include "Win32.h"
+#include "../Engine.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -42,12 +43,15 @@ int main(int argc, const char** argv)
     // Set platform functions pointers
     create_window = PlatformCreateWindow;
 
+    // Start the engine
+    Engine_Start();
 
     // Main engine loop
     MSG msg = {0};
     BOOL shouldClose = 0;
     while(!shouldClose) {
         // Run engine
+        Engine_Run(1.0f / 60.0f);
 
         // Retrieve OS messages
         while(PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -59,6 +63,9 @@ int main(int argc, const char** argv)
             DispatchMessage(&msg);
         }
     }
+    
+    // Clean up the engine resources if needed
+    Engine_Shutdown();
 
     return 0;
 }
