@@ -1,1 +1,1 @@
-clang -I"./include" -o "bin/engine.exe" -m64 -lUser32.lib -fcolor-diagnostics -fomit-frame-pointer -pedantic -fsave-optimization-record=yaml -foptimization-record-file="bin/optimizations.yml" -Wno-unused-parameter -Weverything -fshow-source-location -Og -H  ./src/Win32.c
+clang -I"./include" -o "bin/engine.exe" -m64 -lUser32.lib -fcolor-diagnostics -fomit-frame-pointer -pedantic -fsave-optimization-record=yaml -foptimization-record-file="bin/optimizations.yml" -Wno-unused-parameter -Weverything -fshow-source-location -Og -H  ./src/platform/Win32.c

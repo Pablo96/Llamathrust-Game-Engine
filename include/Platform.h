@@ -9,3 +9,6 @@
 #elif defined(__APPLE__)
      #error "APPLE is not supported!"
 #endif
+
+// Creates a window (width, height, title)
+static void (*create_window)(int, int, const char*);

@@ -11,7 +11,7 @@ int main(int argc, const char** argv)
     
     HINSTANCE hInstance = GetModuleHandleW(NULL);
     
-    // Register the window class.
+    // Register the window classes.
     const char CLASS_NAME[]  = "GameWindow";
     WNDCLASS wc = {0};
     wc.lpfnWndProc   = WindowProcGame;
@@ -21,9 +21,16 @@ int main(int argc, const char** argv)
     RegisterClass(&wc);
     printf("Window class \"%s\" registered.\n", CLASS_NAME);
 
-    HWND wndHandle = Win32CreateWindow(hInstance, CLASS_NAME);
+    
+    HWND wndHandle = Win32CreateWindow(hInstance, CLASS_NAME, 720, 480, "Game x64 (llamathrust) [clang]");
     ShowWindow(wndHandle, SW_SHOW);
 
+
+    // Set platform functions pointers
+    create_window = PlatformCreateWindow;
+
+
+    // Main engine loop
     MSG msg = {0};
     BOOL shouldClose = 0;
     while(!shouldClose) {
@@ -43,21 +50,26 @@ int main(int argc, const char** argv)
     return 0;
 }
 
-HWND Win32CreateWindow(HINSTANCE hInstance, const char* in_wndClassName)
+void PlatformCreateWindow(int in_width, int in_height, const char* in_title)
+{
+    HINSTANCE hInstance = GetModuleHandleW(NULL);
+    HWND wndHandle = Win32CreateWindow(hInstance, "EditorWindow", in_width, in_height, in_title);
+    ShowWindow(wndHandle, SW_SHOW);
+}
+
+HWND Win32CreateWindow(HINSTANCE hInstance, const char* in_wndClassName, int width, int height, const char* title)
 {
     HWND hwnd = CreateWindowEx(
     0,                              // Optional window styles.
-    in_wndClassName,                     // Window class
-    "Game x64 (llamathrust) [clang]",    // Window text
+    in_wndClassName,                // Window class
+    title,                          // Window text
     WS_OVERLAPPEDWINDOW,            // Window style
-
-    // Size and position
-    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-
-    NULL,       // Parent window    
-    NULL,       // Menu
-    hInstance,  // Instance handle
-    NULL        // Additional application data
+    CW_USEDEFAULT, CW_USEDEFAULT,   // Window position
+    width, height,                  // Window size
+    NULL,                           // Parent window    
+    NULL,                           // Menu
+    hInstance,                      // Instance handle
+    NULL                            // Additional application data
     );
 
     if (hwnd == NULL)
