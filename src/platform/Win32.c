@@ -8,15 +8,18 @@
 
 int main(int argc, const char** argv)
 {
-#if defined(LT_DEBUG)
-    printf("Debug Version\n");
-#elif defined(LT_RELEASE)
-    printf("Release Version\n");
-#else
-    printf("Other Version\n");
-#endif
-    printf("Running program: %s\n\n", argv[0]);
+    printf("Running program: %s\n", argv[0]);
+
+    // Parse command line arguments
+    if (argc > 1) {
+        printf("Command line arguments parsed!.\n");
+    }
+    printf("\n");
     
+    //-----------------------------------------------------------------
+    // Check if is the only instance running
+    //-----------------------------------------------------------------
+
     // Try to open the mutex.
     HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, 0, "LlamathrustMutex");
 
@@ -29,7 +32,11 @@ int main(int argc, const char** argv)
         return 48;
     }
 
-    // Get handle to this executable?
+    //-----------------------------------------------------------------
+    // Start setting app the platform layer
+    //-----------------------------------------------------------------
+
+    // Get handle to this executable
     HINSTANCE hInstance = GetModuleHandle(NULL);
     
     // Register the window classes.
@@ -46,14 +53,17 @@ int main(int argc, const char** argv)
     HWND wndHandle = Win32CreateWindow(hInstance, CLASS_NAME, 720, 480, "Game x64 (llamathrust) [clang]");
     ShowWindow(wndHandle, SW_SHOW);
 
-
     // Set platform functions pointers
     create_window = PlatformCreateWindow;
 
+    //-----------------------------------------------------------------
     // Start the engine
+    //-----------------------------------------------------------------s
     Engine_Start();
 
+    //-----------------------------------------------------------------
     // Main engine loop
+    //-----------------------------------------------------------------
     MSG msg = {0};
     BOOL shouldClose = 0;
     while(!shouldClose) {
@@ -71,6 +81,9 @@ int main(int argc, const char** argv)
         }
     }
     
+    //-----------------------------------------------------------------
+    // Cleaning at exit
+    //-----------------------------------------------------------------
     // Clean up the engine resources if needed
     Engine_Shutdown();
 
