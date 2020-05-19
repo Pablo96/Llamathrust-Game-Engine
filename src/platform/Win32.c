@@ -1,5 +1,6 @@
 #include "Win32.h"
 #include "../Engine.h"
+#include <log.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16,7 +17,7 @@ int main(int argc, const char** argv)
     //-----------------------------------------------------------------
     if (argc > 1) {
 #ifdef LT_DEBUG
-        printf("Command line arguments parsed!.\n");
+        log_info("Command line arguments parsed!.\n");
 #endif
     }
 
@@ -32,7 +33,7 @@ int main(int argc, const char** argv)
       hMutex = CreateMutex(NULL, FALSE, "LlamathrustMutex");
     // Else there is an instance of the engine running
     else {
-        printf("Instance already running\n");
+        log_fatal("Instance already running\n");
         return 48;
     }
 
@@ -105,11 +106,11 @@ HWND Win32CreateWindow(const char* in_wndClassName, int width, int height, const
 
     if (hwnd == NULL)
     {
-        printf("Error creating window of class \"%s\".\n", in_wndClassName);
+        log_fatal("Error creating window of class \"%s\".\n", in_wndClassName);
         exit(1);
     }
 
-    printf("Window of class \"%s\" created.\n", in_wndClassName);
+    log_info("Window of class \"%s\" created.\n", in_wndClassName);
     return hwnd;
 }
 
@@ -121,11 +122,11 @@ void Win32RegisterWindowClasses() {
     wc.lpszClassName = GAME_CLASS_NAME;
 
     if (!RegisterClass(&wc)) {
-        printf("Error: Could not register Window Class \"%s\".\n", GAME_CLASS_NAME);
+        log_fatal("Error: Could not register Window Class \"%s\".\n", GAME_CLASS_NAME);
     }
 
 #ifdef LT_DEBUG
-    printf("Window class \"%s\" registered.\n", GAME_CLASS_NAME);
+    log_info("Window class \"%s\" registered.\n", GAME_CLASS_NAME);
 #endif
 }
 

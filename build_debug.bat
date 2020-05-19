@@ -1,7 +1,11 @@
+:: Log-C static library
+
+:: Engine Executable
 clang ^
 -std=c17 ^
 -DLT_DEBUG ^
 -I"./include" ^
+-I"./external/log-c" ^
 -o "bin/engine.exe" ^
 -m64 ^
 -lUser32.lib ^
@@ -15,4 +19,4 @@ clang ^
 -fshow-source-location ^
 -Og ^
 -H ^
-./src/Engine.c ./src/platform/Win32.c
+./external/log-c/log.c ./src/Engine.c ./src/platform/Win32.c
