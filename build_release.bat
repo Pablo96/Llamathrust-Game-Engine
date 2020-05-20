@@ -3,6 +3,7 @@ clang ^
 -DLT_RELEASE ^
 -I"./include" ^
 -I"./external/log-c" ^
+-I"./external/" ^
 -o "bin/engine.exe" ^
 -m64 ^
 -lUser32.lib ^

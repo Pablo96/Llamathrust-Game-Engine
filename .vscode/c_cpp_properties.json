@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/external/log-c"
+                "${workspaceFolder}/external/log-c",
+                "${workspaceFolder}/external/"
             ],
             "defines": [
                 "LT_DEBUG",

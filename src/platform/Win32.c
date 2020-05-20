@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <Windows.h>
 #include <wingdi.h>
+#include <gl/GL.h>
+#include <gl/wglext.h>
 #include <stdnoreturn.h>
 
 // Windows
@@ -19,7 +21,8 @@ Window* windowsVec;
 void (*LT_CreateWindow)(int32, int32, const char*);
 
 // Win32
-static HINSTANCE hInstance;
+static HINSTANCE    hInstance;
+static HGLRC        modernGLcontext;
 static const LPTSTR EDITOR_CLASS_NAME = "EditorWindow";
 static const LPTSTR GAME_CLASS_NAME = "GameWindow";
 static const LPTSTR GHOST_CLASS_NAME = "GhostWindow";
@@ -120,7 +123,19 @@ void Win32InitOpenGL(void) {
         Win32HandleError(50);
     }
 
-  
+    // Create temporary legacy context
+    HGLRC oldOGLcontext = wglCreateContext(ghostWnd->device);
+    wglMakeCurrent(ghostWnd->device, oldOGLcontext);
+    
+    // Get GL extensions
+    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC) wglGetProcAddress("wglChoosePixelFormatARB");
+    if (wglChoosePixelFormatARB == 0) {
+        log_fatal("Retrieving wglChoosePixelFormatARB failed.");
+        Win32HandleError(50);
+    }
+
+    // Delete legacy context and 
+    wglDeleteContext(oldOGLcontext);
     DestroyWindow(ghostWnd->handle);
 
     log_info("Win32 OpenGL initialized.");
@@ -138,6 +153,12 @@ void Win32CreateWindow(int in_width, int in_height, const char* in_title)
     }
 
     Window* wnd = Win32_Helper_CreateWindow(GAME_CLASS_NAME, in_width, in_height, in_title);
+    
+    if (wglMakeCurrent(wnd->device, modernGLcontext) == FALSE) {
+        log_fatal("Error making window the current gl_context user.");
+        Win32HandleError(32);
+    }
+
     ShowWindow(wnd->handle, SW_SHOW);
 }
 

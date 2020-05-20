@@ -4,6 +4,7 @@ clang ^
 -DLT_DEBUG ^
 -I"./include" ^
 -I"./external/log-c" ^
+-I"./external" ^
 -o "bin/engine.exe" ^
 -m64 ^
 -lUser32.lib ^
