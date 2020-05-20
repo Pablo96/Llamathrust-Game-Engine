@@ -6,11 +6,6 @@
 #include <stdlib.h>
 #include <Windows.h>
 
-typedef struct _Window {
-    HWND handle;
-    HDC device;
-} Window;
-
 // Windows
 static uint32 windowsMaxCount = 1;   // if it is a game only 1 window is allowed
 uint32 windowsCount = 0;
@@ -79,7 +74,7 @@ int main(int argc, const char** argv)
 
         // Retrieve OS messages
         while(PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
-            if (msg.message == WM_QUIT) {
+            if (msg.message == WM_QUIT && windowsCount == 0) {
                 shouldClose = 1;
                 break;
             }
@@ -106,7 +101,7 @@ void Win32CreateWindow(int in_width, int in_height, const char* in_title)
     if (windowsCount == windowsMaxCount) {
         return;
     }
-    
+
     HWND wndHandle = Win32_Helper_CreateWindow(EDITOR_CLASS_NAME, in_width, in_height, in_title);
     ShowWindow(wndHandle, SW_SHOW);
 }
@@ -171,6 +166,15 @@ LRESULT CALLBACK WindowProcGame(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         }
         case WM_DESTROY:
         {
+            for (uint32 i = 0; i < windowsCount; i++) {
+                if (windowsVec[i].handle == hwnd) {
+                    if (i < 1)
+                        windowsVec = windowsVec + 1;
+                    else
+                        windowsVec[i] = windowsVec[windowsCount - 1];
+                }
+            }
+            windowsCount--;
             PostQuitMessage(0);
             return 0;
         }

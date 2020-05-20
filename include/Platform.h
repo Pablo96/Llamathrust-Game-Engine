@@ -1,3 +1,4 @@
+#pragma once
 #include "Common.h"
 
 #ifdef _WIN64
@@ -14,7 +15,17 @@
 
 
 // Window handle
-typedef struct _Window Window;
+#ifdef LT_WINDOWS
+typedef struct HWND__ *HWND;
+typedef struct HDC__ *HDC;
+
+typedef struct _Window {
+    HWND handle;
+    HDC device;
+} Window;
+#endif
+
+
 extern uint32 windowsCount;
 extern Window* windowsVec;
 

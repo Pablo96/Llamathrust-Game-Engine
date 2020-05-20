@@ -15,6 +15,10 @@ void Engine_Start() {
 
 void Engine_Run(const decimal deltaTime) {
 
+    // swap buffers in all windows
+    for (uint32 i = 0; i < windowsCount; i++) {
+        api.swapBuffers(windowsVec + i);
+    }
 }
 
 void Engine_Shutdown() {
