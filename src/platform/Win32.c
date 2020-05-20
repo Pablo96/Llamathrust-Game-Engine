@@ -1,10 +1,10 @@
 #include "Win32.h"
-
 #ifdef LT_WINDOWS
 #include "../Engine.h"
 #include <log.h>
 #include <stdlib.h>
 #include <Windows.h>
+#include <stdnoreturn.h>
 
 // Windows
 #ifdef LT_EDITOR
@@ -19,8 +19,10 @@ void (*LT_CreateWindow)(int32, int32, const char*);
 
 // Win32
 static HINSTANCE hInstance;
-static const char* EDITOR_CLASS_NAME = "EditorWindow";
-static const char* GAME_CLASS_NAME = "GameWindow";
+static const LPTSTR EDITOR_CLASS_NAME = "EditorWindow";
+static const LPTSTR GAME_CLASS_NAME = "GameWindow";
+static const LPTSTR GHOST_CLASS_NAME = "GhostWindow";
+noreturn static void Win32HandleError(int32 in_exitCode);
 
 int main(int32 argc, const char** argv)
 {
@@ -95,6 +97,9 @@ int main(int32 argc, const char** argv)
 }
 
 void Win32InitOpenGL(void) {
+    HWND wnd = Win32_Helper_CreateWindow(GHOST_CLASS_NAME, CW_USEDEFAULT, CW_USEDEFAULT, "");
+    DestroyWindow(wnd);
+
     log_info("Win32 OpenGL initialized.");
 }
 
@@ -115,8 +120,12 @@ void Win32CreateWindow(int in_width, int in_height, const char* in_title)
 
 HWND Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int height, const char* title)
 {
+    DWORD styleEx   = in_wndClassName == GAME_CLASS_NAME
+                    ? WS_OVERLAPPED
+                    : WS_DISABLED;
+
     HWND hwnd = CreateWindowEx(
-    0,                              // Optional window styles.
+    styleEx,                       // Optional window styles.
     in_wndClassName,                // Window class
     title,                          // Window text
     WS_OVERLAPPEDWINDOW,            // Window style
@@ -131,7 +140,7 @@ HWND Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int heigh
     if (hwnd == NULL)
     {
         log_fatal("Error creating window of class \"%s\".", in_wndClassName);
-        exit(1);
+        Win32HandleError(1);
     }
 
     // save the window in the vector
@@ -139,28 +148,42 @@ HWND Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int heigh
         windowsVec = malloc(sizeof(Window) * windowsMaxCount);
     }
 
-    log_info("Registering Window of class \"%s\"...", in_wndClassName);
     windowsVec[windowsCount].handle = hwnd;
     windowsVec[windowsCount].device = GetDC(hwnd);
     windowsCount++;
+    
     log_info("Window of class \"%s\" created.", in_wndClassName);
     return hwnd;
 }
 
 void Win32_Helper_RegisterWindowClasses() {
     // Register the game window class.
-    WNDCLASS wc = {0};
-    wc.lpfnWndProc   = WindowProcGame;
-    wc.hInstance     = hInstance;
-    wc.lpszClassName = GAME_CLASS_NAME;
+    WNDCLASSEX wcGame = {0};
+    wcGame.cbSize        = sizeof(wcGame);
+    wcGame.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+    wcGame.hInstance     = hInstance;
+    wcGame.lpfnWndProc   = WindowProcGame;
+    wcGame.lpszClassName = GAME_CLASS_NAME;
 
-    if (!RegisterClass(&wc)) {
+    if (!RegisterClassEx(&wcGame)) {
         log_fatal("Error: Could not register Window Class \"%s\".", GAME_CLASS_NAME);
+        Win32HandleError(49);
+    }
+    log_info("Window class \"%s\" registered.", GAME_CLASS_NAME);
+
+    // Register the game window class.
+    WNDCLASSEX wcGhost = {0};
+    wcGhost.cbSize        = sizeof(wcGhost);
+    wcGhost.hInstance     = hInstance;
+    wcGhost.lpfnWndProc   = WindowProcGame;
+    wcGhost.lpszClassName = GHOST_CLASS_NAME;
+
+    if (!RegisterClassEx(&wcGhost)) {
+        log_fatal("Error: Could not register Window Class \"%s\".", GHOST_CLASS_NAME);
+        Win32HandleError(49);
     }
 
-#ifdef LT_DEBUG
-    log_info("Window class \"%s\" registered.", GAME_CLASS_NAME);
-#endif
+    log_info("Window class \"%s\" registered.", GHOST_CLASS_NAME);
 }
 
 LRESULT CALLBACK WindowProcGame(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -189,4 +212,23 @@ LRESULT CALLBACK WindowProcGame(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
+noreturn void Win32HandleError(int32 in_exitCode) {
+    LPTSTR msg;
+    DWORD errorID = GetLastError();
+    FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        errorID,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPTSTR) &msg,
+        0, NULL
+    );
+
+    log_fatal("%s", msg);
+    LocalFree(msg);
+
+    exit(in_exitCode);
+}
 #endif
