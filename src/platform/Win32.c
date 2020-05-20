@@ -12,7 +12,7 @@ typedef struct _Window {
 } Window;
 
 // Windows
-static uint32 windowMaxCount = 4;
+static uint32 windowsMaxCount = 1;   // if it is a game only 1 window is allowed
 uint32 windowsCount = 0;
 Window* windowsVec;
 
@@ -103,6 +103,10 @@ void Win32SwapBuffer(const Window* in_window) {
 
 void Win32CreateWindow(int in_width, int in_height, const char* in_title)
 {
+    if (windowsCount == windowsMaxCount) {
+        return;
+    }
+    
     HWND wndHandle = Win32_Helper_CreateWindow(EDITOR_CLASS_NAME, in_width, in_height, in_title);
     ShowWindow(wndHandle, SW_SHOW);
 }
@@ -130,7 +134,7 @@ HWND Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int heigh
 
     // save the window in the vector
     if (windowsVec == NULL) {
-        windowsVec = malloc(sizeof(Window) * windowMaxCount);
+        windowsVec = malloc(sizeof(Window) * windowsMaxCount);
     }
 
     windowsVec[windowsCount].handle = hwnd;
