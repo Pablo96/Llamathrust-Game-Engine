@@ -13,16 +13,14 @@ static uint32 windowsMaxCount = 8;
 static uint32 windowsMaxCount = 1;
 #endif
 
-static const char* EDITOR_CLASS_NAME = "EditorWindow";
-static const char* GAME_CLASS_NAME = "GameWindow";
-
 uint32 windowsCount = 0;
 Window* windowsVec;
-
 void (*LT_CreateWindow)(int32, int32, const char*);
 
 // Win32
 static HINSTANCE hInstance;
+static const char* EDITOR_CLASS_NAME = "EditorWindow";
+static const char* GAME_CLASS_NAME = "GameWindow";
 
 int main(int32 argc, const char** argv)
 {
