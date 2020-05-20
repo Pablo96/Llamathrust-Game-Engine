@@ -2,17 +2,20 @@
 #include "GraphicsAPI.h"
 #include <Platform.h>
 #include <log.h>
+#include <glad/glad.h>
 
 void Engine_Start() {
     log_trace("Engine is starting...");
 
     LT_GraphicsAPI_Init(OPENGL);
     
+    glClearColor(0.1f, 0.1f, 0.5f, 1.0f);
+
     log_info("Engine started!");
 }
 
 void Engine_Run(const decimal deltaTime) {
-
+    glClear(GL_COLOR_BUFFER_BIT);
     // swap buffers in all windows
     api.swapBuffers();
 }
