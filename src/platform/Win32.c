@@ -1,10 +1,25 @@
 #include "Win32.h"
+
+#ifdef LT_WINDOWS
 #include "../Engine.h"
 #include <log.h>
 #include <stdlib.h>
-
-#ifdef LT_WINDOWS
 #include <Windows.h>
+
+typedef struct _Window {
+    HWND handle;
+    HDC device;
+} Window;
+
+// Windows
+static uint32 windowMaxCount = 4;
+uint32 windowsCount = 0;
+Window* windowsVec;
+
+// Win32
+static const char* GAME_CLASS_NAME = "GameWindow";
+static const char* EDITOR_CLASS_NAME = "EditorWindow";
+static HINSTANCE hInstance;
 
 int main(int argc, const char** argv)
 {
@@ -32,21 +47,21 @@ int main(int argc, const char** argv)
       hMutex = CreateMutex(NULL, FALSE, "LlamathrustMutex");
     // Else there is an instance of the engine running
     else {
-        log_fatal("Instance already running\n");
+        log_fatal("Instance already running");
         return 48;
     }
 
     //-----------------------------------------------------------------
     // Start setting app the platform layer
     //-----------------------------------------------------------------
-    Win32RegisterWindowClasses();
+    Win32_Helper_RegisterWindowClasses();
 
     // Create main editor window or game window
-    HWND wndHandle = Win32CreateWindow(GAME_CLASS_NAME, 720, 480, "Game x64 (llamathrust) [clang]");
+    HWND wndHandle = Win32_Helper_CreateWindow(GAME_CLASS_NAME, 720, 480, "Game x64 (llamathrust) [clang]");
     ShowWindow(wndHandle, SW_SHOW);
 
     // Set platform functions pointers
-    create_window = PlatformCreateWindow;
+    create_window = Win32CreateWindow;
 
     //-----------------------------------------------------------------
     // Start the engine
@@ -82,13 +97,17 @@ int main(int argc, const char** argv)
     return 0;
 }
 
-void PlatformCreateWindow(int in_width, int in_height, const char* in_title)
+void Win32SwapBuffer(const Window* in_window) {
+    SwapBuffers(in_window->device);
+}
+
+void Win32CreateWindow(int in_width, int in_height, const char* in_title)
 {
-    HWND wndHandle = Win32CreateWindow(EDITOR_CLASS_NAME, in_width, in_height, in_title);
+    HWND wndHandle = Win32_Helper_CreateWindow(EDITOR_CLASS_NAME, in_width, in_height, in_title);
     ShowWindow(wndHandle, SW_SHOW);
 }
 
-HWND Win32CreateWindow(const char* in_wndClassName, int width, int height, const char* title)
+HWND Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int height, const char* title)
 {
     HWND hwnd = CreateWindowEx(
     0,                              // Optional window styles.
@@ -105,15 +124,24 @@ HWND Win32CreateWindow(const char* in_wndClassName, int width, int height, const
 
     if (hwnd == NULL)
     {
-        log_fatal("Error creating window of class \"%s\".\n", in_wndClassName);
+        log_fatal("Error creating window of class \"%s\".", in_wndClassName);
         exit(1);
     }
 
-    log_info("Window of class \"%s\" created.\n", in_wndClassName);
+    // save the window in the vector
+    if (windowsVec == NULL) {
+        windowsVec = malloc(sizeof(Window) * windowMaxCount);
+    }
+
+    windowsVec[windowsCount].handle = hwnd;
+    windowsVec[windowsCount].device = GetDC(hwnd);
+    windowsCount++;
+
+    log_info("Window of class \"%s\" created.", in_wndClassName);
     return hwnd;
 }
 
-void Win32RegisterWindowClasses() {
+void Win32_Helper_RegisterWindowClasses() {
     // Register the game window class.
     WNDCLASS wc = {0};
     wc.lpfnWndProc   = WindowProcGame;
@@ -121,11 +149,11 @@ void Win32RegisterWindowClasses() {
     wc.lpszClassName = GAME_CLASS_NAME;
 
     if (!RegisterClass(&wc)) {
-        log_fatal("Error: Could not register Window Class \"%s\".\n", GAME_CLASS_NAME);
+        log_fatal("Error: Could not register Window Class \"%s\".", GAME_CLASS_NAME);
     }
 
 #ifdef LT_DEBUG
-    log_info("Window class \"%s\" registered.\n", GAME_CLASS_NAME);
+    log_info("Window class \"%s\" registered.", GAME_CLASS_NAME);
 #endif
 }
 

@@ -7,6 +7,7 @@ clang ^
 -o "bin/engine.exe" ^
 -m64 ^
 -lUser32.lib ^
+-lGdi32.lib ^
 -fcolor-diagnostics ^
 -fomit-frame-pointer ^
 -pedantic ^
@@ -17,4 +18,4 @@ clang ^
 -fshow-source-location ^
 -Og ^
 -H ^
-./external/log-c/log.c ./src/Engine.c ./src/platform/Win32.c
+./external/log-c/log.c ./src/GraphicsAPI.c ./src/Engine.c ./src/platform/Win32.c

@@ -1,12 +1,16 @@
 #include "Engine.h"
+#include "GraphicsAPI.h"
+#include <Platform.h>
 #include <log.h>
 
 void Engine_Start() {
-    log_trace("Engine is starting...\n");
+    log_trace("Engine is starting...");
 
+    log_info("Windows created: %u", windowsCount);
     // Initialize GraphicsAPI
+    GraphicsAPI_Init();
 
-    log_info("Engine started!\n");
+    log_info("Engine started!");
 }
 
 void Engine_Run(const decimal deltaTime) {
@@ -14,6 +18,6 @@ void Engine_Run(const decimal deltaTime) {
 }
 
 void Engine_Shutdown() {
-    log_trace("Engine is shuting down...\n");
-    log_info("Engine is off.\n");
+    log_trace("Engine is shuting down...");
+    log_info("Engine is off.");
 }

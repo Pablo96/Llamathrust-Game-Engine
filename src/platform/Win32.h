@@ -1,13 +1,15 @@
+#pragma once
 #include <Platform.h>
 #ifdef LT_WINDOWS
-#include <Windows.h> 
-
-static const char* GAME_CLASS_NAME = "GameWindow";
-static const char* EDITOR_CLASS_NAME = "EditorWindow";
-static HINSTANCE hInstance;
-
+#include <Windows.h>
+// Window Procedures
 LRESULT CALLBACK WindowProcGame(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void Win32RegisterWindowClasses(void);
-HWND Win32CreateWindow(const char* in_wndClassName, int width, int height, const char* title);
-void PlatformCreateWindow(int in_width, int in_height, const char* in_title);
+
+// Win32 helper functions
+void Win32_Helper_RegisterWindowClasses(void);
+HWND Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int height, const char* title);
+
+// Exported functions
+void Win32CreateWindow(int in_width, int in_height, const char* in_title);
+void Win32SwapBuffer(const Window* in_window);
 #endif
