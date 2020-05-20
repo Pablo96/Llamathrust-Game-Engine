@@ -6,6 +6,7 @@ clang ^
 -o "bin/engine.exe" ^
 -m64 ^
 -lUser32.lib ^
+-lGdi32.lib ^
 -fcolor-diagnostics ^
 -fomit-frame-pointer ^
 -pedantic ^
@@ -13,4 +14,4 @@ clang ^
 -foptimization-record-file="bin/optimizations.yml" ^
 -Weverything ^
 -O3  ^
-./external/log-c/log.c ./src/Engine.c ./src/platform/Win32.c
+./external/log-c/log.c ./src/GraphicsAPI.c ./src/Engine.c ./src/platform/Win32.c

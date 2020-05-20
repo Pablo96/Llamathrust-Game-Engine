@@ -19,6 +19,8 @@ static const char* GAME_CLASS_NAME = "GameWindow";
 uint32 windowsCount = 0;
 Window* windowsVec;
 
+void (*LT_CreateWindow)(int32, int32, const char*);
+
 // Win32
 static HINSTANCE hInstance;
 

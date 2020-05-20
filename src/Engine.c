@@ -7,13 +7,8 @@ void Engine_Start() {
     log_trace("Engine is starting...");
 
     LT_GraphicsAPI_Init(OPENGL);
-    
-    log_info("LT_CreateWindow address %p", LT_CreateWindow);
-
     LT_CreateWindow(720, 480, "Game x64 (llamathrust) [clang]");
     
-    log_info("Windows created: %u", windowsCount);
-
     log_info("Engine started!");
 }
 

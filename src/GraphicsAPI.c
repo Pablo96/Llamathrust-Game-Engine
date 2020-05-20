@@ -14,7 +14,6 @@ void LT_GraphicsAPI_Init(const API in_api) {
             break;
         }
         case VULKAN:
-        default:
         {
             log_fatal("API %d not implemented!", in_api);
             exit(54);
