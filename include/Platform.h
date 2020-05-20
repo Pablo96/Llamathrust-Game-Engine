@@ -30,4 +30,4 @@ extern uint32 windowsCount;
 extern Window* windowsVec;
 
 // Creates a window (width, height, title)
-static void (*LT_CreateWindow)(int32, int32, const char*);
+static void (*LT_CreateWindow)(int32, int32, const char*) = 0;

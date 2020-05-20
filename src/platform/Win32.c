@@ -7,13 +7,19 @@
 #include <Windows.h>
 
 // Windows
-static uint32 windowsMaxCount = 1;   // if it is a game only 1 window is allowed
+#ifdef LT_EDITOR
+static uint32 windowsMaxCount = 8;
+#else   // if it is a game only 1 window is allowed
+static uint32 windowsMaxCount = 1;
+#endif
+
+static const char* EDITOR_CLASS_NAME = "EditorWindow";
+static const char* GAME_CLASS_NAME = "GameWindow";
+
 uint32 windowsCount = 0;
 Window* windowsVec;
 
 // Win32
-static const char* GAME_CLASS_NAME = "GameWindow";
-static const char* EDITOR_CLASS_NAME = "EditorWindow";
 static HINSTANCE hInstance;
 
 int main(int argc, const char** argv)
@@ -50,10 +56,6 @@ int main(int argc, const char** argv)
     // Start setting app the platform layer
     //-----------------------------------------------------------------
     Win32_Helper_RegisterWindowClasses();
-
-    // Create main editor window or game window
-    HWND wndHandle = Win32_Helper_CreateWindow(GAME_CLASS_NAME, 720, 480, "Game x64 (llamathrust) [clang]");
-    ShowWindow(wndHandle, SW_SHOW);
 
     // Set platform functions pointers
     LT_CreateWindow = Win32CreateWindow;
@@ -93,7 +95,7 @@ int main(int argc, const char** argv)
 }
 
 void Win32InitOpenGL(void) {
-
+    log_info("Win32 OpenGL initialized.");
 }
 
 void Win32SwapBuffer(const Window* in_window) {
@@ -103,11 +105,12 @@ void Win32SwapBuffer(const Window* in_window) {
 void Win32CreateWindow(int in_width, int in_height, const char* in_title)
 {
     if (windowsCount == windowsMaxCount) {
+        log_error("Max windows count reached!");
         return;
     }
 
-    HWND wndHandle = Win32_Helper_CreateWindow(EDITOR_CLASS_NAME, in_width, in_height, in_title);
-    ShowWindow(wndHandle, SW_SHOW);
+    HWND hwnd = Win32_Helper_CreateWindow(GAME_CLASS_NAME, in_width, in_height, in_title);
+    ShowWindow(hwnd, SW_SHOW);
 }
 
 HWND Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int height, const char* title)
@@ -136,10 +139,10 @@ HWND Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int heigh
         windowsVec = malloc(sizeof(Window) * windowsMaxCount);
     }
 
+    log_info("Registering Window of class \"%s\"...", in_wndClassName);
     windowsVec[windowsCount].handle = hwnd;
     windowsVec[windowsCount].device = GetDC(hwnd);
     windowsCount++;
-
     log_info("Window of class \"%s\" created.", in_wndClassName);
     return hwnd;
 }
