@@ -4,6 +4,7 @@
 #include <log.h>
 #include <stdlib.h>
 #include <Windows.h>
+#include <wingdi.h>
 #include <stdnoreturn.h>
 
 // Windows
@@ -97,8 +98,30 @@ int main(int32 argc, const char** argv)
 }
 
 void Win32InitOpenGL(void) {
-    HWND wnd = Win32_Helper_CreateWindow(GHOST_CLASS_NAME, CW_USEDEFAULT, CW_USEDEFAULT, "");
-    DestroyWindow(wnd);
+    Window* ghostWnd = Win32_Helper_CreateWindow(GHOST_CLASS_NAME, CW_USEDEFAULT, CW_USEDEFAULT, "");
+
+    // IMPORTANT: before creating the contex pixel format must be set
+    PIXELFORMATDESCRIPTOR pfd = {0};
+    pfd.nSize       = sizeof(PIXELFORMATDESCRIPTOR);
+    pfd.nVersion    = 1;   // Always set to 1
+    pfd.dwFlags     = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+    pfd.iPixelType  = PFD_TYPE_RGBA;
+    pfd.cColorBits  = 32;
+    pfd.cDepthBits  = 16;
+    
+    int pixelFormat = ChoosePixelFormat(ghostWnd->device, &pfd);
+    if (pixelFormat == 0) {
+        log_fatal("ChoosePixelFormat failed.");
+        Win32HandleError(50);
+    }
+
+    if (SetPixelFormat(ghostWnd->device, pixelFormat, &pfd) != TRUE) {
+        log_fatal("SetPixelFormat failed.");
+        Win32HandleError(50);
+    }
+
+  
+    DestroyWindow(ghostWnd->handle);
 
     log_info("Win32 OpenGL initialized.");
 }
@@ -114,11 +137,11 @@ void Win32CreateWindow(int in_width, int in_height, const char* in_title)
         return;
     }
 
-    HWND hwnd = Win32_Helper_CreateWindow(GAME_CLASS_NAME, in_width, in_height, in_title);
-    ShowWindow(hwnd, SW_SHOW);
+    Window* wnd = Win32_Helper_CreateWindow(GAME_CLASS_NAME, in_width, in_height, in_title);
+    ShowWindow(wnd->handle, SW_SHOW);
 }
 
-HWND Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int height, const char* title)
+Window* Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int height, const char* title)
 {
     DWORD styleEx   = in_wndClassName == GAME_CLASS_NAME
                     ? WS_OVERLAPPED
@@ -151,9 +174,9 @@ HWND Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int heigh
     windowsVec[windowsCount].handle = hwnd;
     windowsVec[windowsCount].device = GetDC(hwnd);
     windowsCount++;
-    
+
     log_info("Window of class \"%s\" created.", in_wndClassName);
-    return hwnd;
+    return &windowsVec[windowsCount - 1];
 }
 
 void Win32_Helper_RegisterWindowClasses() {

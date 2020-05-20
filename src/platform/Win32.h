@@ -7,7 +7,7 @@ LRESULT CALLBACK WindowProcGame(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 // Win32 helper functions
 void Win32_Helper_RegisterWindowClasses(void);
-HWND Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int height, const char* title);
+Window* Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int height, const char* title);
 
 // Exported functions
 void Win32CreateWindow(int in_width, int in_height, const char* in_title);

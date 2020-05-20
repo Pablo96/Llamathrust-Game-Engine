@@ -8,6 +8,7 @@ clang ^
 -m64 ^
 -lUser32.lib ^
 -lGdi32.lib ^
+-lOpengl32.lib ^
 -fcolor-diagnostics ^
 -fomit-frame-pointer ^
 -pedantic ^
