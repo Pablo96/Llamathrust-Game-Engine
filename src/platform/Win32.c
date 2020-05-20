@@ -24,7 +24,7 @@ void (*LT_CreateWindow)(int32, int32, const char*);
 // Win32
 static HINSTANCE hInstance;
 
-int main(int argc, const char** argv)
+int main(int32 argc, const char** argv)
 {
     // Get handle to this executable
     hInstance = GetModuleHandle(NULL);
@@ -33,6 +33,8 @@ int main(int argc, const char** argv)
     // Parse command line arguments
     //-----------------------------------------------------------------
     if (argc > 1) {
+        for (int32 i = 0; i < argc; i++)
+            log_trace("Command line argument: %s", argv[i]);
         log_info("Command line arguments parsed!.\n");
     }
 
