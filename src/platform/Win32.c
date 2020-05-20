@@ -33,9 +33,7 @@ int main(int argc, const char** argv)
     // Parse command line arguments
     //-----------------------------------------------------------------
     if (argc > 1) {
-#ifdef LT_DEBUG
         log_info("Command line arguments parsed!.\n");
-#endif
     }
 
     //-----------------------------------------------------------------
