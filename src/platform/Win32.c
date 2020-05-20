@@ -56,7 +56,7 @@ int main(int argc, const char** argv)
     ShowWindow(wndHandle, SW_SHOW);
 
     // Set platform functions pointers
-    create_window = Win32CreateWindow;
+    LT_CreateWindow = Win32CreateWindow;
 
     //-----------------------------------------------------------------
     // Start the engine
@@ -90,6 +90,10 @@ int main(int argc, const char** argv)
     Engine_Shutdown();
 
     return 0;
+}
+
+void Win32InitOpenGL(void) {
+
 }
 
 void Win32SwapBuffer(const Window* in_window) {

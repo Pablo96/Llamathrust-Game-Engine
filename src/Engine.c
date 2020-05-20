@@ -8,7 +8,7 @@ void Engine_Start() {
 
     log_info("Windows created: %u", windowsCount);
     // Initialize GraphicsAPI
-    GraphicsAPI_Init();
+    LT_GraphicsAPI_Init(OPENGL);
 
     log_info("Engine started!");
 }
