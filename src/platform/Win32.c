@@ -199,8 +199,8 @@ void Win32InitOpenGL(void) {
     log_info("Win32 OpenGL initialized.");
 }
 
-void Win32SwapBuffer(const Window* in_window) {
-    SwapBuffers(in_window->device);
+void Win32SwapBuffer() {
+    SwapBuffers(window.device);
 }
 
 void Win32_Helper_CreateWindow(Window* wnd, const char* in_wndClassName, int width, int height, const char* title)

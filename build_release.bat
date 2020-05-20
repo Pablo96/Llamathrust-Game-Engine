@@ -2,8 +2,9 @@ clang ^
 -std=c17 ^
 -DLT_RELEASE ^
 -I"./include" ^
+-I"./external" ^
 -I"./external/log-c" ^
--I"./external/" ^
+-I"./external/glad/include" ^
 -o "bin/engine.exe" ^
 -m64 ^
 -lUser32.lib ^
@@ -16,4 +17,4 @@ clang ^
 -foptimization-record-file="bin/optimizations.yml" ^
 -Weverything ^
 -O3  ^
-./external/log-c/log.c ./src/*.c ./src/platform/*.c
+./external/glad/src/glad.c ./external/log-c/log.c ./src/*.c ./src/platform/*.c

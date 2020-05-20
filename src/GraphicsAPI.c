@@ -1,7 +1,8 @@
 #include "GraphicsAPI.h"
-#include <log.h>
 #include "platform/Win32.h"
+#include <log.h>
 #include <stdlib.h>
+#include <glad/glad.h>
 
 GraphicsAPI api = {0};
 
@@ -10,6 +11,7 @@ void LT_GraphicsAPI_Init(const API in_api) {
         case OPENGL:
         {
             Win32InitOpenGL();
+            gladLoadGL();
             break;
         }
         case VULKAN:

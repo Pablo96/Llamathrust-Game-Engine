@@ -14,7 +14,7 @@ void Engine_Start() {
 void Engine_Run(const decimal deltaTime) {
 
     // swap buffers in all windows
-    api.swapBuffers(window);
+    api.swapBuffers();
 }
 
 void Engine_Shutdown() {

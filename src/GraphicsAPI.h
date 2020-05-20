@@ -1,5 +1,4 @@
 #pragma once
-#include <Platform.h>
 
 typedef enum _APIs {
     OPENGL,
@@ -7,7 +6,7 @@ typedef enum _APIs {
 } API;
 
 typedef struct _GraphicsAPI {
-    void (*swapBuffers)(const Window*);
+    void (*swapBuffers)(void);
 } GraphicsAPI;
 
 extern GraphicsAPI api;

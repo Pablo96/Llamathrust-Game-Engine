@@ -12,5 +12,5 @@ void Win32_Helper_CreateWindow(Window* wnd, const char* in_wndClassName, int wid
 // Exported functions
 void Win32CreateWindow(int in_width, int in_height, const char* in_title);
 void Win32InitOpenGL(void);
-void Win32SwapBuffer(const Window* in_window);
+void Win32SwapBuffer(void);
 #endif

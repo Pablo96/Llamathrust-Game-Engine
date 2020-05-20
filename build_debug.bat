@@ -3,8 +3,9 @@ clang ^
 -std=c17 ^
 -DLT_DEBUG ^
 -I"./include" ^
--I"./external/log-c" ^
 -I"./external" ^
+-I"./external/log-c" ^
+-I"./external/glad/include" ^
 -o "bin/engine.exe" ^
 -m64 ^
 -lUser32.lib ^
@@ -20,4 +21,4 @@ clang ^
 -fshow-source-location ^
 -Og ^
 -H ^
-./external/log-c/log.c ./src/*.c ./src/platform/*.c
+./external/glad/src/glad.c ./external/log-c/log.c ./src/*.c ./src/platform/*.c
