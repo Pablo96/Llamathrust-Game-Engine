@@ -26,10 +26,4 @@ typedef struct _Window {
 #endif
 
 
-extern uint32 windowsCount;
-extern Window* windowsVec;
-
-/* Creates a window (width, height, title)
- * NOTE: Remember to define this variable in the platform implementation
- * */
-extern void (*LT_CreateWindow)(int32, int32, const char*);
+extern Window window;

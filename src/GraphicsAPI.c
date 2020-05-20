@@ -10,7 +10,6 @@ void LT_GraphicsAPI_Init(const API in_api) {
         case OPENGL:
         {
             Win32InitOpenGL();
-            log_info("GraphicsAPI: OpenGL.");
             break;
         }
         case VULKAN:
@@ -20,5 +19,6 @@ void LT_GraphicsAPI_Init(const API in_api) {
         }
     }
     api.swapBuffers = Win32SwapBuffer;
-    log_info("GraphicsAPI initalized.");
+
+    log_info("GraphicsAPI initialized.");
 }

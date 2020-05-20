@@ -10,15 +10,7 @@
 #include <stdnoreturn.h>
 
 // Windows
-#ifdef LT_EDITOR
-static uint32 windowsMaxCount = 8;
-#else   // if it is a game only 1 window is allowed
-static uint32 windowsMaxCount = 1;
-#endif
-
-uint32 windowsCount = 0;
-Window* windowsVec;
-void (*LT_CreateWindow)(int32, int32, const char*);
+Window window;
 
 // Win32
 static HINSTANCE    hInstance;
@@ -64,11 +56,10 @@ int main(int32 argc, const char** argv)
     Win32_Helper_RegisterWindowClasses();
 
     // Set platform functions pointers
-    LT_CreateWindow = Win32CreateWindow;
 
     //-----------------------------------------------------------------
     // Start the engine
-    //-----------------------------------------------------------------s
+    //-----------------------------------------------------------------
     Engine_Start();
 
     //-----------------------------------------------------------------
@@ -82,7 +73,7 @@ int main(int32 argc, const char** argv)
 
         // Retrieve OS messages
         while(PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
-            if (msg.message == WM_QUIT && windowsCount == 0) {
+            if (msg.message == WM_QUIT) {
                 shouldClose = 1;
                 break;
             }
@@ -101,7 +92,8 @@ int main(int32 argc, const char** argv)
 }
 
 void Win32InitOpenGL(void) {
-    Window* ghostWnd = Win32_Helper_CreateWindow(GHOST_CLASS_NAME, CW_USEDEFAULT, CW_USEDEFAULT, "");
+    Window ghostWnd;
+    Win32_Helper_CreateWindow(&ghostWnd, GHOST_CLASS_NAME, CW_USEDEFAULT, CW_USEDEFAULT, "");
 
     // IMPORTANT: before creating the contex pixel format must be set
     PIXELFORMATDESCRIPTOR pfd = {0};
@@ -112,20 +104,24 @@ void Win32InitOpenGL(void) {
     pfd.cColorBits  = 32;
     pfd.cDepthBits  = 16;
     
-    int pixelFormat = ChoosePixelFormat(ghostWnd->device, &pfd);
+    int pixelFormat = ChoosePixelFormat(ghostWnd.device, &pfd);
     if (pixelFormat == 0) {
         log_fatal("ChoosePixelFormat failed.");
         Win32HandleError(50);
     }
 
-    if (SetPixelFormat(ghostWnd->device, pixelFormat, &pfd) != TRUE) {
+    if (SetPixelFormat(ghostWnd.device, pixelFormat, &pfd) == 0) {
         log_fatal("SetPixelFormat failed.");
         Win32HandleError(50);
     }
 
     // Create temporary legacy context
-    HGLRC oldOGLcontext = wglCreateContext(ghostWnd->device);
-    wglMakeCurrent(ghostWnd->device, oldOGLcontext);
+    HGLRC oldOGLcontext = wglCreateContext(ghostWnd.device);
+    if (oldOGLcontext == NULL) {
+        log_fatal("Create modern gl context failed.");
+        Win32HandleError(50);
+    }
+    wglMakeCurrent(ghostWnd.device, oldOGLcontext);
     
     // Get GL extensions
     PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC) wglGetProcAddress("wglChoosePixelFormatARB");
@@ -134,10 +130,72 @@ void Win32InitOpenGL(void) {
         Win32HandleError(50);
     }
 
-    // Delete legacy context and 
-    wglDeleteContext(oldOGLcontext);
-    DestroyWindow(ghostWnd->handle);
+    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC) wglGetProcAddress("wglCreateContextAttribsARB");
+    if (wglCreateContextAttribsARB  == 0) {
+        log_fatal("Retrieving wglCreateContextAttribsARB failed.");
+        Win32HandleError(50);
+    }
 
+    // Create modern context
+    Win32_Helper_CreateWindow(&window, GAME_CLASS_NAME, 720, 480, "Game x64");
+
+    const int32 pixelAttribs[] = {
+        WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+        WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+        WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+        WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+        WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
+        WGL_COLOR_BITS_ARB, 32,
+        WGL_ALPHA_BITS_ARB, 8,
+        WGL_DEPTH_BITS_ARB, 24,
+        WGL_STENCIL_BITS_ARB, 8,
+        WGL_SAMPLE_BUFFERS_ARB, GL_TRUE,
+        WGL_SAMPLES_ARB, 4,
+        0
+    };
+    
+    int32 pixelFormatID;
+    uint32 numFormats;
+    BOOL status = wglChoosePixelFormatARB(window.device, pixelAttribs, NULL, 1, &pixelFormatID, &numFormats);
+    
+    if (status == FALSE || numFormats == 0) {
+        log_fatal("wglChoosePixelFormatARB() failed.");
+        Win32HandleError(50);
+    }
+
+    PIXELFORMATDESCRIPTOR PFD;
+    if (DescribePixelFormat(window.device, pixelFormatID, sizeof(PFD), &PFD) == 0) {
+        log_fatal("Describe Modern PixelFormat failed.");
+        Win32HandleError(50);
+    }
+
+    if (SetPixelFormat(window.device, pixelFormatID, &PFD) == 0) {
+        log_fatal("Set Modern PixelFormat failed.");
+        Win32HandleError(50);
+    }
+
+    const int major_min = 4;
+    const int minor_min = 3;
+    int  contextAttribs[] = {
+        WGL_CONTEXT_MAJOR_VERSION_ARB, major_min,
+        WGL_CONTEXT_MINOR_VERSION_ARB, minor_min,
+        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+        0
+    };
+    
+    modernGLcontext = wglCreateContextAttribsARB(window.device, 0, contextAttribs);
+    if (modernGLcontext == NULL) {
+        log_fatal("Create modern gl context failed.");
+        Win32HandleError(50);
+    }
+
+    // Delete legacy context and ghost window
+    wglMakeCurrent(NULL, NULL);
+    wglDeleteContext(oldOGLcontext);
+    ReleaseDC(ghostWnd.handle, ghostWnd.device);
+    DestroyWindow(ghostWnd.handle);
+
+    ShowWindow(window.handle, SW_SHOW);
     log_info("Win32 OpenGL initialized.");
 }
 
@@ -145,24 +203,7 @@ void Win32SwapBuffer(const Window* in_window) {
     SwapBuffers(in_window->device);
 }
 
-void Win32CreateWindow(int in_width, int in_height, const char* in_title)
-{
-    if (windowsCount == windowsMaxCount) {
-        log_error("Max windows count reached!");
-        return;
-    }
-
-    Window* wnd = Win32_Helper_CreateWindow(GAME_CLASS_NAME, in_width, in_height, in_title);
-    
-    if (wglMakeCurrent(wnd->device, modernGLcontext) == FALSE) {
-        log_fatal("Error making window the current gl_context user.");
-        Win32HandleError(32);
-    }
-
-    ShowWindow(wnd->handle, SW_SHOW);
-}
-
-Window* Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int height, const char* title)
+void Win32_Helper_CreateWindow(Window* wnd, const char* in_wndClassName, int width, int height, const char* title)
 {
     DWORD styleEx   = in_wndClassName == GAME_CLASS_NAME
                     ? WS_OVERLAPPED
@@ -188,16 +229,10 @@ Window* Win32_Helper_CreateWindow(const char* in_wndClassName, int width, int he
     }
 
     // save the window in the vector
-    if (windowsVec == NULL) {
-        windowsVec = malloc(sizeof(Window) * windowsMaxCount);
-    }
-
-    windowsVec[windowsCount].handle = hwnd;
-    windowsVec[windowsCount].device = GetDC(hwnd);
-    windowsCount++;
+    wnd->handle = hwnd;
+    wnd->device = GetDC(hwnd);
 
     log_info("Window of class \"%s\" created.", in_wndClassName);
-    return &windowsVec[windowsCount - 1];
 }
 
 void Win32_Helper_RegisterWindowClasses() {
@@ -217,6 +252,7 @@ void Win32_Helper_RegisterWindowClasses() {
 
     // Register the game window class.
     WNDCLASSEX wcGhost = {0};
+    wcGame.style          = CS_OWNDC;
     wcGhost.cbSize        = sizeof(wcGhost);
     wcGhost.hInstance     = hInstance;
     wcGhost.lpfnWndProc   = WindowProcGame;
@@ -240,15 +276,6 @@ LRESULT CALLBACK WindowProcGame(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         }
         case WM_DESTROY:
         {
-            for (uint32 i = 0; i < windowsCount; i++) {
-                if (windowsVec[i].handle == hwnd) {
-                    if (i < 1)
-                        windowsVec = windowsVec + 1;
-                    else
-                        windowsVec[i] = windowsVec[windowsCount - 1];
-                }
-            }
-            windowsCount--;
             PostQuitMessage(0);
             return 0;
         }
