@@ -9,13 +9,14 @@ void Engine_Start() {
 
     LT_GraphicsAPI_Init(OPENGL);
     
-    glClearColor(0.1f, 0.1f, 0.5f, 1.0f);
+    //glClearColor(0.1f, 0.1f, 0.5f, 1.0f);
 
     log_info("Engine started!");
 }
 
 void Engine_Run(const decimal deltaTime) {
     glClear(GL_COLOR_BUFFER_BIT);
+
     // swap buffers in all windows
     api.swapBuffers();
 }

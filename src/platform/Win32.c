@@ -7,7 +7,12 @@
 #include <wingdi.h>
 #include <gl/GL.h>
 #include <gl/wglext.h>
-#include <stdnoreturn.h>
+
+#ifdef _MSC_VER
+#define noreturn
+#else
+#define noreturn _Noreturn
+#endif
 
 // Windows
 Window window;
@@ -87,6 +92,12 @@ int main(int32 argc, const char** argv)
     //-----------------------------------------------------------------
     // Clean up the engine resources if needed
     Engine_Shutdown();
+
+    printf("Press ENTER key to Continue\n");  
+    int c = getchar();
+
+    if (c == 'y')
+        Win32HandleError(-1);
 
     return 0;
 }
