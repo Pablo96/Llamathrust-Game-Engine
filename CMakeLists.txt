@@ -16,7 +16,7 @@ set(CMAKE_C_STANDARD_REQUIRED True)
 project("Llamathrust Engine"
         VERSION 1.0
         DESCRIPTION "Game engine Win32"
-        LANGUAGES C CXX)
+        LANGUAGES C)
 # use folders for ZERO_CHECK and BUILD_ALL
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -31,6 +31,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/")
 
 # set sources
 set(Llamathrust_SRC
+external/glad/src/glad.c
+external/log-c/log.c
 src/Engine.c
 src/GraphicsAPI.c
 src/platform/Win32.c
@@ -39,7 +41,7 @@ src/platform/Win32.c
 # executable name
 add_executable(${TARGET_NAME} ${Llamathrust_SRC})
 
-target_include_directories(${TARGET_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/include")
+target_include_directories(${TARGET_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/external/" "${CMAKE_SOURCE_DIR}/external/log-c" "${CMAKE_SOURCE_DIR}/external/glad/include")
 
 # set filters
 foreach(_source IN ITEMS ${Llamathrust_SRC})
