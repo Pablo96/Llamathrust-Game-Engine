@@ -1,4 +1,5 @@
 cls
+cd ../..
 if not exist ".\bin\release" mkdir ".\bin\release"
 
 :: Engine Executable

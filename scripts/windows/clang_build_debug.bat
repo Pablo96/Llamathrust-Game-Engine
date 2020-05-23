@@ -1,4 +1,5 @@
 cls
+cd ../..
 if not exist ".\bin\debug" mkdir ".\bin\debug"
 
 :: Engine Executable
