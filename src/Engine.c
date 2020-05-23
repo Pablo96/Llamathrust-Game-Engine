@@ -9,7 +9,7 @@ void Engine_Start() {
 
     LT_GraphicsAPI_Init(OPENGL);
     
-    //glClearColor(0.1f, 0.1f, 0.5f, 1.0f);
+    glClearColor(0.1f, 0.1f, 0.5f, 1.0f);
 
     log_info("Engine started!");
 }

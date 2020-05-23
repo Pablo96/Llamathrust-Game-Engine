@@ -8,14 +8,16 @@
 #include <gl/GL.h>
 #include <gl/wglext.h>
 
-#ifdef _MSC_VER
+#ifdef __clang__
+#include <stdnoreturn.h>
+#elif defined(_MSC_VER)
 #define noreturn
-#else
-#define noreturn _Noreturn
 #endif
 
 // Windows
 Window window;
+
+static BOOL shouldClose = FALSE;
 
 // Win32
 static HINSTANCE    hInstance;
@@ -72,17 +74,12 @@ int main(int32 argc, const char** argv)
     // Main engine loop
     //-----------------------------------------------------------------
     MSG msg = {0};
-    BOOL shouldClose = 0;
-    while(shouldClose == 0) {
+    while(shouldClose == FALSE) {
         // Run engine
         Engine_Run(1.0f / 60.0f);
 
         // Retrieve OS messages
         while(PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
-            if (msg.message == WM_QUIT) {
-                shouldClose = 1;
-                break;
-            }
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
@@ -98,11 +95,11 @@ int main(int32 argc, const char** argv)
 }
 
 void* Win32GetProc(const char *name) {
-    void* proc = wglGetProcAddress(name);
+    void* proc = (void*) wglGetProcAddress(name);
     if (proc)
         return proc;
 
-    proc = GetProcAddress(glInstance, name);
+    proc = (void*) GetProcAddress(glInstance, name);
 
     if (proc == 0) {
         log_fatal("Retrieving %s failed.", name);
@@ -291,13 +288,16 @@ void Win32_Helper_RegisterWindowClasses() {
 LRESULT CALLBACK WindowProcGame(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
-        case WM_CLOSE:
-        {
+        case WM_CREATE: {
+            shouldClose = FALSE;
+            return 0;
+        }
+        case WM_CLOSE: {
+            shouldClose = TRUE;
             DestroyWindow(hwnd);
             return 0;
         }
-        case WM_DESTROY:
-        {
+        case WM_DESTROY: {
             PostQuitMessage(0);
             return 0;
         }
