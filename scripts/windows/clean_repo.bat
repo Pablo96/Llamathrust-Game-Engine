@@ -1,17 +1,17 @@
 cls
 cd ../..
 if exist ".vs\" (
-    rmdir ".vs\"
+    rmdir /S /Q ".vs\"
 )
 if exist "bin\" (
-    rmdir "bin\ "
+    rmdir /S /Q "bin\"
 )
 if exist "x64\" (
-    rmdir "x64\"
+    rmdir /S /Q "x64\"
 )
 if exist "CMakeFiles\" (
-    rmdir "CMakeFiles\"
+    rmdir /S /Q "CMakeFiles\"
 )
 if exist "project_files\" (
-    rmdir "project_files\"
+    rmdir /S /Q "project_files\"
 )

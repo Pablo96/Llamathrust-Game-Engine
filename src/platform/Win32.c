@@ -158,7 +158,7 @@ Win32loadproc Win32InitOpenGL(void) {
    
 
     // Create modern context
-    Win32_Helper_CreateWindow(&window, GAME_CLASS_NAME, 720, 480, "Game x64");
+    Win32_Helper_CreateWindow(&window, CLASS_NAME, 720, 480, "Game x64");
 
     const int32 pixelAttribs[] = {
         WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
