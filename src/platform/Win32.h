@@ -8,9 +8,10 @@ LRESULT CALLBACK WindowProcGame(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 // Win32 helper functions
 void Win32_Helper_RegisterWindowClasses(void);
 void Win32_Helper_CreateWindow(Window* wnd, const char* in_wndClassName, int width, int height, const char* title);
+void* Win32GetProc(const char* name);
 
 // Exported functions
-void Win32CreateWindow(int in_width, int in_height, const char* in_title);
-void Win32InitOpenGL(void);
+typedef void* (*Win32loadproc)(const char* name);
+Win32loadproc Win32InitOpenGL(void);
 void Win32SwapBuffer(void);
 #endif

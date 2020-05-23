@@ -19,6 +19,7 @@ Window window;
 
 // Win32
 static HINSTANCE    hInstance;
+static HINSTANCE    glInstance;
 static HGLRC        modernGLcontext;
 static const LPTSTR EDITOR_CLASS_NAME = "EditorWindow";
 static const LPTSTR GAME_CLASS_NAME = "GameWindow";
@@ -72,7 +73,7 @@ int main(int32 argc, const char** argv)
     //-----------------------------------------------------------------
     MSG msg = {0};
     BOOL shouldClose = 0;
-    while(!shouldClose) {
+    while(shouldClose == 0) {
         // Run engine
         Engine_Run(1.0f / 60.0f);
 
@@ -93,16 +94,31 @@ int main(int32 argc, const char** argv)
     // Clean up the engine resources if needed
     Engine_Shutdown();
 
-    printf("Press ENTER key to Continue\n");  
-    int c = getchar();
-
-    if (c == 'y')
-        Win32HandleError(-1);
-
     return 0;
 }
 
-void Win32InitOpenGL(void) {
+void* Win32GetProc(const char *name) {
+    void* proc = wglGetProcAddress(name);
+    if (proc)
+        return proc;
+
+    proc = GetProcAddress(glInstance, name);
+
+    if (proc == 0) {
+        log_fatal("Retrieving %s failed.", name);
+        Win32HandleError(50);
+    }
+
+    return proc;
+}
+
+Win32loadproc Win32InitOpenGL(void) {
+    glInstance = LoadLibraryA("opengl32.dll");
+    if (glInstance == 0) {
+        log_fatal("Couldn't load opengl library.");
+        Win32HandleError(50);
+    }
+
     Window ghostWnd;
     Win32_Helper_CreateWindow(&ghostWnd, GHOST_CLASS_NAME, CW_USEDEFAULT, CW_USEDEFAULT, "");
 
@@ -135,17 +151,9 @@ void Win32InitOpenGL(void) {
     wglMakeCurrent(ghostWnd.device, oldOGLcontext);
     
     // Get GL extensions
-    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC) wglGetProcAddress("wglChoosePixelFormatARB");
-    if (wglChoosePixelFormatARB == 0) {
-        log_fatal("Retrieving wglChoosePixelFormatARB failed.");
-        Win32HandleError(50);
-    }
-
-    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC) wglGetProcAddress("wglCreateContextAttribsARB");
-    if (wglCreateContextAttribsARB  == 0) {
-        log_fatal("Retrieving wglCreateContextAttribsARB failed.");
-        Win32HandleError(50);
-    }
+    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC) Win32GetProc("wglChoosePixelFormatARB");
+    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC) Win32GetProc("wglCreateContextAttribsARB");
+   
 
     // Create modern context
     Win32_Helper_CreateWindow(&window, GAME_CLASS_NAME, 720, 480, "Game x64");
@@ -206,8 +214,11 @@ void Win32InitOpenGL(void) {
     ReleaseDC(ghostWnd.handle, ghostWnd.device);
     DestroyWindow(ghostWnd.handle);
 
+    // Make the modern GL context the current
+    wglMakeCurrent(window.device, modernGLcontext);
     ShowWindow(window.handle, SW_SHOW);
     log_info("Win32 OpenGL initialized.");
+    return Win32GetProc;
 }
 
 void Win32SwapBuffer() {

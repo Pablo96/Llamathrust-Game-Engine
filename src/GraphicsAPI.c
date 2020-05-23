@@ -10,8 +10,11 @@ void LT_GraphicsAPI_Init(const API in_api) {
     switch (in_api) {
         case OPENGL:
         {
-            Win32InitOpenGL();
-            gladLoadGL();
+            Win32loadproc proc = Win32InitOpenGL();
+            if (gladLoadGLLoader(proc) == 0) {
+                log_fatal("Could not initialize glad.");
+                exit(50);
+            }
             break;
         }
         case VULKAN:

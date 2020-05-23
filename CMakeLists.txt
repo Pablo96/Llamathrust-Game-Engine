@@ -55,6 +55,7 @@ source_group("${_group_path}" FILES "${_source}")
 endforeach()
 
 # find and link to opengl
+find_package(OpenGL REQUIRED)
 target_link_libraries(${TARGET_NAME} ${OPENGL_LIBRARY})
 target_include_directories(${TARGET_NAME} PRIVATE "${OPENGL_INCLUDE_DIR}")
 
