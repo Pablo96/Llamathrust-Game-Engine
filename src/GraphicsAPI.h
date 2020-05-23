@@ -1,12 +1,10 @@
 #pragma once
 
-typedef enum _APIs {
-    OPENGL,
-    VULKAN
-} API;
+typedef enum _APIs { OPENGL, VULKAN } API;
 
 typedef struct _GraphicsAPI {
-    void (*swapBuffers)(void);
+
+  void (*swapBuffers)(void);
 } GraphicsAPI;
 
 extern GraphicsAPI api;
