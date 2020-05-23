@@ -1,4 +1,5 @@
 cls
+cd ../..
 if exist ".vs\" (
     rmdir ".vs\"
 )
