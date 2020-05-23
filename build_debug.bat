@@ -1,3 +1,6 @@
+cls
+if not exist ".\bin\debug" mkdir ".\bin\debug"
+
 :: Engine Executable
 clang ^
 -std=c17 ^
@@ -6,7 +9,7 @@ clang ^
 -I"./external" ^
 -I"./external/log-c" ^
 -I"./external/glad/include" ^
--o "bin/engine_clang.exe" ^
+-o "bin/debug/engine_clang.exe" ^
 -m64 ^
 -lOpengl32.lib ^
 -lGdi32.lib ^
@@ -16,7 +19,7 @@ clang ^
 -fomit-frame-pointer ^
 -pedantic ^
 -fsave-optimization-record=yaml ^
--foptimization-record-file="bin/optimizations.yml" ^
+-foptimization-record-file="bin/debug/optimizations.yml" ^
 -Weverything ^
 -Wno-unused-parameter ^
 -fshow-source-location ^
