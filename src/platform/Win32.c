@@ -23,8 +23,13 @@ static BOOL shouldClose = FALSE;
 static HINSTANCE    hInstance;
 static HINSTANCE    glInstance;
 static HGLRC        modernGLcontext;
-static const LPTSTR EDITOR_CLASS_NAME = "EditorWindow";
-static const LPTSTR GAME_CLASS_NAME = "GameWindow";
+#ifdef LT_EDITOR
+static const LPTSTR CLASS_NAME = "EditorWindow";
+#define CLASS_STYLE WS_OVERLAPPED
+#else
+static const LPTSTR CLASS_NAME = "GameWindow";
+#define CLASS_STYLE WS_OVERLAPPED
+#endif
 static const LPTSTR GHOST_CLASS_NAME = "GhostWindow";
 noreturn static void Win32HandleError(int32 in_exitCode);
 
@@ -224,8 +229,8 @@ void Win32SwapBuffer() {
 
 void Win32_Helper_CreateWindow(Window* wnd, const char* in_wndClassName, int width, int height, const char* title)
 {
-    DWORD styleEx   = in_wndClassName == GAME_CLASS_NAME
-                    ? WS_OVERLAPPED
+    DWORD styleEx   = in_wndClassName == CLASS_NAME
+                    ? CLASS_STYLE
                     : WS_DISABLED;
 
     HWND hwnd = CreateWindowEx(
@@ -261,13 +266,13 @@ void Win32_Helper_RegisterWindowClasses() {
     wcGame.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     wcGame.hInstance     = hInstance;
     wcGame.lpfnWndProc   = WindowProcGame;
-    wcGame.lpszClassName = GAME_CLASS_NAME;
+    wcGame.lpszClassName = CLASS_NAME;
 
     if (!RegisterClassEx(&wcGame)) {
-        log_fatal("Error: Could not register Window Class \"%s\".", GAME_CLASS_NAME);
+        log_fatal("Error: Could not register Window Class \"%s\".", CLASS_NAME);
         Win32HandleError(49);
     }
-    log_info("Window class \"%s\" registered.", GAME_CLASS_NAME);
+    log_info("Window class \"%s\" registered.", CLASS_NAME);
 
     // Register the game window class.
     WNDCLASSEX wcGhost = {0};
