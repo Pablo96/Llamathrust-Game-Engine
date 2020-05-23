@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "algorithm": "c",
+        "xutility": "c"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
+}

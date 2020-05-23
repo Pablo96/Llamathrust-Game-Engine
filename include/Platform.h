@@ -1,3 +1,4 @@
+#pragma once
 #include "Common.h"
 
 #ifdef _WIN64
@@ -12,5 +13,17 @@
      #error "APPLE is not supported!"
 #endif
 
-// Creates a window (width, height, title)
-static void (*create_window)(int32, int32, const char*);
+
+// Window handle
+#ifdef LT_WINDOWS
+typedef struct HWND__ *HWND;
+typedef struct HDC__ *HDC;
+
+typedef struct _Window {
+    HWND handle;
+    HDC device;
+} Window;
+#endif
+
+
+extern Window window;

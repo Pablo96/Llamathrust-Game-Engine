@@ -1,4 +1,15 @@
 bin/
 resources/
+.vs/
+CMakeFiles/
+llamathrust.dir/
+project_files/
+x64/
 *.obj
 *.o
+*.db
+*.filters
+*.vcxproj
+*.sln
+*.cmake
+CMakeCache.txt
