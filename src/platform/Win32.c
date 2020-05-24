@@ -119,7 +119,7 @@ void *Win32GetProc(const char *name) {
   return proc;
 }
 
-Win32loadproc Win32InitOpenGL(void) {
+LoadProc Win32InitOpenGL(void) {
   glInstance = LoadLibraryA("opengl32.dll");
   if (glInstance == 0) {
     log_fatal("Couldn't load opengl library.");
@@ -166,7 +166,7 @@ Win32loadproc Win32InitOpenGL(void) {
           "wglCreateContextAttribsARB");
 
   // Create modern context
-  Win32_Helper_CreateWindow(&window, CLASS_NAME, 720, 480, WINDOW_TITLE);
+  Win32_Helper_CreateWindow(&window, CLASS_NAME, 720, 480, "Game x64");
 
   const int32 pixelAttribs[] = {WGL_DRAW_TO_WINDOW_ARB,
                                 GL_TRUE,
@@ -248,13 +248,12 @@ void Win32SwapBuffer() { SwapBuffers(window.device); }
 
 void Win32_Helper_CreateWindow(Window *wnd, const char *in_wndClassName,
                                int width, int height, const char *title) {
-  DWORD style = in_wndClassName == CLASS_NAME ? WINDOW_STYLE : WS_DISABLED;
-  DWORD styleEx = in_wndClassName == CLASS_NAME ? WINDOW_STYLE_EX : 0;
-  
-  HWND hwnd = CreateWindowEx(styleEx,         // Optional window styles.
-                             in_wndClassName, // Window class
-                             title,           // Window text
-                             style,    // Window style
+  DWORD styleEx = in_wndClassName == CLASS_NAME ? CLASS_STYLE : WS_DISABLED;
+
+  HWND hwnd = CreateWindowEx(styleEx,             // Optional window styles.
+                             in_wndClassName,     // Window class
+                             title,               // Window text
+                             WS_OVERLAPPEDWINDOW, // Window style
                              CW_USEDEFAULT, CW_USEDEFAULT, // Window position
                              width, height,                // Window size
                              NULL,                         // Parent window
@@ -279,10 +278,10 @@ void Win32_Helper_RegisterWindowClasses() {
   // Register the game window class.
   WNDCLASSEX wcGame = {0};
   wcGame.cbSize = sizeof(wcGame);
-  wcGame.hInstance = hInstance;
-  wcGame.lpfnWndProc = WindowProc;
-  wcGame.lpszClassName = CLASS_NAME;
   wcGame.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+  wcGame.hInstance = hInstance;
+  wcGame.lpfnWndProc = WindowProcGame;
+  wcGame.lpszClassName = CLASS_NAME;
 
   if (!RegisterClassEx(&wcGame)) {
     log_fatal("Error: Could not register Window Class \"%s\".", CLASS_NAME);
@@ -295,7 +294,7 @@ void Win32_Helper_RegisterWindowClasses() {
   wcGame.style = CS_OWNDC;
   wcGhost.cbSize = sizeof(wcGhost);
   wcGhost.hInstance = hInstance;
-  wcGhost.lpfnWndProc = GhostWindowProc;
+  wcGhost.lpfnWndProc = WindowProcGame;
   wcGhost.lpszClassName = GHOST_CLASS_NAME;
 
   if (!RegisterClassEx(&wcGhost)) {
@@ -307,23 +306,13 @@ void Win32_Helper_RegisterWindowClasses() {
   log_info("Window class \"%s\" registered.", GHOST_CLASS_NAME);
 }
 
-LRESULT CALLBACK GhostWindowProc(HWND hwnd, UINT msg, WPARAM wParam,
-                                 LPARAM lParam) {
+LRESULT CALLBACK WindowProcGame(HWND hwnd, UINT msg, WPARAM wParam,
+                                LPARAM lParam) {
   switch (msg) {
-  case WM_CLOSE: {
-    DestroyWindow(hwnd);
+  case WM_CREATE: {
+    shouldClose = FALSE;
     return 0;
   }
-  case WM_DESTROY: {
-    PostQuitMessage(0);
-    return 0;
-  }
-  }
-  return DefWindowProc(hwnd, msg, wParam, lParam);
-}
-
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-  switch (msg) {
   case WM_CLOSE: {
     shouldClose = TRUE;
     DestroyWindow(hwnd);
@@ -333,43 +322,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     PostQuitMessage(0);
     return 0;
   }
-#ifdef LT_EDITOR
-  // Handle drag window event
-  case WM_NCHITTEST: {
-    RECT wndRect;
-    GetWindowRect(hwnd, &wndRect);
-    int width = wndRect.right - wndRect.left;
-    int height = wndRect.bottom - wndRect.top;
-
-    // Get the location of the mouse click, which is packed into lParam.
-    POINT pt;
-    pt.x = LOWORD(lParam);
-    pt.y = HIWORD(lParam);
-
-    RECT rect;
-
-    // Close button
-    if (PtInRect(&rect, pt)) {
-      return HTCLOSE;
-    }
-    const LRESULT result = DefWindowProc(hwnd, msg, wParam, lParam);
-
-    SetRect(&rect, 3, 5, width - 3, 29);
-
-    // Change Point coordinates to local window coords
-    pt.x -= wndRect.left;
-    pt.y -= wndRect.top;
-
-    if ((result == HTCLIENT) && PtInRect(&rect, pt)) {
-      return HTCAPTION;
-    }
-    return result;
   }
-#endif
-  default:
-    return DefWindowProc(hwnd, msg, wParam, lParam);
-  }
-  return 0;
+  return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 noreturn void Win32HandleError(int32 in_exitCode) {
@@ -384,5 +338,14 @@ noreturn void Win32HandleError(int32 in_exitCode) {
   LocalFree(msg);
 
   exit(in_exitCode);
+}
+
+LoadProc InitOpenGL(void) {
+  return Win32InitOpenGL();
+}
+
+
+SwapBuffersFunc GetSwapBuffer(void) {
+  return Win32SwapBuffer;
 }
 #endif
