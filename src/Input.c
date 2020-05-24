@@ -17,6 +17,5 @@ LT_INPUT_STATE LT_GetKeyState(const LT_INPUT_KEY in_key) {
     exit(36);
   }
 #endif
-  log_info("Requesting %u's state...", in_key);
   return (LT_INPUT_STATE) GetPlatformKeyState(key_states[in_key]);
 }
