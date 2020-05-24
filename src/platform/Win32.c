@@ -32,13 +32,11 @@ static const LPTSTR CLASS_NAME = "EditorWindow";
 #define WINDOW_TITLE "Editor x64"
 #define WINDOW_STYLE WS_POPUP
 #define WINDOW_STYLE_EX WS_EX_ACCEPTFILES
-#define WindowProcedure WindowProcEditor
 #else
 static const LPTSTR CLASS_NAME = "GameWindow";
 #define WINDOW_TITLE "Game x64"
 #define WINDOW_STYLE WS_OVERLAPPED
 #define WINDOW_STYLE_EX 0
-#define WindowProcedure WindowProcGame
 #endif
 static const LPTSTR GHOST_CLASS_NAME = "GhostWindow";
 noreturn static void Win32HandleError(int32 in_exitCode);
@@ -309,7 +307,7 @@ LoadProc Win32InitOpenGL(void) {
           "wglCreateContextAttribsARB");
 
   // Create modern context
-  Win32_Helper_CreateWindow(&window, CLASS_NAME, 720, 480, "Game x64");
+  Win32_Helper_CreateWindow(&window, CLASS_NAME, 720, 480, WINDOW_TITLE);
 
   const int32 pixelAttribs[] = {WGL_DRAW_TO_WINDOW_ARB,
                                 GL_TRUE,

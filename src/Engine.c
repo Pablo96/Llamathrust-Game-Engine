@@ -25,7 +25,7 @@ void Engine_Run(const decimal deltaTime) {
   if (escState == LT_KEY_PRESSED || spaState == LT_KEY_PRESSED) {
     LT_CloseWindow();
   }
-  // swap buffers in all windows
+
   api.swapBuffers();
 }
 
