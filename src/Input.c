@@ -4,6 +4,10 @@
 #include <stdlib.h>
 static uint8 key_states[KEYS_COUNT];
 
+void LT_InputInit() {
+  InitPlatformInput(key_states);
+}
+
 LT_INPUT_STATE LT_GetKeyState(const LT_INPUT_KEY in_key) {
 #ifdef LT_DEBUG
   if (in_key >= KEYS_COUNT) {

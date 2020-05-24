@@ -21,7 +21,7 @@ void LT_GraphicsAPI_Init(const API in_api) {
     exit(54);
   }
   }
-  api.swapBuffers = GetSwapBuffer();
+  api.swapBuffers = GetPlatformSwapBuffer();
 
   log_info("GraphicsAPI initialized.");
 }
