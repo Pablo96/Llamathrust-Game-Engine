@@ -29,4 +29,5 @@ typedef struct _Window {
 
 extern Window window;
 extern LoadProc InitOpenGL(void);
-extern SwapBuffersFunc GetSwapBuffer(void);
+extern SwapBuffersFunc GetPlatformSwapBuffer(void);
+extern void InitPlatformInput(uint8* key_states);
