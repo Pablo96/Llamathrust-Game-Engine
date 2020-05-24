@@ -114,129 +114,126 @@ void InitPlatformInput(int32 *key_states) {
   memset(win32KeyStates, LT_KEY_UP, win32KeyStatesSize);
 
   // Mouse Buttons
-  key_states[MOUSE_BUTTON_L] = VK_LBUTTON;
-  key_states[MOUSE_BUTTON_R] = VK_RBUTTON;
-  key_states[MOUSE_MIDDLE] = VK_MBUTTON;
-  key_states[MOUSE_BUTTON_X1] = VK_XBUTTON1;
-  key_states[MOUSE_BUTTON_X2] = VK_XBUTTON2;
+  key_states[LT_KEY_MOUSE_BUTTON_L] = VK_LBUTTON;
+  key_states[LT_KEY_MOUSE_BUTTON_R] = VK_RBUTTON;
+  key_states[LT_KEY_MOUSE_MIDDLE] = VK_MBUTTON;
+  key_states[LT_KEY_MOUSE_BUTTON_X1] = VK_XBUTTON1;
+  key_states[LT_KEY_MOUSE_BUTTON_X2] = VK_XBUTTON2;
 
   // Util Keys
-  key_states[BACKSPACE] = VK_BACK;
-  key_states[TAB] = VK_TAB;
-  key_states[DEL] = VK_CLEAR;
-  key_states[ENTER] = VK_RETURN;
-  key_states[SHIFT] = VK_SHIFT;
-  key_states[CONTROL] = VK_CONTROL;
-  key_states[ALT] = VK_MENU;
-  key_states[MENU] = VK_APPS;
-  key_states[PAUSE] = VK_PAUSE;
-  key_states[ESCAPE] = VK_ESCAPE;
-  key_states[SPACEBAR] = VK_SPACE;
-  key_states[PAGE_UP] = VK_PRIOR;
-  key_states[PAGE_DOWN] = VK_NEXT;
-  key_states[END] = VK_END;
-  key_states[HOME] = VK_HOME;
-  key_states[LEFT_ARROW] = VK_LEFT;
-  key_states[UP_ARROW] = VK_RIGHT;
-  key_states[RIGHT_ARROW] = VK_UP;
-  key_states[DOWN_ARROW] = VK_DOWN;
-  key_states[SELECT] = VK_SELECT;
-  key_states[SCREENSHOT] = VK_SNAPSHOT;
-  key_states[EXECUTE] = VK_EXECUTE;
-  key_states[PRINT_SCREEN] = VK_PRINT;
-  key_states[INSERT] = VK_INSERT;
-  key_states[HELP] = VK_HELP;
+  key_states[LT_KEY_BACKSPACE] = VK_BACK;
+  key_states[LT_KEY_TAB] = VK_TAB;
+  key_states[LT_KEY_DEL] = VK_CLEAR;
+  key_states[LT_KEY_ENTER] = VK_RETURN;
+  key_states[LT_KEY_SHIFT] = VK_SHIFT;
+  key_states[LT_KEY_CONTROL] = VK_CONTROL;
+  key_states[LT_KEY_ALT] = VK_MENU;
+  key_states[LT_KEY_MENU] = VK_APPS;
+  key_states[LT_KEY_PAUSE] = VK_PAUSE;
+  key_states[LT_KEY_ESCAPE] = VK_ESCAPE;
+  key_states[LT_KEY_SPACEBAR] = VK_SPACE;
+  key_states[LT_KEY_PAGE_UP] = VK_PRIOR;
+  key_states[LT_KEY_PAGE_DOWN] = VK_NEXT;
+  key_states[LT_KEY_END] = VK_END;
+  key_states[LT_KEY_HOME] = VK_HOME;
+  key_states[LT_KEY_LEFT_ARROW] = VK_LEFT;
+  key_states[LT_KEY_UP_ARROW] = VK_RIGHT;
+  key_states[LT_KEY_RIGHT_ARROW] = VK_UP;
+  key_states[LT_KEY_DOWN_ARROW] = VK_DOWN;
+  key_states[LT_KEY_SELECT] = VK_SELECT;
+  key_states[LT_KEY_SCREENSHOT] = VK_SNAPSHOT;
+  key_states[LT_KEY_EXECUTE] = VK_EXECUTE;
+  key_states[LT_KEY_PRINT_SCREEN] = VK_PRINT;
+  key_states[LT_KEY_INSERT] = VK_INSERT;
+  key_states[LT_KEY_HELP] = VK_HELP;
 
   // Numers
-  key_states[NUM_0] = 0x30;
-  key_states[NUM_1] = 0x31;
-  key_states[NUM_2] = 0x32;
-  key_states[NUM_3] = 0x33;
-  key_states[NUM_4] = 0x34;
-  key_states[NUM_5] = 0x35;
-  key_states[NUM_6] = 0x36;
-  key_states[NUM_7] = 0x37;
-  key_states[NUM_8] = 0x38;
-  key_states[NUM_9] = 0x39;
+  key_states[LT_KEY_NUM_0] = 0x30;
+  key_states[LT_KEY_NUM_1] = 0x31;
+  key_states[LT_KEY_NUM_2] = 0x32;
+  key_states[LT_KEY_NUM_3] = 0x33;
+  key_states[LT_KEY_NUM_4] = 0x34;
+  key_states[LT_KEY_NUM_5] = 0x35;
+  key_states[LT_KEY_NUM_6] = 0x36;
+  key_states[LT_KEY_NUM_7] = 0x37;
+  key_states[LT_KEY_NUM_8] = 0x38;
+  key_states[LT_KEY_NUM_9] = 0x39;
 
   // Letters
-  key_states[A] = 0x41;
-  key_states[B] = 0x42;
-  key_states[C] = 0x43;
-  key_states[D] = 0x44;
-  key_states[E] = 0x45;
-  key_states[F] = 0x46;
-  key_states[G] = 0x47;
-  key_states[H] = 0x48;
-  key_states[I] = 0x49;
-  key_states[J] = 0x50;
-  key_states[K] = 0x51;
-  key_states[L] = 0x52;
-  key_states[M] = 0x53;
-  key_states[N] = 0x54;
-  key_states[O] = 0x55;
-  key_states[P] = 0x56;
-  key_states[Q] = 0x57;
-  key_states[R] = 0x58;
-  key_states[S] = 0x59;
-  key_states[T] = 0x60;
-  key_states[U] = 0x61;
-  key_states[V] = 0x62;
-  key_states[W] = 0x63;
-  key_states[X] = 0x64;
-  key_states[Y] = 0x65;
-  key_states[Z] = 0x66;
+  key_states[LT_KEY_A] = 0x41;
+  key_states[LT_KEY_B] = 0x42;
+  key_states[LT_KEY_C] = 0x43;
+  key_states[LT_KEY_D] = 0x44;
+  key_states[LT_KEY_E] = 0x45;
+  key_states[LT_KEY_F] = 0x46;
+  key_states[LT_KEY_G] = 0x47;
+  key_states[LT_KEY_H] = 0x48;
+  key_states[LT_KEY_I] = 0x49;
+  key_states[LT_KEY_J] = 0x50;
+  key_states[LT_KEY_K] = 0x51;
+  key_states[LT_KEY_L] = 0x52;
+  key_states[LT_KEY_M] = 0x53;
+  key_states[LT_KEY_N] = 0x54;
+  key_states[LT_KEY_O] = 0x55;
+  key_states[LT_KEY_P] = 0x56;
+  key_states[LT_KEY_Q] = 0x57;
+  key_states[LT_KEY_R] = 0x58;
+  key_states[LT_KEY_S] = 0x59;
+  key_states[LT_KEY_T] = 0x60;
+  key_states[LT_KEY_U] = 0x61;
+  key_states[LT_KEY_V] = 0x62;
+  key_states[LT_KEY_W] = 0x63;
+  key_states[LT_KEY_X] = 0x64;
+  key_states[LT_KEY_Y] = 0x65;
+  key_states[LT_KEY_Z] = 0x66;
 
   // NUM PAD
-  key_states[NUMPAD0] = VK_NUMPAD0;
-  key_states[NUMPAD1] = VK_NUMPAD1;
-  key_states[NUMPAD2] = VK_NUMPAD2;
-  key_states[NUMPAD3] = VK_NUMPAD3;
-  key_states[NUMPAD4] = VK_NUMPAD4;
-  key_states[NUMPAD5] = VK_NUMPAD5;
-  key_states[NUMPAD6] = VK_NUMPAD6;
-  key_states[NUMPAD7] = VK_NUMPAD7;
-  key_states[NUMPAD8] = VK_NUMPAD8;
-  key_states[NUMPAD9] = VK_NUMPAD9;
-  key_states[MULTIPLY] = VK_MULTIPLY;
-  key_states[PLUS] = VK_ADD;
-  key_states[SEPARATOR] = VK_SEPARATOR;
-  key_states[SUBTRACT] = VK_SUBTRACT;
-  key_states[NUM_DOT] = VK_DECIMAL;
-  key_states[DIVIDE] = VK_DIVIDE;
+  key_states[LT_KEY_NUMPAD0] = VK_NUMPAD0;
+  key_states[LT_KEY_NUMPAD1] = VK_NUMPAD1;
+  key_states[LT_KEY_NUMPAD2] = VK_NUMPAD2;
+  key_states[LT_KEY_NUMPAD3] = VK_NUMPAD3;
+  key_states[LT_KEY_NUMPAD4] = VK_NUMPAD4;
+  key_states[LT_KEY_NUMPAD5] = VK_NUMPAD5;
+  key_states[LT_KEY_NUMPAD6] = VK_NUMPAD6;
+  key_states[LT_KEY_NUMPAD7] = VK_NUMPAD7;
+  key_states[LT_KEY_NUMPAD8] = VK_NUMPAD8;
+  key_states[LT_KEY_NUMPAD9] = VK_NUMPAD9;
+  key_states[LT_KEY_MULTIPLY] = VK_MULTIPLY;
+  key_states[LT_KEY_PLUS] = VK_ADD;
+  key_states[LT_KEY_SEPARATOR] = VK_SEPARATOR;
+  key_states[LT_KEY_SUBTRACT] = VK_SUBTRACT;
+  key_states[LT_KEY_NUM_DOT] = VK_DECIMAL;
+  key_states[LT_KEY_DIVIDE] = VK_DIVIDE;
 
   // Functions keys
-  key_states[F1] = VK_F1;
-  key_states[F2] = VK_F2;
-  key_states[F3] = VK_F3;
-  key_states[F4] = VK_F4;
-  key_states[F5] = VK_F5;
-  key_states[F6] = VK_F6;
-  key_states[F7] = VK_F7;
-  key_states[F8] = VK_F8;
-  key_states[F9] = VK_F9;
-  key_states[F10] = VK_F10;
-  key_states[F11] = VK_F11;
-  key_states[F12] = VK_F12;
-  key_states[CAPS_LOCK] = VK_CAPITAL;
-  key_states[NUM_LOCK] = VK_NUMLOCK;
-  key_states[SCROLL_LOCK] = VK_SCROLL;
+  key_states[LT_KEY_F1] = VK_F1;
+  key_states[LT_KEY_F2] = VK_F2;
+  key_states[LT_KEY_F3] = VK_F3;
+  key_states[LT_KEY_F4] = VK_F4;
+  key_states[LT_KEY_F5] = VK_F5;
+  key_states[LT_KEY_F6] = VK_F6;
+  key_states[LT_KEY_F7] = VK_F7;
+  key_states[LT_KEY_F8] = VK_F8;
+  key_states[LT_KEY_F9] = VK_F9;
+  key_states[LT_KEY_F10] = VK_F10;
+  key_states[LT_KEY_F11] = VK_F11;
+  key_states[LT_KEY_F12] = VK_F12;
+  key_states[LT_KEY_CAPS_LOCK] = VK_CAPITAL;
+  key_states[LT_KEY_NUM_LOCK] = VK_NUMLOCK;
+  key_states[LT_KEY_SCROLL_LOCK] = VK_SCROLL;
 
   // Mods
-  key_states[SUPER_L] = VK_LWIN;
-  key_states[SUPER_R] = VK_RWIN;
-  key_states[SHIFT_L] = VK_LSHIFT;
-  key_states[SHIFT_R] = VK_RSHIFT;
-  key_states[ALT_L] = VK_LMENU;
-  key_states[ALT_R] = VK_RMENU;
-  key_states[CONTROL_L] = VK_LCONTROL;
-  key_states[CONTROL_R] = VK_RCONTROL;
+  key_states[LT_KEY_SUPER_L] = VK_LWIN;
+  key_states[LT_KEY_SUPER_R] = VK_RWIN;
+  key_states[LT_KEY_SHIFT_L] = VK_LSHIFT;
+  key_states[LT_KEY_SHIFT_R] = VK_RSHIFT;
+  key_states[LT_KEY_ALT_L] = VK_LMENU;
+  key_states[LT_KEY_ALT_R] = VK_RMENU;
+  key_states[LT_KEY_CONTROL_L] = VK_LCONTROL;
+  key_states[LT_KEY_CONTROL_R] = VK_RCONTROL;
 }
 
-uint8 GetPlatformKeyState(int32 key_state) {
-  log_info("Platform request of %u's state...", key_state);
-  return win32KeyStates[key_state];
-}
+uint8 GetPlatformKeyState(int32 key_state) { return win32KeyStates[key_state]; }
 //-----------------------------------------------------------------
 // Window | Graphics
 //-----------------------------------------------------------------
@@ -477,8 +474,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   case WM_KEYDOWN:
   case WM_SYSKEYDOWN: {
     if (win32KeyStates == 0 || wParam > VK_RMENU ||
-        (wParam > VK_F12 && wParam <= VK_NAVIGATION_CANCEL))
+        (wParam > VK_F12 && wParam <= VK_NAVIGATION_CANCEL)) {
+      log_error("Key: %u not supported.", wParam);
       break;
+    }
     // get and set the key's state
     LT_INPUT_STATE state = (lParam & (1 << 30)) ? LT_KEY_DOWN : LT_KEY_PRESSED;
     win32KeyStates[wParam] = state;
