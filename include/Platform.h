@@ -28,6 +28,8 @@ typedef struct _Window {
 #endif
 
 extern Window window;
+extern void LT_CloseWindow(void);
 extern LoadProc InitOpenGL(void);
 extern SwapBuffersFunc GetPlatformSwapBuffer(void);
-extern void InitPlatformInput(uint8* key_states);
+extern void InitPlatformInput(int32* key_states);
+extern uint8 GetPlatformKeyState(int32 key_state);
