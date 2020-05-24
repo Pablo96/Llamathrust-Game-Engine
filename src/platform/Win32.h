@@ -11,7 +11,6 @@ void Win32_Helper_CreateWindow(Window* wnd, const char* in_wndClassName, int wid
 void* Win32GetProc(const char* name);
 
 // Exported functions
-typedef void* (*Win32loadproc)(const char* name);
-Win32loadproc Win32InitOpenGL(void);
+LoadProc Win32InitOpenGL(void);
 void Win32SwapBuffer(void);
 #endif

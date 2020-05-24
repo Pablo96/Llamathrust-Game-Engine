@@ -13,6 +13,8 @@
      #error "APPLE is not supported!"
 #endif
 
+typedef void* (*LoadProc)(const char* name);
+typedef void (*SwapBuffersFunc)(void);
 
 // Window handle
 #ifdef LT_WINDOWS
@@ -27,3 +29,5 @@ typedef struct _Window {
 
 
 extern Window window;
+extern LoadProc InitOpenGL(void);
+extern SwapBuffersFunc GetSwapBuffer(void);
