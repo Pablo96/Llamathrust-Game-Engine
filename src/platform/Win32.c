@@ -25,10 +25,16 @@ static HINSTANCE glInstance;
 static HGLRC modernGLcontext;
 #ifdef LT_EDITOR
 static const LPTSTR CLASS_NAME = "EditorWindow";
-#define CLASS_STYLE WS_OVERLAPPED
+#define WINDOW_TITLE "Editor x64"
+#define WINDOW_STYLE WS_POPUP
+#define WINDOW_STYLE_EX WS_EX_ACCEPTFILES
+#define WindowProcedure WindowProcEditor
 #else
 static const LPTSTR CLASS_NAME = "GameWindow";
-#define CLASS_STYLE WS_OVERLAPPED
+#define WINDOW_TITLE "Game x64"
+#define WINDOW_STYLE WS_OVERLAPPED
+#define WINDOW_STYLE_EX 0
+#define WindowProcedure WindowProcGame
 #endif
 static const LPTSTR GHOST_CLASS_NAME = "GhostWindow";
 noreturn static void Win32HandleError(int32 in_exitCode);
