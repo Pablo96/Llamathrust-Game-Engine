@@ -13,3 +13,4 @@ x64/
 *.sln
 *.cmake
 CMakeCache.txt
+*.ll
