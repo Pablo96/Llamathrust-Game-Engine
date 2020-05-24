@@ -24,5 +24,5 @@ clang ^
 -Weverything ^
 -Wno-unused-parameter ^
 -fshow-source-location ^
--Og ^
+-O0 ^
 ./external/glad/src/glad.c ./external/log-c/log.c ./src/*.c ./src/platform/*.c

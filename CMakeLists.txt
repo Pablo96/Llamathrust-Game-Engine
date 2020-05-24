@@ -34,6 +34,7 @@ set(Llamathrust_SRC
 external/glad/src/glad.c
 external/log-c/log.c
 src/Engine.c
+src/Input.c
 src/GraphicsAPI.c
 src/platform/Win32.c
 )

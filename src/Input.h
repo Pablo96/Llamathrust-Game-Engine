@@ -81,7 +81,7 @@ typedef enum lt_InputKey {
   PLUS,
   SEPARATOR,
   SUBTRACT,
-  DECIMAL,
+  NUM_DOT,
   DIVIDE,
   F1,
   F2,
@@ -109,7 +109,11 @@ typedef enum lt_InputKey {
   KEYS_COUNT
 } LT_INPUT_KEY;
 
-typedef enum lt_InputState { PRESSED, DOWN, UP } LT_INPUT_STATE;
+typedef enum lt_InputState {
+  LT_KEY_UP,
+  LT_KEY_DOWN,
+  LT_KEY_PRESSED
+} LT_INPUT_STATE;
 
 extern void LT_InputInit(void);
 extern LT_INPUT_STATE LT_GetKeyState(const LT_INPUT_KEY in_key);
