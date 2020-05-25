@@ -29,7 +29,7 @@ typedef struct _Color {
   float a;
 } ColorRGBA;
 
-typedef enum _BufferBit { LT_COLOR_BIT, LT_DEPTH_BIT, LT_STENCIL_BIT } BufferBit;
+typedef enum _BufferBit { LT_COLOR_BIT = 1, LT_DEPTH_BIT = 2, LT_STENCIL_BIT = 4 } BufferBit;
 
 typedef struct _GraphicsAPI {
   void (*clearScreenColor8)(const ColorRGBA8 in_value);
@@ -37,7 +37,9 @@ typedef struct _GraphicsAPI {
   void (*clearScreen)(const BufferBit in_value);
   void (*enableAlphaBlending)(const uint8 in_value);
   void (*enableDepthTesting)(const uint8 in_value);
+  void (*enableStencilTesting)(const uint8 in_value);
   void (*enableScissorTesting)(const uint8 in_value);
+  void (*setScissor)(const Rect *in_value);
   void (*setViewport)(const Rect *in_value);
   void (*swapBuffers)(void);
 } GraphicsAPI;

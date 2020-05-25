@@ -17,3 +17,6 @@ typedef double decimal;
 #else
 typedef float decimal;
 #endif
+
+#define LT_FALSE 0
+#define LT_TRUE 1

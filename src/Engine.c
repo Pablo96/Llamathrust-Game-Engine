@@ -3,6 +3,7 @@
 #include "Input.h"
 #include <Platform.h>
 #include <log.h>
+
 void Engine_Start() {
   log_trace("Engine is starting...");
 
@@ -11,7 +12,8 @@ void Engine_Start() {
 
   ColorRGBA color = {0.1f, 0.1f, 0.5f, 1.0f};
   api.clearScreenColor(&color);
-
+  api.enableDepthTesting(LT_TRUE);
+  
   log_info("Engine started!");
 }
 
