@@ -12,7 +12,7 @@ void Engine_Start() {
   
   LT_GraphicsAPI_Init(LT_OPENGL);
 
-  LT_GameStateInit();
+  LT_GameStateInit("");
 
   //ColorRGBA color = {0.1f, 0.1f, 0.5f, 1.0f};
   //api.clearScreenColor(&color);

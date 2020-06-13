@@ -1,6 +1,5 @@
 #include "Common.h"
 
-
 typedef struct _Game {
     const char* idName;
 } Game;
