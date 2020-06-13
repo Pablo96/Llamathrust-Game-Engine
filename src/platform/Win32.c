@@ -2,12 +2,15 @@
 #ifdef LT_WINDOWS
 #include "../Engine.h"
 #include "../Input.h"
+#include "../Performance.h"
+#include <log.h>
 #include <Windows.h>
+#include <wingdi.h>
+
 #include <gl/GL.h>
 #include <gl/wglext.h>
-#include <log.h>
+
 #include <stdlib.h>
-#include <wingdi.h>
 
 #ifdef __clang__
 #include <stdnoreturn.h>
@@ -80,15 +83,18 @@ int main(int32 argc, const char **argv) {
   //-----------------------------------------------------------------
   // Start the engine
   //-----------------------------------------------------------------
-  Engine_Start();
+  LT_MEASURE_FUNC(Engine_Start());
 
   //-----------------------------------------------------------------
   // Main engine loop
   //-----------------------------------------------------------------
   MSG msg = {0};
   while (shouldClose == FALSE) {
+    LT_START_TIME();
+
     // Run engine
-    Engine_Run(1.0f / 60.0f);
+    double deltaTime = 1.0 / t;
+    Engine_Run(deltaTime);
 
     // Reset key state cache
     memset(win32KeyStates, LT_KEY_UP, win32KeyStatesSize);
@@ -98,6 +104,8 @@ int main(int32 argc, const char **argv) {
       TranslateMessage(&msg);
       DispatchMessage(&msg);
     }
+
+    LT_END_TIME();
   }
 
   //-----------------------------------------------------------------

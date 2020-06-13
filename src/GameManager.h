@@ -3,14 +3,14 @@
 
 typedef struct _GameState {
     const char* callerGame;
-    void* custom_data;
+    void* customData;
     Game* currentGame;
 } GameState;
 
 /**
  * Initialize the game state with:
  * - callerGame to null.
- * - custom data to null.
+ * - customData to null.
  * - currentGame to the game from the config file.
  * 
  * @Param in_gameName: Name of the shared library
@@ -22,4 +22,4 @@ void LT_GameStateInit(const char* in_gameName);
  * Update the current game.
  * @Param deltaTime: Elapsed time from the last frame in ms.
  * */
-void LT_GameStateUpdateCurrent(const decimal deltaTime);
+void LT_GameStateUpdateCurrent(const double deltaTime);

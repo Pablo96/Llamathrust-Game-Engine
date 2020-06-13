@@ -14,22 +14,10 @@ void Engine_Start() {
 
   LT_GameStateInit("");
 
-  //ColorRGBA color = {0.1f, 0.1f, 0.5f, 1.0f};
-  //api.clearScreenColor(&color);
-  //api.enableDepthTesting(LT_TRUE);
-  
   log_info("Engine started!");
 }
 
-void Engine_Run(const decimal deltaTime) {
-  //api.clearScreen(LT_COLOR_BIT);
-
-  //LT_INPUT_STATE escState = LT_GetKeyState(LT_KEY_ESCAPE);
-  //LT_INPUT_STATE spaState = LT_GetKeyState(LT_KEY_SPACEBAR);
-  //if (escState == LT_KEY_PRESSED || spaState == LT_KEY_PRESSED) {
-  //  LT_CloseWindow();
-  //}
-
+void Engine_Run(const double deltaTime) {
   LT_GameStateUpdateCurrent(deltaTime);
   api.swapBuffers();
 }
