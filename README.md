@@ -20,9 +20,9 @@ https://pablonarvaja.wixsite.com/llamathrustengine
 - Same as game
 
 ## Supported Builds
-Windows 10 x64: WIP
-Linux 4+ x64: Not implemented
-Android 4.4+ x64: Not implemented
+- Windows 10 x64: WIP
+- Linux 4+ x64: Not implemented
+- Android 4.4+ x64: Not implemented
 
 ## Errors list
 0   | No errors
