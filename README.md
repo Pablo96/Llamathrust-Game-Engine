@@ -27,18 +27,16 @@ the implementation and why you made some decisions in the code.
 Right now all is documented (poorly) in this page:
 https://pablonarvaja.wixsite.com/llamathrustengine
 
-# Features
-## Game
-- OpenGL 3.3+
-
-## Editor
-- Same as game
-
+# Implemented Features
 ## Supported Builds
 - Windows 10 x64: WIP
 - Linux 4+ x64: Not implemented
 - Android 4.4+ x64: Not implemented
 
+## Engine
+- OpenGL 3.3+
+
+# Miscellaneous
 ## Errors list
 <table>
   <tr>
