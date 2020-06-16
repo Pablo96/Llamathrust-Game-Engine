@@ -25,8 +25,25 @@ https://pablonarvaja.wixsite.com/llamathrustengine
 - Android 4.4+ x64: Not implemented
 
 ## Errors list
-#### | code | description
-#### | 0    | No errors
-#### | 1    | Couldn't create the window
-#### | 48   | Instance already running
-#### | 50   | Graphic API initialization
+<table>
+  <tr>
+    <th>Code</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>0</td>
+    <td>Succesful Run</td>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>Couldn't create the window</td>
+  </tr>
+  <tr>
+    <td>48</td>
+    <td>Instance already running</td>
+  </tr>
+  <tr>
+    <td>50</td>
+    <td>Graphic API initialization error</td>
+  </tr>
+</table>
