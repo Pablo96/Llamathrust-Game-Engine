@@ -24,4 +24,4 @@ clang ^
 -foptimization-record-file="bin/release/optimizations.yml" ^
 -Weverything ^
 -O3  ^
-./external/glad/src/glad.c ./external/log-c/log.c ./src/*.c ./src/platform/*.c
+./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/platform/*.c
