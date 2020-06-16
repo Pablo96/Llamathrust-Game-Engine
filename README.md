@@ -1,5 +1,20 @@
 # LlamathrustC
-Llamathrust GameEngine test in C18 using LLVM CLANG
+Llamathrust GameEngine developed in C18 using LLVM CLANG.
+
+## Motivation
+Llamathrust Engine is a personal project to learn how game engines work.
+
+It aims to cover:
+- Custom platform API abstraction (linux and windows)
+- Multiple Grpahics API's (OpenGL and Vulkan)
+- GUI library from scratch
+- PBR rendering
+- ECS based
+- Binary files for assets (includes a cooker and editor)
+- Plug-in based physics API
+- Someday mobile support for Android
+
+You can see tutorials and progress in facebook.com/LlamathrustGE
 
 ## Build
 - Clone the repository
