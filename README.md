@@ -26,7 +26,11 @@ https://pablonarvaja.wixsite.com/llamathrustengine
 
 ## Errors list
 | code | description
+
 | 0    | No errors
+
 | 1    | Couldn't create the window
+
 | 48   | Instance already running
+
 | 50   | Graphic API initialization
