@@ -5,40 +5,47 @@
 
 /**
  * @def MAKE_ON_CREATE
- * @param gameStructName
- * @brief Generates a function OnCreate for the gameStructName
+ * @param GameStructName
+ * @brief Generates a function OnCreate for the GameStructName
  * @example MAKE_ON_CREATE(Test) => void TestOnCreate(params...)
  **/
-#define MAKE_ON_CREATE(gameStructName) void MAKE_FN_NAME(gameStructName, OnCreate)(struct _Game* this, const char* callerGame, const void* stateData)
+#define MAKE_ON_CREATE(GameStructName) void MAKE_FN_NAME(GameStructName, OnCreate)(struct _Game* this, const char* callerGame, const void* stateData)
 /**
  * @def MAKE_ON_RESUME
- * @param gameStructName
- * @brief Generates a function OnResume for the gameStructName
+ * @param GameStructName
+ * @brief Generates a function OnResume for the GameStructName
  * @example MAKE_ON_RESUME(Test) => void TestOnResume(params...)
  **/
-#define MAKE_ON_RESUME(gameStructName) void MAKE_FN_NAME(gameStructName, OnResume)(struct _Game* this)
+#define MAKE_ON_RESUME(GameStructName) void MAKE_FN_NAME(GameStructName, OnResume)(struct _Game* this)
 /**
  * @def MAKE_ON_UPDATE
- * @param gameStructName
- * @brief Generates a function OnUpdate for the gameStructName
+ * @param GameStructName
+ * @brief Generates a function OnUpdate for the GameStructName
  * @example MAKE_ON_UPDATE(Test) => void TestOnUpdate(params...)
  **/
-#define MAKE_ON_UPDATE(gameStructName) void MAKE_FN_NAME(gameStructName, OnUpdate)(struct _Game* this, const double deltaTime)
+#define MAKE_ON_UPDATE(GameStructName) void MAKE_FN_NAME(GameStructName, OnUpdate)(struct _Game* this, const double deltaTime)
 /**
  * @def MAKE_ON_STOP
- * @param gameStructName
- * @brief Generates a function OnStop for the gameStructName
+ * @param GameStructName
+ * @brief Generates a function OnStop for the GameStructName
  * @example MAKE_ON_STOP(Test) => void TestOnStop(params...)
  **/
-#define MAKE_ON_STOP(gameStructName) void MAKE_FN_NAME(gameStructName, OnStop)(struct _Game* this)
+#define MAKE_ON_STOP(GameStructName) void MAKE_FN_NAME(GameStructName, OnStop)(struct _Game* this)
 /**
  * @def MAKE_ON_DESTROY
- * @param gameStructName
- * @brief Generates a function OnDestroy for the gameStructName
+ * @param GameStructName
+ * @brief Generates a function OnDestroy for the GameStructName
  * @example MAKE_ON_DESTROY(Test) => void TestOnDestroy(params...)
  **/
-#define MAKE_ON_DESTROY(gameStructName) void MAKE_FN_NAME(gameStructName, OnDestroy)(struct _Game* this, void* stateData)
+#define MAKE_ON_DESTROY(GameStructName) void MAKE_FN_NAME(GameStructName, OnDestroy)(struct _Game* this, void* stateData)
 
+/**
+ * @def MAKE_CONSTRUCTOR
+ * @param GameStructName
+ * @brief Generates a function declaration with the naming convection for constructors
+ * @example MAKE_CONSTRUCTOR(Test) Game* TestConstructor(Game* gameObject)
+ **/
+#define MAKE_CONSTRUCTOR(GameStructName) Game* MAKE_FN_NAME(GameStructName, Constructor)(Game* gameObject)
 
 typedef void (*OnCreateFunc)(struct _Game* this, const char* callerGame, const void* stateData);
 typedef void (*OnResumeFunc)(struct _Game* this);

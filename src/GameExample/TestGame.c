@@ -23,12 +23,12 @@ MAKE_ON_DESTROY(Test) {
 
 }
 
-Game* TestConstructor(Game* testObject) {
-    testObject->idName = "Test Game";
-    testObject->OnCreate = TestOnCreate;
-    testObject->OnResume = TestOnResume;
-    testObject->OnUpdate = TestOnUpdate;
-    testObject->OnStop = TestOnStop;
-    testObject->OnDestroy = TestOnDestroy;
-    return testObject;
+MAKE_CONSTRUCTOR(Test) {
+    gameObject->idName = "Test Game";
+    gameObject->OnCreate = TestOnCreate;
+    gameObject->OnResume = TestOnResume;
+    gameObject->OnUpdate = TestOnUpdate;
+    gameObject->OnStop = TestOnStop;
+    gameObject->OnDestroy = TestOnDestroy;
+    return gameObject;
 }

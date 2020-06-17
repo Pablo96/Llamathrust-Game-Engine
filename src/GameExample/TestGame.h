@@ -1,3 +1,3 @@
 #include <Game.h>
 
-extern Game* TestConstructor(Game* testObject);
+extern MAKE_CONSTRUCTOR(Test);
