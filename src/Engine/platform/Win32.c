@@ -120,9 +120,19 @@ int main(int32 argc, const char **argv) {
 //-----------------------------------------------------------------
 // System
 //-----------------------------------------------------------------
-void* PlatformLoadSharedLib(const char* name) {
-  char* path = strcat(in_name, ".dll");
-  return { LoadLibrary(path) };
+void* PlatformLoadSharedLib(const char* in_name) {
+  const size_t size = strlen(in_name);
+  
+  char* name_dll = malloc(size + 5);
+  memcpy(name_dll, in_name, size);
+  name_dll[size] = 0;
+
+  strcat(name_dll, ".dll");
+  
+  void* lib = LoadLibrary(name_dll);
+  free(name_dll);
+  
+  return lib;
 }
 
 void* PlatformGetProc(const void* in_lib, const char* in_name){

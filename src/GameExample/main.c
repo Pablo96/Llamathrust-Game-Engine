@@ -1,4 +1,4 @@
 #include <Platform.h>
 
-#include <windows.h>
+#include <Windows.h>
 LT_CREATEGAME();

@@ -11,7 +11,7 @@ void Engine_Start() {
   
   LT_GraphicsAPI_Init(LT_OPENGL);
 
-  LT_GameStateInit("");
+  LT_GameStateInit("game");
 
   log_info("Engine started!");
 }
