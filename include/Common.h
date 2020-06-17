@@ -11,6 +11,11 @@ typedef unsigned int        uint32;
 typedef unsigned long long  uint64;
 typedef uint8               byte;
 
+// boolean
+typedef byte               bool;
+#define LT_FALSE 0
+#define LT_TRUE 1
+
 // precision floating point
 #ifdef LT_PRECISION_HIGH
 typedef double decimal;
@@ -18,5 +23,4 @@ typedef double decimal;
 typedef float decimal;
 #endif
 
-#define LT_FALSE 0
-#define LT_TRUE 1
+
