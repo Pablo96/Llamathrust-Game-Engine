@@ -2,7 +2,6 @@
 #include "GraphicsAPI.h"
 #include "Input.h"
 #include "GameManager.h"
-#include <Platform.h>
 #include <log.h>
 
 void Engine_Start() {

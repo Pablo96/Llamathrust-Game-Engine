@@ -117,7 +117,22 @@ int main(int32 argc, const char **argv) {
   return 0;
 }
 
-void InitPlatformInput(int32 *key_states) {
+//-----------------------------------------------------------------
+// System
+//-----------------------------------------------------------------
+void* PlatformLoadSharedLib(const char* name) {
+  char* path = strcat(in_name, ".dll");
+  return { LoadLibrary(path) };
+}
+
+void* PlatformGetProc(const void* in_lib, const char* in_name){
+  return GetProcAddress((HMODULE) in_lib, in_name);
+}
+
+//-----------------------------------------------------------------
+// Input
+//-----------------------------------------------------------------
+void PlatformInitInput(int32 *key_states) {
   win32KeyStates = (uint8 *)malloc(win32KeyStatesSize);
   memset(win32KeyStates, LT_KEY_UP, win32KeyStatesSize);
 
@@ -241,7 +256,8 @@ void InitPlatformInput(int32 *key_states) {
   key_states[LT_KEY_CONTROL_R] = VK_RCONTROL;
 }
 
-uint8 GetPlatformKeyState(int32 key_state) { return win32KeyStates[key_state]; }
+uint8 PlatformGetKeyState(int32 key_state) { return win32KeyStates[key_state]; }
+
 //-----------------------------------------------------------------
 // Window | Graphics
 //-----------------------------------------------------------------
@@ -392,6 +408,16 @@ LoadProc Win32InitOpenGL(void) {
 
 void Win32SwapBuffer() { SwapBuffers(window.device); }
 
+//-----------------------------------------------------------------
+// Exporters
+//-----------------------------------------------------------------
+LoadProc InitOpenGL(void) { return Win32InitOpenGL(); }
+
+SwapBuffersFunc GetPlatformSwapBuffer(void) { return Win32SwapBuffer; }
+
+//-----------------------------------------------------------------
+// HELPERS
+//-----------------------------------------------------------------
 void Win32_Helper_CreateWindow(Window *wnd, const char *in_wndClassName,
                                int width, int height, const char *title) {
   DWORD styleEx = in_wndClassName == CLASS_NAME ? WINDOW_STYLE_EX : WS_DISABLED;
@@ -545,7 +571,5 @@ noreturn void Win32HandleError(int32 in_exitCode) {
   exit(in_exitCode);
 }
 
-LoadProc InitOpenGL(void) { return Win32InitOpenGL(); }
 
-SwapBuffersFunc GetPlatformSwapBuffer(void) { return Win32SwapBuffer; }
 #endif

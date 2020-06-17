@@ -7,7 +7,7 @@ static int32 key_states[KEYS_COUNT];
 
 void LT_InputInit() {
   log_trace("Initializing Input...");
-  InitPlatformInput(key_states);
+  PlatformInitInput(key_states);
   log_info("Input Initialized...");
 }
 
@@ -19,5 +19,5 @@ LT_INPUT_STATE LT_GetKeyState(const LT_INPUT_KEY in_key) {
     exit(36);
   }
 #endif
-  return (LT_INPUT_STATE)GetPlatformKeyState(key_states[in_key]);
+  return (LT_INPUT_STATE)PlatformGetKeyState(key_states[in_key]);
 }

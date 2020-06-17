@@ -43,8 +43,9 @@ switch( fdwReason ) {\
 #endif
 
 extern Window window;
-extern void LT_CloseWindow(void);
 extern LoadProc InitOpenGL(void);
 extern SwapBuffersFunc GetPlatformSwapBuffer(void);
-extern void InitPlatformInput(int32* key_states);
-extern uint8 GetPlatformKeyState(int32 key_state);
+extern void PlatformInitInput(int32* in_keyStates);
+extern uint8 PlatformGetKeyState(int32 keyState);
+extern void* PlatformLoadSharedLib(const char* name);
+extern void* PlatformGetProc(const void* in_lib, const char* in_name);
