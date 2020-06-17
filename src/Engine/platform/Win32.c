@@ -2,12 +2,15 @@
 #ifdef LT_WINDOWS
 #include "../Engine.h"
 #include "../Input.h"
+#include "../Performance.h"
+#include <log.h>
 #include <Windows.h>
+#include <wingdi.h>
+
 #include <gl/GL.h>
 #include <gl/wglext.h>
-#include <log.h>
+
 #include <stdlib.h>
-#include <wingdi.h>
 
 #ifdef __clang__
 #include <stdnoreturn.h>
@@ -80,15 +83,18 @@ int main(int32 argc, const char **argv) {
   //-----------------------------------------------------------------
   // Start the engine
   //-----------------------------------------------------------------
-  Engine_Start();
+  LT_MEASURE_FUNC(Engine_Start());
 
   //-----------------------------------------------------------------
   // Main engine loop
   //-----------------------------------------------------------------
   MSG msg = {0};
   while (shouldClose == FALSE) {
+    LT_START_TIME();
+
     // Run engine
-    Engine_Run(1.0f / 60.0f);
+    double deltaTime = 1.0 / t;
+    Engine_Run(deltaTime);
 
     // Reset key state cache
     memset(win32KeyStates, LT_KEY_UP, win32KeyStatesSize);
@@ -98,6 +104,8 @@ int main(int32 argc, const char **argv) {
       TranslateMessage(&msg);
       DispatchMessage(&msg);
     }
+
+    LT_END_TIME();
   }
 
   //-----------------------------------------------------------------
@@ -109,7 +117,32 @@ int main(int32 argc, const char **argv) {
   return 0;
 }
 
-void InitPlatformInput(int32 *key_states) {
+//-----------------------------------------------------------------
+// System
+//-----------------------------------------------------------------
+void* PlatformLoadSharedLib(const char* in_name) {
+  const size_t size = strlen(in_name);
+  
+  char* name_dll = malloc(size + 5);
+  memcpy(name_dll, in_name, size);
+  name_dll[size] = 0;
+
+  strcat(name_dll, ".dll");
+  
+  void* lib = LoadLibrary(name_dll);
+  free(name_dll);
+  
+  return lib;
+}
+
+void* PlatformGetProc(const void* in_lib, const char* in_name){
+  return GetProcAddress((HMODULE) in_lib, in_name);
+}
+
+//-----------------------------------------------------------------
+// Input
+//-----------------------------------------------------------------
+void PlatformInitInput(int32 *key_states) {
   win32KeyStates = (uint8 *)malloc(win32KeyStatesSize);
   memset(win32KeyStates, LT_KEY_UP, win32KeyStatesSize);
 
@@ -233,7 +266,8 @@ void InitPlatformInput(int32 *key_states) {
   key_states[LT_KEY_CONTROL_R] = VK_RCONTROL;
 }
 
-uint8 GetPlatformKeyState(int32 key_state) { return win32KeyStates[key_state]; }
+uint8 PlatformGetKeyState(int32 key_state) { return win32KeyStates[key_state]; }
+
 //-----------------------------------------------------------------
 // Window | Graphics
 //-----------------------------------------------------------------
@@ -384,6 +418,16 @@ LoadProc Win32InitOpenGL(void) {
 
 void Win32SwapBuffer() { SwapBuffers(window.device); }
 
+//-----------------------------------------------------------------
+// Exporters
+//-----------------------------------------------------------------
+LoadProc InitOpenGL(void) { return Win32InitOpenGL(); }
+
+SwapBuffersFunc GetPlatformSwapBuffer(void) { return Win32SwapBuffer; }
+
+//-----------------------------------------------------------------
+// HELPERS
+//-----------------------------------------------------------------
 void Win32_Helper_CreateWindow(Window *wnd, const char *in_wndClassName,
                                int width, int height, const char *title) {
   DWORD styleEx = in_wndClassName == CLASS_NAME ? WINDOW_STYLE_EX : WS_DISABLED;
@@ -537,7 +581,5 @@ noreturn void Win32HandleError(int32 in_exitCode) {
   exit(in_exitCode);
 }
 
-LoadProc InitOpenGL(void) { return Win32InitOpenGL(); }
 
-SwapBuffersFunc GetPlatformSwapBuffer(void) { return Win32SwapBuffer; }
 #endif

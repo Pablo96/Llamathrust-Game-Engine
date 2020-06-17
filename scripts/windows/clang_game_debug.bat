@@ -10,12 +10,9 @@ clang ^
 -I"./external" ^
 -I"./external/log-c" ^
 -I"./external/glad/include" ^
--o "bin/debug/engine_clang.exe" ^
+-o "bin/debug/game.dll" ^
 -m64 ^
--lOpengl32.lib ^
--lGdi32.lib ^
 -lUser32.lib ^
--lKernel32.lib ^
 -fcolor-diagnostics ^
 -fomit-frame-pointer ^
 -pedantic ^
@@ -26,4 +23,5 @@ clang ^
 -Wno-documentation ^
 -fshow-source-location ^
 -O0 ^
-./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/platform/*.c
+-shared ^
+./src/gameexample/*.c
