@@ -1,5 +1,7 @@
+#include "TestGame.h"
 #include <Common.h>
 #include <Game.h>
+#include <string.h>
 
 MAKE_ON_CREATE(Test) {
 
@@ -21,11 +23,12 @@ MAKE_ON_DESTROY(Test) {
 
 }
 
-static Game test = {
-    .idName = "Test game",
-    .OnCreate = TestOnCreate,
-    .OnResume = TestOnResume,
-    .OnUpdate = TestOnUpdate,
-    .OnStop = TestOnStop,
-    .OnDestroy = TestOnDestroy
-};
+Game* TestConstructor(Game* testObject) {
+    testObject->idName = "Test Game";
+    testObject->OnCreate = TestOnCreate;
+    testObject->OnResume = TestOnResume;
+    testObject->OnUpdate = TestOnUpdate;
+    testObject->OnStop = TestOnStop;
+    testObject->OnDestroy = TestOnDestroy;
+    return testObject;
+}

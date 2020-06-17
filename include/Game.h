@@ -1,3 +1,4 @@
+#pragma once
 #include "Common.h"
 
 #define MAKE_FN_NAME(prefix, subfix) prefix ## subfix

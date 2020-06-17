@@ -18,6 +18,7 @@ typedef void (*SwapBuffersFunc)(void);
 
 // WINDOWS
 #ifdef LT_WINDOWS
+#define LT_EXPORT __declspec(dllexport)
 typedef struct HWND__ *HWND;
 typedef struct HDC__ *HDC;
 
@@ -41,6 +42,9 @@ switch( fdwReason ) {\
   case DLL_PROCESS_DETACH: break;\
 } return TRUE;}
 #endif
+
+#define LT_Init(GameConstructor) LT_EXPORT void* GetInitGame() {\
+Game* game = (Game*) malloc(sizeof(Game)); return GameConstructor(game); }
 
 extern Window window;
 extern LoadProc InitOpenGL(void);
