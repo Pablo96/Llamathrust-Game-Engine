@@ -23,6 +23,7 @@ clang ^
 -foptimization-record-file="bin/debug/optimizations.yml" ^
 -Weverything ^
 -Wno-unused-parameter ^
+-Wno-documentation ^
 -fshow-source-location ^
 -O0 ^
 ./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/platform/*.c

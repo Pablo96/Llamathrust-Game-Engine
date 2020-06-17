@@ -20,6 +20,7 @@ clang ^
 -foptimization-record-file="bin/debug/optimizations.yml" ^
 -Weverything ^
 -Wno-unused-parameter ^
+-Wno-documentation ^
 -fshow-source-location ^
 -O0 ^
 -shared ^

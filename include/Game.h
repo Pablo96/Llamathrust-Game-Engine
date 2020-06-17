@@ -37,7 +37,7 @@
  * @brief Generates a function OnDestroy for the GameStructName
  * @example MAKE_ON_DESTROY(Test) => void TestOnDestroy(params...)
  **/
-#define MAKE_ON_DESTROY(GameStructName) void MAKE_FN_NAME(GameStructName, OnDestroy)(struct _Game* this, void* stateData)
+#define MAKE_ON_DESTROY(GameStructName) void MAKE_FN_NAME(GameStructName, OnDestroy)(struct _Game* this)
 
 /**
  * @def MAKE_CONSTRUCTOR
@@ -47,14 +47,96 @@
  **/
 #define MAKE_CONSTRUCTOR(GameStructName) Game* MAKE_FN_NAME(GameStructName, Constructor)(Game* gameObject)
 
+/**
+ * @func OnCreateFunc
+ * @brief Called the first time the game is loaded.
+ * @note In this function you should do initialization of the game.
+ * @param this
+ *   @type Game pointer
+ *   @brief Reference to the game object it works on
+ * @param callerGame
+ *   @type const char pointer
+ *   @brief Name of the caller game
+ *   @note This param is null if this is the first game loaded
+ * @param stateData
+ *   @type void pointer
+ *   @brief Data passed by the caller game.
+ *   @note This param is null if this is the first game loaded
+ **/
 typedef void (*OnCreateFunc)(struct _Game* this, const char* callerGame, const void* stateData);
-typedef void (*OnResumeFunc)(struct _Game* this);
-typedef void (*OnUpdateFunc)(struct _Game* this, const double deltaTime);
-typedef void (*OnStopFunc)(struct _Game* this);
-typedef void (*OnDestroyFunc)(struct _Game* this, void* stateData);
 
+/**
+ * @func OnResumeFunc
+ * @brief Called every time the game is brought into the screen.
+ * @note In this function you might resume the rendering and/or the game.
+ * @param this
+ *   @type Game pointer
+ *   @brief Reference to the game object it works on
+ **/
+typedef void (*OnResumeFunc)(struct _Game* this);
+
+/**
+ * @func OnUpdateFunc
+ * @brief Called every frame.
+ * @note In this function you should update the logic and rendering of the game.
+ * @param this
+ *   @type Game pointer
+ *   @brief Reference to the game object it works on.
+ * @param deltaTime
+ *   @type const double
+ *   @brief The elapsed time between frames.
+ **/
+typedef void (*OnUpdateFunc)(struct _Game* this, const double deltaTime);
+
+/**
+ * @func OnStopFunc
+ * @brief Called every time the game is taken off the screen.
+ * @note In this function you might pause the rendering and/or the game.
+ * @param this
+ *   @type Game pointer
+ *   @brief Reference to the game object it works on
+ **/
+typedef void (*OnStopFunc)(struct _Game* this);
+/**
+ * @func OnDestroyFunc
+ * @brief Called when the game is destroyed.
+ * @note In this function you should do memory freeing of the game.
+ * @param this
+ *   @type Game pointer
+ *   @brief Reference to the game object it works on
+ **/
+typedef void (*OnDestroyFunc)(struct _Game* this);
+
+/**
+ * @struct Game
+ * @brief Defines a game.
+ * 
+ * @field idName
+ *   @type const char pointer
+ *   @brief is the id_name of the game.
+ *   @note shuld never be null and most be unique on the entire application
+ * @field customData
+ *   @type void pointer
+ *   @brief custom data the game need between stages
+ * @field OnCreate
+ *   @type function pointer
+ *   @ref @func OnCreateFunc
+ * @field OnResume
+ *   @type function pointer
+ *   @ref @func OnResumeFunc
+ * @field OnUpdate
+ *   @type function pointer
+ *   @ref @func OnUpdateFunc
+ * @field OnStop
+ *   @type function pointer
+ *   @ref @func OnStopFunc
+ * @field OnDestroy
+ *   @type function pointer
+ *   @ref @func OnDestroyFunc
+ **/
 typedef struct _Game {
     const char* idName;
+    void* customData;
     OnCreateFunc OnCreate;
     OnResumeFunc OnResume;
     OnUpdateFunc OnUpdate;

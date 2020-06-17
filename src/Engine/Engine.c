@@ -1,7 +1,7 @@
 #include "Engine.h"
 #include "GraphicsAPI.h"
 #include "Input.h"
-#include "GameManager.h"
+#include <GameManager.h>
 #include <log.h>
 
 void Engine_Start() {
@@ -23,5 +23,5 @@ void Engine_Run(const double deltaTime) {
 
 void Engine_Shutdown() {
   log_trace("Engine is shuting down...");
-  log_info("Engine is off.");
+  log_info("Engine shut down.");
 }
