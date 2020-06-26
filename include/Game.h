@@ -126,19 +126,19 @@ typedef void (*OnDestroyFunc)(struct _Game* this);
  *   @brief custom data the game need between stages
  * @field OnCreate
  *   @type function pointer
- *   @ref @func OnCreateFunc
+ *   @see @func OnCreateFunc
  * @field OnResume
  *   @type function pointer
- *   @ref @func OnResumeFunc
+ *   @see @func OnResumeFunc
  * @field OnUpdate
  *   @type function pointer
- *   @ref @func OnUpdateFunc
+ *   @see @func OnUpdateFunc
  * @field OnStop
  *   @type function pointer
- *   @ref @func OnStopFunc
+ *   @see @func OnStopFunc
  * @field OnDestroy
  *   @type function pointer
- *   @ref @func OnDestroyFunc
+ *   @see @func OnDestroyFunc
  **/
 typedef struct _Game {
     const char* idName;
