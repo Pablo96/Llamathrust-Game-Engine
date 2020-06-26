@@ -1,3 +1,9 @@
+/**
+ * @file Game.h
+ * @author Pablo Narvaja
+ * @brief Contains defines for easier mehtod override and the game structur
+ **/
+
 #pragma once
 #include "Common.h"
 
