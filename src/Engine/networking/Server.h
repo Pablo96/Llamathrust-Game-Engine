@@ -3,7 +3,7 @@
  * @author Pablo Narvaja
  * @brief In here you'll find the abstraction for server related code.
  **/
-
+#pragma once
 
 /**
  * NOTE:

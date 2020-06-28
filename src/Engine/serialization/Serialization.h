@@ -3,6 +3,7 @@
  * @author Pablo Narvaja
  * @brief TODO.
  **/
+#pragma once
 #include <Common.h>
 
 typedef void (*SerializableWriteFunc)(const byte* in_stream);
