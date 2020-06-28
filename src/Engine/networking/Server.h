@@ -4,6 +4,13 @@
  * @brief In here you'll find the abstraction for server related code.
  **/
 
+
+/**
+ * NOTE:
+ * Should implment hoffman coding for stream compression
+ **/
+
+
 /**
  * @struct Server
  * @brief Server abstraction.
