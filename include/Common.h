@@ -1,3 +1,8 @@
+/**
+ * @file Common.h
+ * @author Pablo Narvaja
+ * @brief Here are all common types and defines.
+ **/
 #pragma once
 // signed types
 typedef char        int8;
@@ -23,4 +28,5 @@ typedef double decimal;
 typedef float decimal;
 #endif
 
+#define MAKE_FN_NAME(prefix, subfix) prefix ## subfix
 

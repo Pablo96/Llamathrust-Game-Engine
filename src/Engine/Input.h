@@ -1,5 +1,9 @@
 #pragma once
 
+/**
+ * @enum LT_INPUT_KEY
+ * @brief Available keys and buttons.
+ **/
 typedef enum lt_InputKey {
   LT_KEY_MOUSE_BUTTON_L,
   LT_KEY_MOUSE_BUTTON_R,
@@ -109,11 +113,37 @@ typedef enum lt_InputKey {
   KEYS_COUNT
 } LT_INPUT_KEY;
 
+/**
+ * @enum LT_INPUT_STATE
+ * @brief Available keys states.
+ * @tag LT_KEY_UP
+ *	  @brief Key is up (not pressed)
+ * @tag LT_KEY_DOWN
+ *    @brief key is being pressed
+ * @tag LT_KEY_PRESSED
+ *    @brief key was resently pressed
+ *    @note is set when a key resently pass from up to down.
+ **/
 typedef enum lt_InputState {
   LT_KEY_UP,
   LT_KEY_DOWN,
   LT_KEY_PRESSED
 } LT_INPUT_STATE;
 
+/**
+ * @func LT_InputInit
+ * @brief initialize the input system.
+ * @return void
+ **/
 extern void LT_InputInit(void);
+
+/**
+ * @func LT_GetKeyState
+ * @brief Gets the key a state is.
+ * @param in_key
+ *    @type const LT_INPUT_KEY
+ *    @brief the key to what check the state for
+ * @return LT_INPUT_STATE
+ *    @brief the state in what the key is
+ **/
 extern LT_INPUT_STATE LT_GetKeyState(const LT_INPUT_KEY in_key);

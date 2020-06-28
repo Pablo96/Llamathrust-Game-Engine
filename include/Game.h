@@ -7,8 +7,6 @@
 #pragma once
 #include "Common.h"
 
-#define MAKE_FN_NAME(prefix, subfix) prefix ## subfix
-
 /**
  * @def MAKE_ON_CREATE
  * @param GameStructName

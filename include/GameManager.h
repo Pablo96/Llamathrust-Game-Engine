@@ -1,3 +1,8 @@
+/**
+ * @file GameManager.h
+ * @author Pablo Narvaja
+ * @brief Here is all code related to Game Loading and States between them.
+ **/
 #pragma once
 #include "Common.h"
 #include <Game.h>

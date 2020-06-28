@@ -1,3 +1,8 @@
+/**
+ * @file System.h
+ * @author Pablo Narvaja
+ * @brief In here is all code related to system(OS) access.
+ **/
 #pragma once
 #include <Common.h>
 typedef void* SharedLib;
