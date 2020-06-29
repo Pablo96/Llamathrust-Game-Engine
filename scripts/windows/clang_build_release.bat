@@ -1,10 +1,11 @@
-cls
 cd ../..
 if not exist ".\bin\release" mkdir ".\bin\release"
+cls
 
 :: Engine Executable
 clang ^
 -std=c17 ^
+-D_CRT_SECURE_NO_WARNINGS ^
 -DLT_RELEASE ^
 -I"./include" ^
 -I"./external" ^
@@ -16,6 +17,7 @@ clang ^
 -lGdi32.lib ^
 -lUser32.lib ^
 -lKernel32.lib ^
+-lws2_32.lib ^
 -fcolor-diagnostics ^
 -fomit-frame-pointer ^
 -pedantic ^

@@ -1,7 +1,9 @@
 #pragma once
 #include <Platform.h>
 #ifdef LT_WINDOWS
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+
 typedef void *(*Win32loadproc)(const char *name);
 
 // Window Procedures

@@ -5,8 +5,11 @@
 #include "../Performance.h"
 #include "ArgsParsing.h"
 #include <log.h>
-#include <Windows.h>
+
+#include <WinSock2.h>
+#include <WS2tcpip.h>
 #include <wingdi.h>
+
 
 #include <gl/GL.h>
 #include <gl/wglext.h>
@@ -28,6 +31,7 @@ Window window;
 static BOOL shouldClose = FALSE;
 
 // Networking
+#define IP_LOCAL_HOST "localhost"
 #define DEFAULT_PORT "27015"
 #define DEFAULT_BUFLEN 512
 
@@ -65,19 +69,31 @@ int main(int32 argc, const char **argv) {
   //-----------------------------------------------------------------
   // Check if is the only instance running
   //-----------------------------------------------------------------
+  if (config.isServer) {
+    // Try to open the mutex.
+    HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, "LlamathrustMutexServer");
 
-  // Try to open the mutex.
-  HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, "LlamathrustMutex");
+    // If mutex doesnt exists create it and run the engine
+    if (!hMutex)
+      hMutex = CreateMutex(NULL, FALSE, "LlamathrustMutexServer");
+    // Else there is an instance of the engine running
+    else {
+      log_fatal("Server instance already running");
+      return 48;
+    }
+  } else {
+    // Try to open the mutex.
+    HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, "LlamathrustMutexClient");
 
-  // If mutex doesnt exists create it and run the engine
-  if (!hMutex)
-    hMutex = CreateMutex(NULL, FALSE, "LlamathrustMutex");
-  // Else there is an instance of the engine running
-  else {
-    log_fatal("Instance already running");
-    return 48;
+    // If mutex doesnt exists create it and run the engine
+    if (!hMutex)
+      hMutex = CreateMutex(NULL, FALSE, "LlamathrustMutexClient");
+    // Else there is an instance of the engine running
+    else {
+      log_fatal("Client instance already running");
+      return 48;
+    }
   }
-
   //-----------------------------------------------------------------
   // Start setting app the platform layer
   //-----------------------------------------------------------------
@@ -99,22 +115,23 @@ int main(int32 argc, const char **argv) {
   struct addrinfo hints = {0};
 
   if (config.isServer) {
+    log_info("SERVER INITIALIZED");
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = AI_PASSIVE;
 
     // Resolve the local address and port to be used by the server
-    iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+    iResult = getaddrinfo(IP_LOCAL_HOST, DEFAULT_PORT, &hints, &result);
     if (iResult != 0) {
-      printf("getaddrinfo failed: %d\n", iResult);
+      log_error("getaddrinfo failed: %d", iResult);
       WSACleanup();
       return 1;
     }
 
     SOCKET ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (ListenSocket == INVALID_SOCKET) {
-      printf("Error at socket(): %ld\n", WSAGetLastError());
+      log_error("Error at socket(): %d", WSAGetLastError());
       freeaddrinfo(result);
       WSACleanup();
       return 1;
@@ -123,7 +140,7 @@ int main(int32 argc, const char **argv) {
     // Setup the TCP listening socket
     iResult = bind( ListenSocket, result->ai_addr, (int)result->ai_addrlen);
     if (iResult == SOCKET_ERROR) {
-      printf("bind failed with error: %d\n", WSAGetLastError());
+      log_error("bind failed with error: %d", WSAGetLastError());
       freeaddrinfo(result);
       closesocket(ListenSocket);
       WSACleanup();
@@ -133,7 +150,7 @@ int main(int32 argc, const char **argv) {
     freeaddrinfo(result);
 
     if ( listen( ListenSocket, SOMAXCONN ) == SOCKET_ERROR ) {
-      printf( "Listen failed with error: %ld\n", WSAGetLastError() );
+      log_error( "Listen failed with error: %d", WSAGetLastError() );
       closesocket(ListenSocket);
       WSACleanup();
       return 1;
@@ -144,35 +161,35 @@ int main(int32 argc, const char **argv) {
     // Accept a client socket
     ClientSocket = accept(ListenSocket, NULL, NULL);
     if (ClientSocket == INVALID_SOCKET) {
-      printf("accept failed: %d\n", WSAGetLastError());
+      log_error("accept failed: %d", WSAGetLastError());
       closesocket(ListenSocket);
       WSACleanup();
       goto engine;
     }
 
     char recvbuf[DEFAULT_BUFLEN];
-    int iResult, iSendResult;
+    int iSendResult;
     int recvbuflen = DEFAULT_BUFLEN;
 
     // Receive until the peer shuts down the connection
     do {
       iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
       if (iResult > 0) {
-        printf("Bytes received: %d\n", iResult);
+        log_info("Bytes received: %d", iResult);
 
         // Echo the buffer back to the sender
         iSendResult = send(ClientSocket, recvbuf, iResult, 0);
         if (iSendResult == SOCKET_ERROR) {
-          printf("send failed: %d\n", WSAGetLastError());
+          log_error("send failed: %d", WSAGetLastError());
           closesocket(ClientSocket);
           WSACleanup();
           goto engine;
         }
-        printf("Bytes sent: %d\n", iSendResult);
+        log_info("Bytes sent: %d", iSendResult);
       } else if (iResult == 0) {
-        printf("Connection closing...\n");
+        log_info("Connection closing...\n");
       } else {
-        printf("recv failed: %d\n", WSAGetLastError());
+        log_error("recv failed: %d", WSAGetLastError());
         closesocket(ClientSocket);
         WSACleanup();
         goto engine;
@@ -182,7 +199,7 @@ int main(int32 argc, const char **argv) {
     // shutdown the send half of the connection since no more data will be sent
     iResult = shutdown(ClientSocket, SD_SEND);
     if (iResult == SOCKET_ERROR) {
-      printf("shutdown failed: %d\n", WSAGetLastError());
+      log_error("shutdown failed: %d", WSAGetLastError());
       closesocket(ClientSocket);
       WSACleanup();
       goto engine;
@@ -192,14 +209,15 @@ int main(int32 argc, const char **argv) {
     closesocket(ClientSocket);
     WSACleanup();
   } else {
+    log_info("CLIENT INITIALIZED");
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
   
     // Resolve the server address and port
-    iResult = getaddrinfo(argv[1], DEFAULT_PORT, &hints, &result);
+    iResult = getaddrinfo(IP_LOCAL_HOST, DEFAULT_PORT, &hints, &result);
     if (iResult != 0) {
-      printf("getaddrinfo failed: %d\n", iResult);
+      log_error("getaddrinfo failed: %d", iResult);
       WSACleanup();
       goto engine;
     }
@@ -211,7 +229,7 @@ int main(int32 argc, const char **argv) {
     // Create a SOCKET for connecting to server
     SOCKET ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
     if (ConnectSocket == INVALID_SOCKET) {
-      printf("Error at socket(): %ld\n", WSAGetLastError());
+      log_error("Error at socket(): %d", WSAGetLastError());
       freeaddrinfo(result);
       WSACleanup();
       goto engine;
@@ -232,7 +250,7 @@ int main(int32 argc, const char **argv) {
     freeaddrinfo(result);
 
     if (ConnectSocket == INVALID_SOCKET) {
-      printf("Unable to connect to server!\n");
+      log_error("Unable to connect to server!");
       WSACleanup();
       goto engine;
     }
@@ -241,24 +259,22 @@ int main(int32 argc, const char **argv) {
     const char *sendbuf = "this is a test";
     char recvbuf[DEFAULT_BUFLEN];
 
-    int iResult;
-
     // Send an initial buffer
     iResult = send(ConnectSocket, sendbuf, (int) strlen(sendbuf), 0);
     if (iResult == SOCKET_ERROR) {
-      printf("send failed: %d\n", WSAGetLastError());
+      log_error("send failed: %d", WSAGetLastError());
       closesocket(ConnectSocket);
       WSACleanup();
       goto engine;
     }
 
-    printf("Bytes Sent: %ld\n", iResult);
+    log_info("Bytes Sent: %d", iResult);
 
     // shutdown the connection for sending since no more data will be sent
     // the client can still use the ConnectSocket for receiving data
     iResult = shutdown(ConnectSocket, SD_SEND);
     if (iResult == SOCKET_ERROR) {
-      printf("shutdown failed: %d\n", WSAGetLastError());
+      log_error("shutdown failed: %d", WSAGetLastError());
       closesocket(ConnectSocket);
       WSACleanup();
       goto engine;
@@ -268,17 +284,17 @@ int main(int32 argc, const char **argv) {
     do {
       iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
       if (iResult > 0)
-        printf("Bytes received: %d\n", iResult);
+        log_info("Bytes received: %d", iResult);
       else if (iResult == 0)
-        printf("Connection closed\n");
+        log_info("Connection closed");
       else
-        printf("recv failed: %d\n", WSAGetLastError());
+        log_error("recv failed: %d", WSAGetLastError());
     } while (iResult > 0);
     
     // shutdown the send half of the connection since no more data will be sent
     iResult = shutdown(ConnectSocket, SD_SEND);
     if (iResult == SOCKET_ERROR) {
-      printf("shutdown failed: %d\n", WSAGetLastError());
+      log_error("shutdown failed: %d", WSAGetLastError());
       closesocket(ConnectSocket);
       WSACleanup();
       goto engine;
@@ -346,7 +362,7 @@ void* PlatformLoadSharedLib(const char* in_name) {
 }
 
 void* PlatformGetProc(const void* in_lib, const char* in_name){
-  return GetProcAddress((HMODULE) in_lib, in_name);
+  return (void*) GetProcAddress((HMODULE) in_lib, in_name);
 }
 
 //-----------------------------------------------------------------

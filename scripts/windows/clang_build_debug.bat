@@ -1,10 +1,11 @@
-cls
 cd ../..
 if not exist ".\bin\debug" mkdir ".\bin\debug"
+cls
 
 :: Engine Executable
 clang ^
 -std=c17 ^
+-D_CRT_SECURE_NO_WARNINGS ^
 -DLT_DEBUG ^
 -I"./include" ^
 -I"./external" ^
@@ -16,6 +17,7 @@ clang ^
 -lGdi32.lib ^
 -lUser32.lib ^
 -lKernel32.lib ^
+-lws2_32.lib ^
 -fcolor-diagnostics ^
 -fomit-frame-pointer ^
 -pedantic ^
@@ -24,6 +26,7 @@ clang ^
 -Weverything ^
 -Wno-unused-parameter ^
 -Wno-documentation ^
+-Wno-documentation-unknown-command ^
 -fshow-source-location ^
 -O0 ^
 ./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/platform/*.c

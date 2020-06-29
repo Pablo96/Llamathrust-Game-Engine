@@ -33,12 +33,18 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/")
 set(Llamathrust_SRC
 external/glad/src/glad.c
 external/log-c/log.c
+include/Common.h
+include/Game.h
+include/GameManager.h
+include/Platform.h
+include/System.h
 src/Engine/Engine.c
 src/Engine/Input.c
 src/Engine/GraphicsAPI.c
 src/Engine/GameManager.c
 src/Engine/System.c
 src/Engine/platform/Win32.c
+src/Engine/platform/ArgsParsing.c
 )
 
 # executable name
