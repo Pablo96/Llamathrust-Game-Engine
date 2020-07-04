@@ -31,9 +31,8 @@ Window window;
 static BOOL shouldClose = FALSE;
 
 // Networking
-#define IP_LOCAL_HOST "localhost"
-#define DEFAULT_PORT "27015"
 #define DEFAULT_BUFLEN 512
+#define DEFAULT_PORT "27015"
 
 // Win32
 static HINSTANCE hInstance;
@@ -103,73 +102,80 @@ int main(int32 argc, const char **argv) {
   WSADATA wsaData;
   int iResult;
 
+  SOCKET ListenSocket = INVALID_SOCKET;
+  SOCKET ClientSocket = INVALID_SOCKET;
+  SOCKET ConnectSocket = INVALID_SOCKET;
+
+  struct addrinfo *result = NULL;
+  struct addrinfo hints;
+
+  int iSendResult;
+  char recvbuf[DEFAULT_BUFLEN];
+  int recvbuflen = DEFAULT_BUFLEN;
+
   // Initialize Winsock
   iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
   if (iResult != 0) {
-    printf("WSAStartup failed: %d\n", iResult);
-    return 12;
+    printf("WSAStartup failed with error: %d\n", iResult);
+    goto engine;
   }
-
-  struct addrinfo *result = 0;
-  struct addrinfo *ptr = 0;
-  struct addrinfo hints = {0};
 
   if (config.isServer) {
     log_info("SERVER INITIALIZED");
+    ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = AI_PASSIVE;
 
-    // Resolve the local address and port to be used by the server
-    iResult = getaddrinfo(IP_LOCAL_HOST, DEFAULT_PORT, &hints, &result);
-    if (iResult != 0) {
-      log_error("getaddrinfo failed: %d", iResult);
-      WSACleanup();
-      return 1;
-    }
-
-    SOCKET ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (ListenSocket == INVALID_SOCKET) {
-      log_error("Error at socket(): %d", WSAGetLastError());
-      freeaddrinfo(result);
-      WSACleanup();
-      return 1;
-    }
-
-    // Setup the TCP listening socket
-    iResult = bind( ListenSocket, result->ai_addr, (int)result->ai_addrlen);
-    if (iResult == SOCKET_ERROR) {
-      log_error("bind failed with error: %d", WSAGetLastError());
-      freeaddrinfo(result);
-      closesocket(ListenSocket);
-      WSACleanup();
-      return 1;
-    }
-
-    freeaddrinfo(result);
-
-    if ( listen( ListenSocket, SOMAXCONN ) == SOCKET_ERROR ) {
-      log_error( "Listen failed with error: %d", WSAGetLastError() );
-      closesocket(ListenSocket);
-      WSACleanup();
-      return 1;
-    }
-    
-    SOCKET ClientSocket = INVALID_SOCKET;
-
-    // Accept a client socket
-    ClientSocket = accept(ListenSocket, NULL, NULL);
-    if (ClientSocket == INVALID_SOCKET) {
-      log_error("accept failed: %d", WSAGetLastError());
-      closesocket(ListenSocket);
+    // Resolve the server address and port
+    iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+    if ( iResult != 0 ) {
+      printf("getaddrinfo failed with error: %d\n", iResult);
       WSACleanup();
       goto engine;
     }
 
-    char recvbuf[DEFAULT_BUFLEN];
-    int iSendResult;
-    int recvbuflen = DEFAULT_BUFLEN;
+    // Create a SOCKET for connecting to server
+    ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (ListenSocket == INVALID_SOCKET) {
+      printf("socket failed with error: %ld\n", WSAGetLastError());
+      freeaddrinfo(result);
+      WSACleanup();
+      goto engine;
+    }
+
+     // Setup the TCP listening socket
+    iResult = bind( ListenSocket, result->ai_addr, (int)result->ai_addrlen);
+    if (iResult == SOCKET_ERROR) {
+        printf("bind failed with error: %d\n", WSAGetLastError());
+        freeaddrinfo(result);
+        closesocket(ListenSocket);
+        WSACleanup();
+        goto engine;
+    }
+
+    freeaddrinfo(result);
+
+    iResult = listen(ListenSocket, SOMAXCONN);
+    if (iResult == SOCKET_ERROR) {
+        printf("listen failed with error: %d\n", WSAGetLastError());
+        closesocket(ListenSocket);
+        WSACleanup();
+        goto engine;
+    }
+
+    // Accept a client socket
+    ClientSocket = accept(ListenSocket, NULL, NULL);
+    if (ClientSocket == INVALID_SOCKET) {
+        printf("accept failed with error: %d\n", WSAGetLastError());
+        closesocket(ListenSocket);
+        WSACleanup();
+        goto engine;
+    }
+
+    // No longer need server socket
+    closesocket(ListenSocket);
 
     // Receive until the peer shuts down the connection
     do {
@@ -196,114 +202,99 @@ int main(int32 argc, const char **argv) {
       }
     } while (iResult > 0);
 
-    // shutdown the send half of the connection since no more data will be sent
+    // shutdown the connection since we're done
     iResult = shutdown(ClientSocket, SD_SEND);
     if (iResult == SOCKET_ERROR) {
-      log_error("shutdown failed: %d", WSAGetLastError());
+      printf("shutdown failed with error: %d\n", WSAGetLastError());
       closesocket(ClientSocket);
       WSACleanup();
       goto engine;
     }
 
-    // cleanup
     closesocket(ClientSocket);
-    WSACleanup();
   } else {
-    log_info("CLIENT INITIALIZED");
+    const char *sendbuf = "this is a test";
+
+    ZeroMemory( &hints, sizeof(hints) );
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
-  
+
     // Resolve the server address and port
-    iResult = getaddrinfo(IP_LOCAL_HOST, DEFAULT_PORT, &hints, &result);
-    if (iResult != 0) {
-      log_error("getaddrinfo failed: %d", iResult);
-      WSACleanup();
-      goto engine;
+    iResult = getaddrinfo("localhost", DEFAULT_PORT, &hints, &result);
+    if ( iResult != 0 ) {
+        printf("getaddrinfo failed with error: %d\n", iResult);
+        WSACleanup();
+        goto engine;
     }
 
-    // Attempt to connect to the first address returned by
-    // the call to getaddrinfo
-    ptr = result;
+    // Attempt to connect to an address until one succeeds
+    for(struct addrinfo *ptr = result; ptr != NULL; ptr = ptr->ai_next) {
+      // Create a SOCKET for connecting to server
+      ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
+      if (ConnectSocket == INVALID_SOCKET) {
+        printf("socket failed with error: %ld\n", WSAGetLastError());
+        WSACleanup();
+        goto engine;
+      }
 
-    // Create a SOCKET for connecting to server
-    SOCKET ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
-    if (ConnectSocket == INVALID_SOCKET) {
-      log_error("Error at socket(): %d", WSAGetLastError());
-      freeaddrinfo(result);
-      WSACleanup();
-      goto engine;
+      // Connect to server.
+      iResult = connect( ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+      if (iResult == SOCKET_ERROR) {
+        closesocket(ConnectSocket);
+        ConnectSocket = INVALID_SOCKET;
+        continue;
+      }
+      break;
     }
-    
-    // Connect to server.
-    iResult = connect( ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
-    if (iResult == SOCKET_ERROR) {
-      closesocket(ConnectSocket);
-      ConnectSocket = INVALID_SOCKET;
-    }
-
-    // Should really try the next address returned by getaddrinfo
-    // if the connect call failed
-    // But for this simple example we just free the resources
-    // returned by getaddrinfo and print an error message
 
     freeaddrinfo(result);
 
     if (ConnectSocket == INVALID_SOCKET) {
-      log_error("Unable to connect to server!");
+      printf("Unable to connect to server!\n");
       WSACleanup();
       goto engine;
     }
-
-    int recvbuflen = DEFAULT_BUFLEN;
-    const char *sendbuf = "this is a test";
-    char recvbuf[DEFAULT_BUFLEN];
 
     // Send an initial buffer
-    iResult = send(ConnectSocket, sendbuf, (int) strlen(sendbuf), 0);
+    iResult = send( ConnectSocket, sendbuf, (int)strlen(sendbuf), 0 );
     if (iResult == SOCKET_ERROR) {
-      log_error("send failed: %d", WSAGetLastError());
+      printf("send failed with error: %d\n", WSAGetLastError());
       closesocket(ConnectSocket);
       WSACleanup();
       goto engine;
     }
 
-    log_info("Bytes Sent: %d", iResult);
+    printf("Bytes Sent: %ld\n", iResult);
 
-    // shutdown the connection for sending since no more data will be sent
-    // the client can still use the ConnectSocket for receiving data
+    // shutdown the connection since no more data will be sent
     iResult = shutdown(ConnectSocket, SD_SEND);
     if (iResult == SOCKET_ERROR) {
-      log_error("shutdown failed: %d", WSAGetLastError());
+      printf("shutdown failed with error: %d\n", WSAGetLastError());
       closesocket(ConnectSocket);
       WSACleanup();
       goto engine;
     }
 
-    // Receive data until the server closes the connection
+    // Receive until the peer closes the connection
     do {
       iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-      if (iResult > 0)
-        log_info("Bytes received: %d", iResult);
-      else if (iResult == 0)
-        log_info("Connection closed");
+      if ( iResult > 0 )
+        printf("Bytes received: %d\n", iResult);
+      else if ( iResult == 0 )
+        printf("Connection closed\n");
       else
-        log_error("recv failed: %d", WSAGetLastError());
-    } while (iResult > 0);
-    
-    // shutdown the send half of the connection since no more data will be sent
-    iResult = shutdown(ConnectSocket, SD_SEND);
-    if (iResult == SOCKET_ERROR) {
-      log_error("shutdown failed: %d", WSAGetLastError());
-      closesocket(ConnectSocket);
-      WSACleanup();
-      goto engine;
-    }
+        printf("recv failed with error: %d\n", WSAGetLastError());
+    } while( iResult > 0 );
 
-    // cleanup
     closesocket(ConnectSocket);
-    WSACleanup();
   }
+
+ 
+
+  // cleanup
+  WSACleanup();
+
 
 engine:
   //-----------------------------------------------------------------
