@@ -23,10 +23,35 @@ typedef void (*SerializableReadFunc)(byte* in_stream);
  *	@brief Function to deserialize the _data
  **/
 typedef struct _Serializable {
-    void* _data;
     SerializableWriteFunc write;
     SerializableReadFunc read;
 } Serializable;
+
+/**
+ * @def SERIALIZABLE
+ * @brief inherits serializable capabilities making
+ *  the object poointer safe to Serializable* cast
+ * @note this macro should be used only inside structs and as first member
+ * @note make the struct 2*sizeof(void*) bigger
+ **/
+#define SERIALIZABLE Serializable _base
+
+/**
+ * @func ConstructSerializable
+ * @brief Initiate a serializable object.
+ * @param data:
+ *	@type Serializable pointer
+ *	@brief Object to be constructed with the corresponding functions
+ *  @note should be a valid pointer to a struct
+ *        containing the SERIALIZABLE macro
+ * @param readFunc:
+ *	@type SerializableReadFunc
+ *	@brief Function that deserialize the object
+ * @param writeFunc:
+ *	@type SerializableWriteFunc
+ *	@brief Function that serialize the object
+ **/
+extern Serializable* ConstructSerializable(Serializable* obj, SerializableReadFunc readFunc, SerializableWriteFunc writeFunc);
 
 /**
  * @def LT_SERIALIZATION_WRITE_FUNCTION(type)
@@ -50,20 +75,6 @@ typedef struct _Serializable {
  **/
 #define LT_SERIALIZATION_PRIMITIVE_WRITE_FUNCTION(typeFuncName, type) void MAKE_FN_NAME(LT_Write, typeFuncName)(byte* in_stream, type* in_object)
 
-/**
- * @func GetSerializableOf
- * @brief Creates a serializable object from data object with the corresponding funcitons.
- * @param data:
- *	@type void pointer
- *	@brief Object to be serialized
- * @param writeFunc:
- *	@type SerializableWriteFunc
- *	@brief Function that serialize the object
- * @param data:
- *	@type SerializableReadFunc
- *	@brief Function that deserialize the object
- **/
-extern Serializable* GetSerializableOf(void* data, SerializableWriteFunc writeFunc, SerializableReadFunc readFunc);
 
 /**
  * Register primitive types

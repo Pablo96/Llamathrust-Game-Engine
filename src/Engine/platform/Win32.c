@@ -289,12 +289,8 @@ int main(int32 argc, const char **argv) {
 
     closesocket(ConnectSocket);
   }
-
- 
-
   // cleanup
   WSACleanup();
-
 
 engine:
   //-----------------------------------------------------------------
