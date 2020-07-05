@@ -14,6 +14,7 @@ LRESULT CALLBACK GhostWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 // Win32 helper functions
 void *Win32GetProc(const char *name);
 void Win32_Helper_RegisterWindowClasses(void);
+void Win32_Helper_InitNetworking(void);
 void Win32_Helper_CreateWindow(Window *wnd, const char *in_wndClassName,
                                int width, int height, const char *title);
 

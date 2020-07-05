@@ -7,15 +7,15 @@
 #include <Common.h>
 
 /**
- * @struct Config
- * @brief has the engine configuration data.
+ * @struct ConfigArgs
+ * @brief has the engine configuration data from execution params.
  * @field isServer:
  *	@type bool
  *	@brief If this is a server application for a game.
  **/
-typedef struct _Config {
+typedef struct _ConfigArgs {
     bool isServer;
-} Config;
+} ConfigArgs;
 
 /**
  * @func parseArgs
@@ -29,4 +29,4 @@ typedef struct _Config {
  * @return Config
  *  @brief configuration struct
  **/
-extern Config parseArgs(const char** argsv, const int size);
+extern ConfigArgs parseArgs(const char** argsv, const int size);

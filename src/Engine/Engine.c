@@ -1,15 +1,35 @@
 #include "Engine.h"
 #include "GraphicsAPI.h"
 #include "Input.h"
+#include <Networking.h>
 #include <GameManager.h>
 #include <log.h>
 
-void Engine_Start() {
+void Engine_Start(const ConfigArgs* args) {
   log_trace("Engine is starting...");
+
+  // load config file
+  Config config = {
+    .graphic_api = LT_OPENGL,
+    .networking_support = LT_TRUE,
+    .is_server = LT_FALSE,
+    .port = 27854,
+    .ip = "127.0.0.1",
+  };
+
+  // override config with args
+  if (args != NULL) {
+    config.is_server = args->isServer
+
+    // free mem after use
+    free(args);
+  }
 
   LT_InputInit();
   
-  LT_GraphicsAPI_Init(LT_OPENGL);
+  LT_GraphicsAPI_Init(config.graphic_api);
+
+  LT_NetworkingInit(&config)
 
   LT_GameStateInit("game");
 

@@ -2,7 +2,9 @@
     "files.associations": {
         "algorithm": "c",
         "xutility": "c",
-        "*.rh": "c"
+        "*.rh": "c",
+        "cstdlib": "c",
+        "new": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

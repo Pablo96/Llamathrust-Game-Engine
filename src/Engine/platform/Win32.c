@@ -33,6 +33,7 @@ static BOOL shouldClose = FALSE;
 // Networking
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
+static BOOL has_networking = FALSE;
 
 // Win32
 static HINSTANCE hInstance;
@@ -59,37 +60,42 @@ int main(int32 argc, const char **argv) {
   //-----------------------------------------------------------------
   // Parse command line arguments
   //-----------------------------------------------------------------
-  Config config;
+  const ConfigArgs* config;
   if (argc > 1) {
     config = parseArgs(argv, argc);
-    log_info("Command line arguments parsed!.\n");
+    const char[] log_msg = "Command line arguments parsed!.";
+    log_info(log_msg);
   }
 
   //-----------------------------------------------------------------
   // Check if is the only instance running
   //-----------------------------------------------------------------
-  if (config.isServer) {
+  if (config->isServer) {
     // Try to open the mutex.
-    HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, "LlamathrustMutexServer");
+    const char[] mutex_name = "LlamathrustMutexServer";
+    HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, mutex_name);
 
     // If mutex doesnt exists create it and run the engine
     if (!hMutex)
-      hMutex = CreateMutex(NULL, FALSE, "LlamathrustMutexServer");
+      hMutex = CreateMutex(NULL, FALSE, mutex_name);
     // Else there is an instance of the engine running
     else {
-      log_fatal("Server instance already running");
+      const char[] error = "Server instance already running";
+      log_fatal(error);
       return 48;
     }
   } else {
     // Try to open the mutex.
-    HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, "LlamathrustMutexClient");
+    const char[] mutex_name = "LlamathrustMutexClient";
+    HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, mutex_name);
 
     // If mutex doesnt exists create it and run the engine
     if (!hMutex)
-      hMutex = CreateMutex(NULL, FALSE, "LlamathrustMutexClient");
+      hMutex = CreateMutex(NULL, FALSE, mutex_name);
     // Else there is an instance of the engine running
     else {
-      log_fatal("Client instance already running");
+      const char[] error = "Client instance already running";
+      log_fatal(error);
       return 48;
     }
   }
@@ -99,7 +105,8 @@ int main(int32 argc, const char **argv) {
   Win32_Helper_RegisterWindowClasses();
 
   // NetWorking
-  WSADATA wsaData;
+  Win32_Helper_InitNetworking();
+
   int iResult;
 
   SOCKET ListenSocket = INVALID_SOCKET;
@@ -113,14 +120,8 @@ int main(int32 argc, const char **argv) {
   char recvbuf[DEFAULT_BUFLEN];
   int recvbuflen = DEFAULT_BUFLEN;
 
-  // Initialize Winsock
-  iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-  if (iResult != 0) {
-    printf("WSAStartup failed with error: %d\n", iResult);
-    goto engine;
-  }
 
-  if (config.isServer) {
+  if (config->isServer) {
     log_info("SERVER INITIALIZED");
     ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
@@ -289,14 +290,13 @@ int main(int32 argc, const char **argv) {
 
     closesocket(ConnectSocket);
   }
-  // cleanup
-  WSACleanup();
+ 
 
 engine:
   //-----------------------------------------------------------------
   // Start the engine
   //-----------------------------------------------------------------
-  LT_MEASURE_FUNC(Engine_Start());
+  LT_MEASURE_FUNC(Engine_Start(config));
 
   //-----------------------------------------------------------------
   // Main engine loop
@@ -327,6 +327,10 @@ engine:
   // Clean up the engine resources if needed
   Engine_Shutdown();
 
+  // Networking
+  if (has_networking)
+    WSACleanup();
+  
   return 0;
 }
 
@@ -350,6 +354,22 @@ void* PlatformLoadSharedLib(const char* in_name) {
 
 void* PlatformGetProc(const void* in_lib, const char* in_name){
   return (void*) GetProcAddress((HMODULE) in_lib, in_name);
+}
+
+//-----------------------------------------------------------------
+// Networking
+//-----------------------------------------------------------------
+
+void Win32_Helper_InitNetworking(void) {
+  WSADATA wsaData;
+  int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+  if (iResult != 0) {
+    const char[] log_msg = "WSAStartup failed with error: %d";
+    log_error(log_msg, iResult);
+    return;
+  }
+
+  has_networking = TRUE;
 }
 
 //-----------------------------------------------------------------
@@ -486,7 +506,6 @@ uint8 PlatformGetKeyState(int32 key_state) { return win32KeyStates[key_state]; }
 //-----------------------------------------------------------------
 void LT_CloseWindow(void) {
   shouldClose = TRUE;
-  log_info("Window should close: %s", shouldClose == TRUE ? "TRUE" : "FALSE");
 }
 
 void *Win32GetProc(const char *name) {
@@ -497,7 +516,8 @@ void *Win32GetProc(const char *name) {
   proc = (void *)GetProcAddress(glInstance, name);
 
   if (proc == 0) {
-    log_fatal("Retrieving %s failed.", name);
+    const char[] log_fatal = "Retrieving %s failed.";
+    log_fatal(log_fatal, name);
     Win32HandleError(50);
   }
 
@@ -659,15 +679,14 @@ void Win32_Helper_CreateWindow(Window *wnd, const char *in_wndClassName,
   );
 
   if (hwnd == NULL) {
-    log_fatal("Error creating window of class \"%s\".", in_wndClassName);
+    const char[] log_msg = "Error creating window of class \"%s\".";
+    log_fatal(log_msg, in_wndClassName);
     Win32HandleError(1);
   }
 
   // save the window in the vector
   wnd->handle = hwnd;
   wnd->device = GetDC(hwnd);
-
-  log_info("Window of class \"%s\" created.", in_wndClassName);
 }
 
 void Win32_Helper_RegisterWindowClasses() {
@@ -680,10 +699,10 @@ void Win32_Helper_RegisterWindowClasses() {
   wcGame.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 
   if (!RegisterClassEx(&wcGame)) {
-    log_fatal("Error: Could not register Window Class \"%s\".", CLASS_NAME);
+    const char[] log_msg = "Error: Could not register Window Class \"%s\".";
+    log_fatal(log_msg, CLASS_NAME);
     Win32HandleError(49);
   }
-  log_info("Window class \"%s\" registered.", CLASS_NAME);
 
   // Register the game window class.
   WNDCLASSEX wcGhost = {0};
@@ -694,12 +713,10 @@ void Win32_Helper_RegisterWindowClasses() {
   wcGhost.lpszClassName = GHOST_CLASS_NAME;
 
   if (!RegisterClassEx(&wcGhost)) {
-    log_fatal("Error: Could not register Window Class \"%s\".",
-              GHOST_CLASS_NAME);
+    const char[] log_msg = "Error: Could not register Window Class \"%s\".";
+    log_fatal(log_msg, GHOST_CLASS_NAME);
     Win32HandleError(49);
   }
-
-  log_info("Window class \"%s\" registered.", GHOST_CLASS_NAME);
 }
 
 LRESULT CALLBACK GhostWindowProc(HWND hwnd, UINT msg, WPARAM wParam,
@@ -738,7 +755,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     // get and set the key's state
     LT_INPUT_STATE state = (lParam & (1 << 30)) ? LT_KEY_DOWN : LT_KEY_PRESSED;
     win32KeyStates[wParam] = state;
-    log_info("Key: %u state: %u", wParam, state);
     break;
   }
 #ifdef LT_EDITOR
