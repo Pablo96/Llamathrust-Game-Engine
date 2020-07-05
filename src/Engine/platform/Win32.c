@@ -60,19 +60,19 @@ int main(int32 argc, const char **argv) {
   //-----------------------------------------------------------------
   // Parse command line arguments
   //-----------------------------------------------------------------
-  const ConfigArgs* config;
+  const ConfigArgs* config = NULL;
   if (argc > 1) {
     config = parseArgs(argv, argc);
-    const char[] log_msg = "Command line arguments parsed!.";
+    const char log_msg[] = "Command line arguments parsed!.";
     log_info(log_msg);
   }
 
   //-----------------------------------------------------------------
   // Check if is the only instance running
   //-----------------------------------------------------------------
-  if (config->isServer) {
+  if (config != NULL && config->isServer) {
     // Try to open the mutex.
-    const char[] mutex_name = "LlamathrustMutexServer";
+    const char mutex_name[] = "LlamathrustMutexServer";
     HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, mutex_name);
 
     // If mutex doesnt exists create it and run the engine
@@ -80,13 +80,13 @@ int main(int32 argc, const char **argv) {
       hMutex = CreateMutex(NULL, FALSE, mutex_name);
     // Else there is an instance of the engine running
     else {
-      const char[] error = "Server instance already running";
+      const char error[] = "Server instance already running";
       log_fatal(error);
       return 48;
     }
   } else {
     // Try to open the mutex.
-    const char[] mutex_name = "LlamathrustMutexClient";
+    const char mutex_name[] = "LlamathrustMutexClient";
     HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, mutex_name);
 
     // If mutex doesnt exists create it and run the engine
@@ -94,7 +94,7 @@ int main(int32 argc, const char **argv) {
       hMutex = CreateMutex(NULL, FALSE, mutex_name);
     // Else there is an instance of the engine running
     else {
-      const char[] error = "Client instance already running";
+      const char error[] = "Client instance already running";
       log_fatal(error);
       return 48;
     }
@@ -121,7 +121,7 @@ int main(int32 argc, const char **argv) {
   int recvbuflen = DEFAULT_BUFLEN;
 
 
-  if (config->isServer) {
+  if (config != NULL && config->isServer) {
     log_info("SERVER INITIALIZED");
     ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
@@ -364,7 +364,7 @@ void Win32_Helper_InitNetworking(void) {
   WSADATA wsaData;
   int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
   if (iResult != 0) {
-    const char[] log_msg = "WSAStartup failed with error: %d";
+    const char log_msg[] = "WSAStartup failed with error: %d";
     log_error(log_msg, iResult);
     return;
   }
@@ -516,7 +516,7 @@ void *Win32GetProc(const char *name) {
   proc = (void *)GetProcAddress(glInstance, name);
 
   if (proc == 0) {
-    const char[] log_fatal = "Retrieving %s failed.";
+    const char log_fatal[] = "Retrieving %s failed.";
     log_fatal(log_fatal, name);
     Win32HandleError(50);
   }
@@ -679,7 +679,7 @@ void Win32_Helper_CreateWindow(Window *wnd, const char *in_wndClassName,
   );
 
   if (hwnd == NULL) {
-    const char[] log_msg = "Error creating window of class \"%s\".";
+    const char log_msg[] = "Error creating window of class \"%s\".";
     log_fatal(log_msg, in_wndClassName);
     Win32HandleError(1);
   }
@@ -699,7 +699,7 @@ void Win32_Helper_RegisterWindowClasses() {
   wcGame.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 
   if (!RegisterClassEx(&wcGame)) {
-    const char[] log_msg = "Error: Could not register Window Class \"%s\".";
+    const char log_msg[] = "Error: Could not register Window Class \"%s\".";
     log_fatal(log_msg, CLASS_NAME);
     Win32HandleError(49);
   }
@@ -713,7 +713,7 @@ void Win32_Helper_RegisterWindowClasses() {
   wcGhost.lpszClassName = GHOST_CLASS_NAME;
 
   if (!RegisterClassEx(&wcGhost)) {
-    const char[] log_msg = "Error: Could not register Window Class \"%s\".";
+    const char log_msg[] = "Error: Could not register Window Class \"%s\".";
     log_fatal(log_msg, GHOST_CLASS_NAME);
     Win32HandleError(49);
   }

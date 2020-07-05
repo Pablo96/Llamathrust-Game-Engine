@@ -19,7 +19,7 @@ void Engine_Start(const ConfigArgs* args) {
 
   // override config with args
   if (args != NULL) {
-    config.is_server = args->isServer
+    config.is_server = args->isServer;
 
     // free mem after use
     free(args);
@@ -29,7 +29,7 @@ void Engine_Start(const ConfigArgs* args) {
   
   LT_GraphicsAPI_Init(config.graphic_api);
 
-  LT_NetworkingInit(&config)
+  LT_NetworkingInit(&config);
 
   LT_GameStateInit("game");
 

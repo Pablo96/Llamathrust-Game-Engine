@@ -29,4 +29,4 @@ clang ^
 -Wno-documentation-unknown-command ^
 -fshow-source-location ^
 -O0 ^
-./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/platform/*.c
+./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/platform/*.c ./src/engine/networking/*.c

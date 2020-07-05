@@ -3,6 +3,7 @@
  * @author Pablo Narvaja
  * @brief Here you'll find the configuration struct for storing config data.
  **/
+#pragma once
 #include "Common.h"
 
 // forward declarations
@@ -34,5 +35,5 @@ typedef struct _Config {
     bool networking_support;
     bool is_server;
     uint16 port;
-    char[16] ip;
+    char ip[16];
 } Config;

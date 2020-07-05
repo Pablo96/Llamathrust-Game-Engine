@@ -34,17 +34,25 @@ set(Llamathrust_SRC
 external/glad/src/glad.c
 external/log-c/log.c
 include/Common.h
+include/EngineConfig.h
+include/Networking.h
 include/Game.h
 include/GameManager.h
 include/Platform.h
 include/System.h
 src/Engine/Engine.c
+src/Engine/Engine.h
 src/Engine/Input.c
+src/Engine/Input.h
 src/Engine/GraphicsAPI.c
+src/Engine/GraphicsAPI.h
 src/Engine/GameManager.c
+src/Engine/Performance.h
 src/Engine/System.c
 src/Engine/platform/Win32.c
 src/Engine/platform/ArgsParsing.c
+src/Engine/networking/Networking.c
+src/Engine/networking/Server.h
 )
 
 # executable name

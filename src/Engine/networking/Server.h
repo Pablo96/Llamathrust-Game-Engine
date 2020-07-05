@@ -1,11 +1,10 @@
-#include <Common.h>
-
 /**
  * @file Server.h
  * @author Pablo Narvaja
  * @brief In here you'll find the abstraction for server related code.
  **/
 #pragma once
+#include <Common.h>
 
 /**
  * NOTE:
@@ -32,7 +31,7 @@
  **/
 typedef struct _Server {
     int16 port;
-    char[MAX_CHAR_IP] ip;
+    char ip[MAX_CHAR_IP];
     SERVER_TYPE type;
     void* reserved;
 } Server;

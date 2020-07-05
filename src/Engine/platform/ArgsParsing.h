@@ -29,4 +29,4 @@ typedef struct _ConfigArgs {
  * @return Config
  *  @brief configuration struct
  **/
-extern ConfigArgs parseArgs(const char** argsv, const int size);
+extern const ConfigArgs* parseArgs(const char** argsv, const int size);
