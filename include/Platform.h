@@ -46,10 +46,29 @@ switch( fdwReason ) {\
 #define LT_Init(GameConstructor) LT_EXPORT void* GetInitGame() {\
 Game* game = (Game*) malloc(sizeof(Game)); return GameConstructor(game); }
 
+typedef struct _Socket Socket;
+
+// GRAPHICS
+
 extern Window window;
 extern LoadProc InitOpenGL(void);
 extern SwapBuffersFunc GetPlatformSwapBuffer(void);
+
+// INPUT
+
 extern void PlatformInitInput(int32* in_keyStates);
 extern uint8 PlatformGetKeyState(int32 keyState);
+
+// DYNAMIC LIB
+
 extern void* PlatformLoadSharedLib(const char* name);
 extern void* PlatformGetProc(const void* in_lib, const char* in_name);
+
+// NETWORKING
+extern void PlatformSocketCreate(const Socket* socket, bool is_server = LT_FALSE, bool is_IPv6 = LT_FALSE);
+extern bool PlatformSocketBind(const Socket* socket);
+extern Socket* PlatformSocketListenAndAccept(const Socket* socket);
+extern void PlatformSocketClose(const Socket* socket);
+extern bool PlatformSocketConnClose(const Socket* socket);
+extern bool PlatformSocketSend(const Socket* socket, const char* msg, const uint32 msg_len);
+extern bool PlatformSocketRecieve(const Socket* socket, char* msg, uint32* msg_len);
