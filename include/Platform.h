@@ -16,13 +16,24 @@
 typedef void* (*LoadProc)(const char* name);
 typedef void (*SwapBuffersFunc)(void);
 
+// Forward declaration
+typedef struct _Thread Thread;
+typedef uint64 (*ThreadFuncWrapper)(void* name);
+
+
 // WINDOWS
 #ifdef LT_WINDOWS
 #define LT_EXPORT __declspec(dllexport)
 typedef struct HWND__ *HWND;
 typedef struct HDC__ *HDC;
+typedef void* HANDLE;
 
-typedef struct _Window {
+typedef struct {
+  HANDLE  handle;
+  const unsigned long id;
+} ThreadWin;
+
+typedef struct {
   HWND handle;
   HDC device;
 } Window;
@@ -41,7 +52,7 @@ switch( fdwReason ) {\
   case DLL_THREAD_DETACH: break;\
   case DLL_PROCESS_DETACH: break;\
 } return TRUE;}
-#endif
+#endif // End Windows
 
 #define LT_Init(GameConstructor) LT_EXPORT void* GetInitGame() {\
 Game* game = (Game*) malloc(sizeof(Game)); return GameConstructor(game); }
@@ -53,3 +64,5 @@ extern void PlatformInitInput(int32* in_keyStates);
 extern uint8 PlatformGetKeyState(int32 keyState);
 extern void* PlatformLoadSharedLib(const char* name);
 extern void* PlatformGetProc(const void* in_lib, const char* in_name);
+extern Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* paramter, const char* name);
+
