@@ -20,6 +20,8 @@ typedef uint8               byte;
 typedef byte               bool;
 #define LT_FALSE 0
 #define LT_TRUE 1
+#define NULL (void*)0
+
 
 // precision floating point
 #ifdef LT_PRECISION_HIGH

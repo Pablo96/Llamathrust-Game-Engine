@@ -7,6 +7,7 @@ clang ^
 -std=c17 ^
 -D_CRT_SECURE_NO_WARNINGS ^
 -DLT_DEBUG ^
+-D_CRT_SECURE_NO_WARNINGS ^
 -I"./include" ^
 -I"./external" ^
 -I"./external/log-c" ^
@@ -29,4 +30,4 @@ clang ^
 -Wno-documentation-unknown-command ^
 -fshow-source-location ^
 -O0 ^
-./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/platform/*.c ./src/engine/networking/*.c
+./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/networking/*.c ./src/engine/threading/*.c ./src/engine/platform/*.c

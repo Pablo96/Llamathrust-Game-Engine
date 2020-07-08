@@ -3,8 +3,10 @@
 #include "../Engine.h"
 #include "../Input.h"
 #include "../Performance.h"
+#include "../threading/thread.h"
 #include "ArgsParsing.h"
 #include <Networking.h>
+
 #include <log.h>
 
 #include <WinSock2.h>
@@ -16,6 +18,7 @@
 #include <gl/wglext.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef __clang__
 #include <stdnoreturn.h>
@@ -273,6 +276,32 @@ bool PlatformSocketRecieve(const Socket* socket, char* msg, uint32* msg_len, con
     return LT_FALSE;
   }
   return LT_TRUE;
+}
+
+Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* parameter, const char* name) {
+  ASSERT_RESERVED_SIZE(sizeof(ThreadWin))
+
+  DWORD threadID;
+  HANDLE threadhandle = CreateThread(
+    NULL,             // cant be inherited
+    0,                // Default stack size
+    funcWrapper,      // function that the thread will exec
+    parameter,        // parameter to the function
+    CREATE_SUSPENDED, // do not start immediately
+    &threadID
+  );
+
+  if (threadhandle == NULL) {
+    log_error("Failed to create thread.");
+    Win32HandleError(54);
+  }
+
+  ThreadWin winThd = {
+    .id = threadID,
+    .handle = threadhandle
+  };
+
+  return ConstructThread(&winThd, sizeof(ThreadWin), name);
 }
 
 //-----------------------------------------------------------------
