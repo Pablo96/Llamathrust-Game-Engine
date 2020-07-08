@@ -29,7 +29,7 @@ typedef uint64 (*ThreadFuncWrapper)(void* name);
  *	@brief reserved for platform representation.
  * @field name:
  *	@type const char pointer
- *	@brief optional name for the thread.
+ *	@brief OPTIONAL: name for the thread.
  * @field ID
  *  @type const uint64
  *  @brief the ID of this thread.
@@ -55,12 +55,35 @@ typedef struct _Thread {
  * @param size:
  *	@type const uint64
  *	@brief size of the platform obj.
+ * @param name
+ *  @brief OPTIONAL: name of the thread.
  * @return Thread pointer
  *  @brief pointer to the created thread obj.
  **/
 extern Thread* ConstructThread(const void* platformObj, const uint64 size, const char* name);
 
+/**
+ * @func LT_Thread_Create
+ * @brief this function does this thing.
+ * @note the thread is created and suspended.
+ * @param func:
+ *	@type ThreadFuncWrapper
+ *	@brief function to execute on the thread.
+ * @param name
+ *  @brief OPTIONAL: name of the thread.
+ * @return Thread pointer
+ *  @brief reference to the thread created.
+ **/
 extern Thread* LT_Thread_Create(ThreadFuncWrapper func, const char* name);
-extern void LT_Thread_Run(void);
+
+/**
+ * @func LT_Thread_Run
+ * @brief starts the thread.
+ * @param thread:
+ *	@type const Thread pointer
+ *	@brief thread to start.
+ * @return void
+ **/
+extern void LT_Thread_Start(const Thread* thread);
 extern void LT_Thread_Join(void);
 extern void LT_Thread_Delete(void);
