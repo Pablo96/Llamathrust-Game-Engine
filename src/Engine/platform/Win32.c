@@ -151,7 +151,7 @@ Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* parameter, con
     0,                // Default stack size
     funcWrapper,      // function that the thread will exec
     parameter,        // parameter to the function
-    CREATE_SUSPENDED, // do not start immediately
+    0,                // start immediately
     &threadID
   );
 
@@ -166,6 +166,16 @@ Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* parameter, con
   };
 
   return ConstructThread(&winThd, sizeof(ThreadWin), name);
+}
+
+void PlatformThreadJoin(const Thread* thread) {
+  HANDLE handle = ((const ThreadWin*)thread)->handle;
+  WaitForSingleObject(handle, INFINITE);
+  CloseHandle(handle);
+}
+
+void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds) {
+  WaitForSingleObject(((const ThreadWin*)thread)->handle, (DWORD) miliseconds);
 }
 
 //-----------------------------------------------------------------

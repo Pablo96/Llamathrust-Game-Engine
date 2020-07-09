@@ -60,9 +60,13 @@ Game* game = (Game*) malloc(sizeof(Game)); return GameConstructor(game); }
 extern Window window;
 extern LoadProc InitOpenGL(void);
 extern SwapBuffersFunc GetPlatformSwapBuffer(void);
+
 extern void PlatformInitInput(int32* in_keyStates);
 extern uint8 PlatformGetKeyState(int32 keyState);
+
 extern void* PlatformLoadSharedLib(const char* name);
 extern void* PlatformGetProc(const void* in_lib, const char* in_name);
-extern Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* paramter, const char* name);
 
+extern Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* paramter, const char* name);
+extern void PlatformThreadJoin(const Thread* thread);
+extern void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds);

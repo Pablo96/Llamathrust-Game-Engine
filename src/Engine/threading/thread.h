@@ -53,14 +53,14 @@ typedef struct _Thread {
  *	@brief the pointer to the thread object must not be null
  *  @note data will be copied to the thread obj.
  * @param size:
- *	@type const uint64
+ *	@type const uint16
  *	@brief size of the platform obj.
  * @param name
  *  @brief OPTIONAL: name of the thread.
  * @return Thread pointer
  *  @brief pointer to the created thread obj.
  **/
-extern Thread* ConstructThread(const void* platformObj, const uint64 size, const char* name);
+extern Thread* ConstructThread(const void* platformObj, const uint16 size, const char* name);
 
 /**
  * @func LT_Thread_Create
@@ -77,13 +77,25 @@ extern Thread* ConstructThread(const void* platformObj, const uint64 size, const
 extern Thread* LT_Thread_Create(ThreadFuncWrapper func, const char* name);
 
 /**
- * @func LT_Thread_Run
- * @brief starts the thread.
+ * @func LT_Thread_Join
+ * @brief waits for a thread to finish.
  * @param thread:
  *	@type const Thread pointer
- *	@brief thread to start.
+ *	@brief the thread to wait for.
  * @return void
  **/
-extern void LT_Thread_Start(const Thread* thread);
-extern void LT_Thread_Join(void);
-extern void LT_Thread_Delete(void);
+extern void LT_Thread_Join(const Thread* thread);
+
+/**
+ * @func LT_Thread_Sleep
+ * @brief Sleep the thread the specified ammount of time.
+ * @note if miliseconds is 0 then it dont go to sleep at all.
+ * @param thread:
+ *	@type const Thread pointer
+ *	@brief the thread to put to sleep.
+ * @param millisecons:
+ *	@type uint64
+ *	@brief the amount of millisecond to wait.
+ * @return void
+ **/
+extern void LT_Thread_Sleep(const Thread* thread, const uint64 miliseconds);

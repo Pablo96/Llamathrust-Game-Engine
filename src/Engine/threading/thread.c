@@ -5,7 +5,7 @@
 
 static uint64 threadIDCount = 0;
 
-Thread* ConstructThread(const void* platformObj, const uint64 size, const char* name) {
+Thread* ConstructThread(const void* platformObj, const uint16 size, const char* name) {
   Thread tmp = {
     .name = name,
     .ID = threadIDCount++,
@@ -21,4 +21,12 @@ Thread* ConstructThread(const void* platformObj, const uint64 size, const char* 
 
 Thread* LT_Thread_Create(ThreadFuncWrapper func, const char* name) {
     return PlatformThreadCreate(func, NULL, name);
+}
+
+void LT_Thread_Join(const Thread* thread) {
+  PlatformThreadJoin(thread);
+}
+
+void LT_Thread_Sleep(const Thread* thread, const uint64 miliseconds) {
+  PlatformThreadSleep(thread, miliseconds);
 }
