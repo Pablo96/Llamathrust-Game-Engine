@@ -1,4 +1,10 @@
-static void TestArray() {
+#pragma once
+#include "test_framework.h"
+#include <CoreLib/Array.h>
+#include <CoreLib/Queue.h>
+#include <CoreLib/String.h>
+
+START_TEST(TestArray)
   Array array = LT_ArrayCreate(8 * 10, 8);
   
   uint64 count = LT_ArrayCount(&array);
@@ -15,10 +21,12 @@ static void TestArray() {
   }
 
   LT_ArrayDestroy(&array);
-}
+
+  return TEST_SUCCESS;
+END_TEST
 
 
-static void TestArrayOutRange() {
+START_TEST(TestArrayOutRange)
   Array array = LT_ArrayCreate(8 * 10, 8);
   uint64 count = LT_ArrayCount(&array);
   
@@ -28,4 +36,6 @@ static void TestArrayOutRange() {
   }
 
   LT_ArrayDestroy(&array);
-}
+
+  return TEST_SUCCESS;
+END_TEST

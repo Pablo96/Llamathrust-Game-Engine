@@ -5,6 +5,7 @@
  **/
 #pragma once
 #define NULL (void*)0
+#include <stdlib.h>
 
 // signed types
 typedef char        int8;
@@ -57,14 +58,19 @@ typedef float decimal;
 #error "APPLE is not supported!"
 #endif
 
+
 #ifdef LT_WINDOWS
-#define LT_DEBUG_BREAK __debugbreak()
+  #ifdef LT_TEST_FRAMEWORK
+    #define LT_DEBUG_BREAK(error_code) ExitThread(error_code)
+  #else
+    #define LT_DEBUG_BREAK(error_code) __debugbreak()
+  #endif
 #else
 #define LT_DEBUG_BREAK raise(SIGTRAP)
 #endif
 
 #ifdef LT_DEBUG
-#define LT_ASSERT(positive_condition, msg) if (!(positive_condition)) {log_error(msg); LT_DEBUG_BREAK;}
+#define LT_ASSERT(positive_condition, msg, error_code) if (!(positive_condition)) {log_error(msg); LT_DEBUG_BREAK(error_code);}
 #else
-#define LT_ASSERT(positive_condition, msg)
+#define LT_ASSERT(positive_condition, msg, error_code)
 #endif

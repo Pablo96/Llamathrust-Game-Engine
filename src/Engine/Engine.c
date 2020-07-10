@@ -1,7 +1,7 @@
 #include "Engine.h"
 #include "GraphicsAPI.h"
 #include "Input.h"
-#include "threading/Thread.h"
+#include <Thread.h>
 #include <GameManager.h>
 #include <log.h>
 
@@ -24,17 +24,14 @@ void Engine_Start() {
 
   LT_GraphicsAPI_Init(LT_OPENGL);
 
-  //LT_GameStateInit("game");
+  LT_GameStateInit("game");
 
   log_info("Engine started!");
 }
 
 void Engine_Run(const double deltaTime) {
-  //LT_GameStateUpdateCurrent(deltaTime);
-
-
+  LT_GameStateUpdateCurrent(deltaTime);
   api.swapBuffers();
-  LT_CloseWindow();
 }
 
 void Engine_Shutdown() {
