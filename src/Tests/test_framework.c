@@ -4,15 +4,14 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-
 typedef struct _TestNode {
   int (*func)(void*);
   const char* name;
   struct _TestNode* next;
 } TestNode;
 
-TestNode* test_list = NULL;
-uint64 test_count = 0; 
+static TestNode* test_list = NULL;
+static uint64 test_count = 0; 
 
 static void CreateNode(TestNode* in_mem, unsigned long (*func)(void*), const char* testName) {
     TestNode test = {
@@ -51,40 +50,49 @@ static Prepare(TestNode* list) {
 }
 
 void LT_TestRun() {
-    log_log(LOG_INFO,  "LT TESTS", 0, "Preparing %u Tests", test_count);
+  log_log(LOG_INFO,  "LT TESTS", 0, "Preparing %u Tests", test_count);
 
-    TestNode list[test_count];
-    Prepare(list);
-    HANDLE threads[test_count];
+  TestNode list[test_count];
+  Prepare(list);
+  HANDLE threads[test_count];
 
-    log_log(LOG_INFO,  "LT TESTS", 0, "Spawning threads");
-    // Create a thread for every test
-    for (uint64 i = 0; i < test_count; i++) {
-        threads[i] = CreateThread(
-            NULL,
-            0,
-            list[i].func,
-            NULL,
-            CREATE_SUSPENDED,
-            NULL
-        );
+  log_log(LOG_INFO,  "LT TESTS", 0, "Spawning threads");
+  // Create a thread for every test
+  for (uint64 i = 0; i < test_count; i++) {
+    threads[i] = CreateThread(
+      NULL,
+      0,
+      list[i].func,
+      NULL,
+      CREATE_SUSPENDED,
+      NULL
+    );
+  }
+
+  uint64 test_failed = 0;
+  // Execute tests
+  for (uint64 i = 0; i < test_count; i++) {
+    const char* name =  list[i].name;
+    log_log(LOG_INFO,  "LT TESTS", 0, "Running test %s", name);
+
+    HANDLE thread = threads[i];
+    
+    ResumeThread(thread);
+    
+    // Wait for test to finish
+    WaitForSingleObject(thread, INFINITE);
+
+    DWORD exitCode;
+    GetExitCodeThread(thread, &exitCode);   
+
+    const char* msg = (exitCode == TEST_SUCCESS) ? "SUCCESS" : "FAILED";
+    if (exitCode != TEST_SUCCESS) {
+        test_failed++;
     }
 
-    // Execute tests
-    for (uint64 i = 0; i < test_count; i++) {
-        const char* name =  list[i].name;
-        log_log(LOG_INFO,  "LT TESTS", 0, "Running test %s", name);
-
-        HANDLE thread = threads[i];
-        
-        ResumeThread(thread);
-        
-        // Wait for test to finish
-        WaitForSingleObject(thread, INFINITE);
-
-        DWORD exitCode;
-        GetExitCodeThread(thread, &exitCode);   
-
-        log_log(LOG_INFO,  "LT TESTS", 0, "TEST '%s' %s", list[i].name, (exitCode == TEST_SUCCESS) ? "SUCCESS" : "FAILED");
-    }
+    /* Get current time */
+    log_log(LOG_INFO,  "LT TESTS", 0, "TEST '%s' %s", list[i].name, msg);
+  }
+    
+  log_log(LOG_INFO,  "LT TESTS", 0, "TOTAL: %u, \tSUCCEDED: %u, \tFAILED: %u", test_count, test_count - test_failed, test_failed);
 }
