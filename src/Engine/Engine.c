@@ -5,6 +5,8 @@
 #include <GameManager.h>
 #include <log.h>
 
+#include <CoreLib/Array.h>
+
 static void function(void* param) {
   log_info("Initialized thread");
 
@@ -16,24 +18,23 @@ static void function(void* param) {
 }
 
 void Engine_Start() {
-  Thread* thread = LT_Thread_Create(function, NULL);
-  
   log_trace("Engine is starting...");
 
   LT_InputInit();
 
   LT_GraphicsAPI_Init(LT_OPENGL);
 
-  LT_Thread_Join(thread);
-
-  LT_GameStateInit("game");
+  //LT_GameStateInit("game");
 
   log_info("Engine started!");
 }
 
 void Engine_Run(const double deltaTime) {
-  LT_GameStateUpdateCurrent(deltaTime);
+  //LT_GameStateUpdateCurrent(deltaTime);
+
+
   api.swapBuffers();
+  LT_CloseWindow();
 }
 
 void Engine_Shutdown() {
