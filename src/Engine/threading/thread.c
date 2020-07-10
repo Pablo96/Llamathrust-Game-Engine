@@ -1,4 +1,4 @@
-#include "thread.h"
+#include "Thread.h"
 #include <Platform.h>
 #include <stdlib.h>
 #include <string.h> // memset

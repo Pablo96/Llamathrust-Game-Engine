@@ -3,7 +3,7 @@
 #include "../Engine.h"
 #include "../Input.h"
 #include "../Performance.h"
-#include "../threading/thread.h"
+#include <Thread.h>
 
 #include <log.h>
 #include <Windows.h>
@@ -15,9 +15,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __clang__
+#ifdef LT_CLANG
 #include <stdnoreturn.h>
-#elif defined(_MSC_VER)
+#elif defined(LT_VS)
 #define noreturn
 #endif
 
@@ -47,6 +47,7 @@ static const LPTSTR CLASS_NAME = "GameWindow";
 static const LPTSTR GHOST_CLASS_NAME = "GhostWindow";
 noreturn static void Win32HandleError(int32 in_exitCode);
 
+#ifndef LT_NO_MAIN //used for running tests
 int main(int32 argc, const char **argv) {
   // Get handle to this executable
   hInstance = GetModuleHandle(NULL);
@@ -119,7 +120,7 @@ int main(int32 argc, const char **argv) {
 
   return 0;
 }
-
+#endif
 //-----------------------------------------------------------------
 // System
 //-----------------------------------------------------------------

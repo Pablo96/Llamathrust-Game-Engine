@@ -1,17 +1,19 @@
 cls
 cd ../..
-if not exist ".\bin\debug" mkdir ".\bin\debug"
+if not exist ".\bin\tests" mkdir ".\bin\tests"
 
 :: Engine Executable
 clang ^
 -std=c17 ^
 -DLT_DEBUG ^
 -D_CRT_SECURE_NO_WARNINGS ^
+-DLT_NO_MAIN ^
+-DLT_TEST_FRAMEWORK ^
 -I"./include" ^
 -I"./external" ^
 -I"./external/log-c" ^
 -I"./external/glad/include" ^
--o "bin/debug/engine_clang.exe" ^
+-o "bin/tests/tests.exe" ^
 -m64 ^
 -lOpengl32.lib ^
 -lGdi32.lib ^
@@ -19,13 +21,14 @@ clang ^
 -lKernel32.lib ^
 -fcolor-diagnostics ^
 -fomit-frame-pointer ^
--pedantic ^
 -fsave-optimization-record=yaml ^
 -foptimization-record-file="bin/debug/optimizations.yml" ^
--Weverything ^
--Wno-unused-parameter ^
--Wno-documentation ^
--Wno-documentation-unknown-command ^
+-w ^
 -fshow-source-location ^
 -O0 ^
-./external/glad/src/glad.c ./external/log-c/log.c ./src/CoreLib/*.c ./src/engine/*.c ./src/engine/threading/*.c ./src/engine/platform/*.c
+./external/glad/src/glad.c ./external/log-c/log.c ^
+./src/CoreLib/*.c ./src/Engine/*.c ^
+./src/Engine/threading/*.c ./src/Engine/platform/*.c ^
+./src/Tests/*.c
+
+.\bin\tests\tests.exe
