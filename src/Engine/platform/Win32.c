@@ -3,7 +3,7 @@
 #include "../Engine.h"
 #include "../Input.h"
 #include "../Performance.h"
-#include "../threading/thread.h"
+#include "../threading/Thread.h"
 
 #include <log.h>
 #include <Windows.h>
@@ -15,9 +15,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __clang__
+#ifdef LT_CLANG
 #include <stdnoreturn.h>
-#elif defined(_MSC_VER)
+#elif defined(LT_VS)
 #define noreturn
 #endif
 

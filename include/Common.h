@@ -4,6 +4,8 @@
  * @brief Here are all common types and defines.
  **/
 #pragma once
+#define NULL (void*)0
+
 // signed types
 typedef char        int8;
 typedef short int   int16;
@@ -20,9 +22,8 @@ typedef uint8               byte;
 typedef byte               bool;
 #define LT_FALSE 0
 #define LT_TRUE 1
-#define NULL (void*)0
 
-
+// MAX and MIN values
 #define LT_UINT64_MAX 0xFFFFFFFFFFFFFFFF
 
 // precision floating point
@@ -34,3 +35,36 @@ typedef float decimal;
 
 #define MAKE_FN_NAME(prefix, subfix) prefix ## subfix
 
+#ifdef __clang__
+#define LT_CLANG
+#elif defined(_MSC_VER)
+#define LT_VS
+#else
+#error "Compiler not supported!"
+#endif
+
+#ifdef _WIN64
+#define LT_WINDOWS
+#elif defined(_WIN32)
+#error "Windows 32bit is not supported!"
+#elif defined(__ANDROID__)
+#define LT_ANDROID
+#error "ANDORID is not supported!"
+#elif defined(__linux__)
+#define LT_LINUX
+#error "LINUX is not supported!"
+#elif defined(__APPLE__)
+#error "APPLE is not supported!"
+#endif
+
+#ifdef LT_WINDOWS
+#define LT_DEBUG_BREAK __debugbreak()
+#else
+#define LT_DEBUG_BREAK raise(SIGTRAP)
+#endif
+
+#ifdef LT_DEBUG
+#define LT_ASSERT(positive_condition, msg) if (!(positive_condition)) {log_error(msg); LT_DEBUG_BREAK;}
+#else
+#define LT_ASSERT(positive_condition, msg)
+#endif

@@ -5,7 +5,7 @@
 #include <GameManager.h>
 #include <log.h>
 
-void function(void* param) {
+static void function(void* param) {
   log_info("Initialized thread");
 
   Thread* this = LT_Thread_GetCurrent();

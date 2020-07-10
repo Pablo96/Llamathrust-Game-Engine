@@ -73,7 +73,7 @@ uint64 LT_ArrayCount(const Array* array);
  *	@type const Array pointer
  *	@brief the array to operate on.
  **/
-void LT_ArrayDestroy(const Array* array);
+void LT_ArrayDestroy(Array* array);
 
 /**
  * @func LT_ArrayGetElement

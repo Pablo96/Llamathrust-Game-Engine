@@ -1,6 +1,7 @@
 #include "ThreadPool.h"
 #include <CoreLib/Array.h>
 #include <CoreLib/Queue.h>
+#include <string.h> //memcpy
 
 /**
  * @struct Task
@@ -38,7 +39,7 @@ typedef struct _Worker {
   Thread base;
   bool running;
   byte padding;
-  Task* task,
+  Task* task;
 } Worker;
 
 static Worker* LT_WorkerCreate(void) {
@@ -73,46 +74,53 @@ static struct ThreadPool {
   Array threads;
   uint32 active_count;
   volatile bool process;
-} Pool;
+} *Pool;
 
 void LT_ThreadPoolInitialize(const uint32 min_threads, const uint32 max_threads, const uint64 max_tasks) {
-  Pool.tasks = LT_QueueCreate(sizeof(Task) * max_tasks, sizeof(Task));
-  Pool.threads = LT_ArrayCreate(sizeof(Worker*), max_threads);
+  struct ThreadPool pool = {
+    .tasks = LT_QueueCreate(sizeof(Task) * max_tasks, sizeof(Task)),
+    .threads = LT_ArrayCreate(sizeof(Worker*), max_threads),
+    .active_count = 0,
+    .process = LT_FALSE
+  };
+  
+  Pool = (struct ThreadPool*) malloc(sizeof(struct ThreadPool));
+  memcpy(Pool, &pool, sizeof(struct ThreadPool));
 
   // Initialize the min number of threads
-  for(int i = 0; i < min_threads; i++)
+  for(uint32 i = 0; i < min_threads; i++)
  	{
- 		LT_ArraySetElement(&Pool.threads, i, LT_WorkerCreate());
- 		Worker* worker =(Worker*) LT_ArraySetElement(&Pool.threads, i);
+ 		LT_ArraySetElement(&Pool->threads, i, LT_WorkerCreate());
+ 		Worker* worker =(Worker*) LT_ArrayGetElement(&Pool->threads, i);
     // NOTE: See if is a good idea to add the thread to the array after initialized
     // or should be alloc and then started after being inserted.
     //LT_WorkerBegin(worker);
 
 		if(worker->running)
-			Pool.active_count++;
+			Pool->active_count++;
 	}
 }
 
 void LT_ThreadPoolShutdown(void) {
-  Pool.process = LT_FALSE;
+  Pool->process = LT_FALSE;
   
   // Stop threads
-  uint64 thread_count = LT_ArrayCount(&Pool.threads);
-  for (uint64 i = 0; i < thread_count, i++) {
-    Worker* worker = (Worker*) LT_ArrayGetElement(&Pool.threads, i);
+  uint64 thread_count = LT_ArrayCount(&Pool->threads);
+  for (uint64 i = 0; i < thread_count; i++) {
+    Worker* worker = (Worker*) LT_ArrayGetElement(&Pool->threads, i);
     LT_WorkerShutdown(worker);
   }
 
   // Clear the arrays/queues
-  LT_ArrayDestroy(&Pool.threads);
-  LT_ArrayDestroy((Array*) &Pool.tasks);
+  LT_ArrayDestroy(&Pool->threads);
+  LT_ArrayDestroy((Array*) &Pool->tasks);
 }
 
-void LT_ThreadPoolAddTask(ThreadFuncWrapper task, void* data) {
+void LT_ThreadPoolAddTask(ThreadFuncWrapper taskFunc, void* data) {
   Task task = {
-    .task = task,
+    .task = taskFunc,
     .data = data
   };
 
-  LT_QueuePush(&Pool.tasks, &task);
+  LT_QueuePush(&Pool->tasks, &task);
 }
