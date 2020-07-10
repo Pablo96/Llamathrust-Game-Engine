@@ -178,6 +178,19 @@ void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds) {
   WaitForSingleObject(((const ThreadWin*)thread)->handle, (DWORD) miliseconds);
 }
 
+Thread* PlatformThreadGetCurrent() {
+  HANDLE this = GetCurrentThread();
+  DWORD id = GetThreadId(this);
+
+  ThreadWin winThd = {
+    .id = id,
+    .handle = this
+  };
+
+  return ConstructDummyThread(&winThd, sizeof(ThreadWin));
+}
+
+
 //-----------------------------------------------------------------
 // Input
 //-----------------------------------------------------------------

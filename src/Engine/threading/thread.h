@@ -63,6 +63,21 @@ typedef struct _Thread {
 extern Thread* ConstructThread(const void* platformObj, const uint16 size, const char* name);
 
 /**
+ * @func ConstructDummyThread
+ * @brief Create a new thread on the heap with LT_UINT64_MAX as ID.
+ * @param platformObj:
+ *	@type const void pointer
+ *	@brief the pointer to the thread object must not be null
+ *  @note data will be copied to the thread obj.
+ * @param size:
+ *	@type const uint16
+ *	@brief size of the platform obj.
+ * @return Thread pointer
+ *  @brief pointer to the created thread obj.
+ **/
+extern Thread* ConstructDummyThread(const void* platformObj, const uint16 size) ;
+
+/**
  * @func LT_Thread_Create
  * @brief this function does this thing.
  * @note the thread is created and suspended.
@@ -99,3 +114,15 @@ extern void LT_Thread_Join(const Thread* thread);
  * @return void
  **/
 extern void LT_Thread_Sleep(const Thread* thread, const uint64 miliseconds);
+
+/**
+ * @func LT_Thread_GetCurrent
+ * @brief Get the thread we are currently running on.
+ * @note Thread id is LT_UINT64_MAX and name is null. Only platform reserved is created.
+ * @param void:
+ *	@type void
+ *	@brief void.
+ * @return Thread pointer
+ **/
+extern Thread* LT_Thread_GetCurrent(void);
+

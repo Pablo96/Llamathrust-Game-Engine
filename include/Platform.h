@@ -70,3 +70,4 @@ extern void* PlatformGetProc(const void* in_lib, const char* in_name);
 extern Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* paramter, const char* name);
 extern void PlatformThreadJoin(const Thread* thread);
 extern void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds);
+extern Thread* PlatformThreadGetCurrent(void);

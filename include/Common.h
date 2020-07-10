@@ -23,6 +23,8 @@ typedef byte               bool;
 #define NULL (void*)0
 
 
+#define LT_UINT64_MAX 0xFFFFFFFFFFFFFFFF
+
 // precision floating point
 #ifdef LT_PRECISION_HIGH
 typedef double decimal;
