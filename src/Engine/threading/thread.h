@@ -18,7 +18,7 @@ exit(36);}
 #endif
 
 
-typedef uint64 (*ThreadFuncWrapper)(void* name);
+typedef uint64 (*ThreadFuncWrapper)(void*);
 
 /**
  * @struct Thread

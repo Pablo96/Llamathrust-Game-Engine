@@ -1,7 +1,7 @@
 #include "Engine.h"
 #include "GraphicsAPI.h"
 #include "Input.h"
-#include "threading/thread.h"
+#include "threading/Thread.h"
 #include <GameManager.h>
 #include <log.h>
 
