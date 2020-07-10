@@ -6,6 +6,7 @@ if not exist ".\bin\debug" mkdir ".\bin\debug"
 clang ^
 -std=c17 ^
 -DLT_DEBUG ^
+-D_CRT_SECURE_NO_WARNINGS ^
 -I"./include" ^
 -I"./external" ^
 -I"./external/log-c" ^
@@ -24,6 +25,7 @@ clang ^
 -Weverything ^
 -Wno-unused-parameter ^
 -Wno-documentation ^
+-Wno-documentation-unknown-command ^
 -fshow-source-location ^
 -O0 ^
-./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/platform/*.c
+./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/threading/*.c ./src/engine/platform/*.c

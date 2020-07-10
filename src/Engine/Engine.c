@@ -1,15 +1,30 @@
 #include "Engine.h"
 #include "GraphicsAPI.h"
 #include "Input.h"
+#include "threading/thread.h"
 #include <GameManager.h>
 #include <log.h>
 
+void function(void* param) {
+  log_info("Initialized thread");
+
+  Thread* this = LT_Thread_GetCurrent();
+
+  LT_Thread_Sleep(this, 4000);
+
+  log_info("Finished thread");
+}
+
 void Engine_Start() {
+  Thread* thread = LT_Thread_Create(function, NULL);
+  
   log_trace("Engine is starting...");
 
   LT_InputInit();
-  
+
   LT_GraphicsAPI_Init(LT_OPENGL);
+
+  LT_Thread_Join(thread);
 
   LT_GameStateInit("game");
 
