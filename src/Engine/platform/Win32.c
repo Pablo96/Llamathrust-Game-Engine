@@ -4,6 +4,7 @@
 #include "../Input.h"
 #include "../Performance.h"
 #include <Thread.h>
+#include <ErrorCodes.h>
 
 #include <log.h>
 #include <Windows.h>
@@ -326,7 +327,6 @@ uint8 PlatformGetKeyState(int32 key_state) { return win32KeyStates[key_state]; }
 //-----------------------------------------------------------------
 void LT_CloseWindow(void) {
   shouldClose = TRUE;
-  log_info("Window should close: %s", shouldClose == TRUE ? "TRUE" : "FALSE");
 }
 
 void *Win32GetProc(const char *name) {
@@ -338,7 +338,7 @@ void *Win32GetProc(const char *name) {
 
   if (proc == 0) {
     log_fatal("Retrieving %s failed.", name);
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PROC_NOT_FOUND);
   }
 
   return proc;
@@ -348,7 +348,7 @@ LoadProc Win32InitOpenGL(void) {
   glInstance = LoadLibraryA("opengl32.dll");
   if (glInstance == 0) {
     log_fatal("Couldn't load opengl library.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_LIB_NOT_FOUND);
   }
 
   Window ghostWnd;
@@ -367,19 +367,19 @@ LoadProc Win32InitOpenGL(void) {
   int pixelFormat = ChoosePixelFormat(ghostWnd.device, &pfd);
   if (pixelFormat == 0) {
     log_fatal("ChoosePixelFormat failed.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
   }
 
   if (SetPixelFormat(ghostWnd.device, pixelFormat, &pfd) == 0) {
     log_fatal("SetPixelFormat failed.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
   }
 
   // Create temporary legacy context
   HGLRC oldOGLcontext = wglCreateContext(ghostWnd.device);
   if (oldOGLcontext == NULL) {
-    log_fatal("Create modern gl context failed.");
-    Win32HandleError(50);
+    log_fatal("Create gl context failed.");
+    Win32HandleError(ERROR_PLATFORM_OPENGL_CREATE_FAILED);
   }
   wglMakeCurrent(ghostWnd.device, oldOGLcontext);
 
@@ -424,19 +424,19 @@ LoadProc Win32InitOpenGL(void) {
 
   if (status == FALSE || numFormats == 0) {
     log_fatal("wglChoosePixelFormatARB() failed.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
   }
 
   PIXELFORMATDESCRIPTOR PFD;
   if (DescribePixelFormat(window.device, pixelFormatID, sizeof(PFD), &PFD) ==
       0) {
     log_fatal("Describe Modern PixelFormat failed.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
   }
 
   if (SetPixelFormat(window.device, pixelFormatID, &PFD) == 0) {
     log_fatal("Set Modern PixelFormat failed.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
   }
 
   const int major_min = 4;
@@ -453,7 +453,7 @@ LoadProc Win32InitOpenGL(void) {
       wglCreateContextAttribsARB(window.device, 0, contextAttribs);
   if (modernGLcontext == NULL) {
     log_fatal("Create modern gl context failed.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_CREATE_MODERN_FAILED);
   }
 
   // Delete legacy context and ghost window
@@ -500,7 +500,7 @@ void Win32_Helper_CreateWindow(Window *wnd, const char *in_wndClassName,
 
   if (hwnd == NULL) {
     log_fatal("Error creating window of class \"%s\".", in_wndClassName);
-    Win32HandleError(1);
+    Win32HandleError(ERROR_PLATFORM_WINDOW_CREATION);
   }
 
   // save the window in the vector
@@ -521,7 +521,7 @@ void Win32_Helper_RegisterWindowClasses() {
 
   if (!RegisterClassEx(&wcGame)) {
     log_fatal("Error: Could not register Window Class \"%s\".", CLASS_NAME);
-    Win32HandleError(49);
+    Win32HandleError(ERROR_PLATFORM_WINDOWS_REGISTERCLASS);
   }
   log_info("Window class \"%s\" registered.", CLASS_NAME);
 
@@ -536,7 +536,7 @@ void Win32_Helper_RegisterWindowClasses() {
   if (!RegisterClassEx(&wcGhost)) {
     log_fatal("Error: Could not register Window Class \"%s\".",
               GHOST_CLASS_NAME);
-    Win32HandleError(49);
+    Win32HandleError(ERROR_PLATFORM_WINDOWS_REGISTERCLASS);
   }
 
   log_info("Window class \"%s\" registered.", GHOST_CLASS_NAME);

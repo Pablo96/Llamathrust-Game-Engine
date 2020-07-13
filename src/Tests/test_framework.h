@@ -7,8 +7,8 @@
 
 #define END_TEST }
 
-#define LT_ADD_TEST(testName) __TestAdd(testName, #testName)
+#define LT_ADD_TEST(testName, expected_code) __TestAdd(testName, #testName, expected_code)
 
-void __TestAdd(unsigned long (*func)(void*), const char* testName);
+void __TestAdd(unsigned long (*func)(void*), const char* testName, const int expected_code);
 
 void LT_TestRun(void);

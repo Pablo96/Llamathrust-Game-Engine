@@ -8,22 +8,24 @@ typedef struct _TestNode {
   int (*func)(void*);
   const char* name;
   struct _TestNode* next;
+  const int expected_code;
 } TestNode;
 
 static TestNode* test_list = NULL;
 static uint64 test_count = 0; 
 
-static void CreateNode(TestNode* in_mem, unsigned long (*func)(void*), const char* testName) {
+static void CreateNode(TestNode* in_mem, unsigned long (*func)(void*), const char* testName, const int expected_code) {
     TestNode test = {
         .func = func,
         .name = testName,
+        .expected_code = expected_code,
         .next = NULL
     };
     memcpy(in_mem, &test, sizeof(TestNode));
     test_count++;
 }
 
-void __TestAdd(unsigned long (*func)(void*), const char* testName) {
+void __TestAdd(unsigned long (*func)(void*), const char* testName, const int expected_code) {
     TestNode* mem;
     if (test_list != NULL) {
         TestNode* current = test_list;
@@ -36,7 +38,7 @@ void __TestAdd(unsigned long (*func)(void*), const char* testName) {
         mem = test_list = (TestNode*) malloc(sizeof(TestNode));
     }
 
-    CreateNode(mem, func, testName);
+    CreateNode(mem, func, testName, expected_code);
 }
 
 static Prepare(TestNode* list) {
@@ -85,8 +87,9 @@ void LT_TestRun() {
     DWORD exitCode;
     GetExitCodeThread(thread, &exitCode);   
 
-    const char* msg = (exitCode == TEST_SUCCESS) ? "SUCCESS" : "FAILED";
-    if (exitCode != TEST_SUCCESS) {
+    bool condition = exitCode == list[i].expected_code;
+    const char* msg = (condition) ? "SUCCESS" : "FAILED";
+    if (!condition) {
         test_failed++;
     }
 
