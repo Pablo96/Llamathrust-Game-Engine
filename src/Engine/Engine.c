@@ -5,18 +5,6 @@
 #include <GameManager.h>
 #include <log.h>
 
-#include <CoreLib/Array.h>
-
-static void function(void* param) {
-  log_info("Initialized thread");
-
-  Thread* this = LT_Thread_GetCurrent();
-
-  LT_Thread_Sleep(this, 4000);
-
-  log_info("Finished thread");
-}
-
 void Engine_Start() {
   log_trace("Engine is starting...");
 

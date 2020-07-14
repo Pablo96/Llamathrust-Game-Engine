@@ -3,6 +3,7 @@
 #include <string.h>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <malloc.h>
 
 typedef struct _TestNode {
   int (*func)(void*);
@@ -41,22 +42,24 @@ void __TestAdd(unsigned long (*func)(void*), const char* testName, const int exp
     CreateNode(mem, func, testName, expected_code);
 }
 
-static Prepare(TestNode* list) {
-    TestNode* current = test_list;
-    for (uint64 i = 0; current != NULL; i++) {
-        memcpy(&list[i], current, sizeof(TestNode));
-        current = current->next;
-    }
 
-    return list;
+
+static void Prepare(TestNode* list) {
+  TestNode* current = test_list;
+  for (uint64 i = 0; current != NULL; i++) {
+    memcpy(&list[i], current, sizeof(TestNode));
+    current = current->next;
+  }
 }
+
 
 int LT_TestRun() {
   log_test_nfunc("Preparing %u Tests", test_count);
 
-  TestNode list[test_count];
+  HANDLE *threads = malloc(sizeof(HANDLE) * test_count);
+  TestNode *list = malloc(sizeof(TestNode) * test_count);
+
   Prepare(list);
-  HANDLE threads[test_count];
 
   log_test_nfunc("Spawning threads");
   // Create a thread for every test
@@ -96,7 +99,9 @@ int LT_TestRun() {
     /* Get current time */
     log_test_nfunc("'%s' %s", list[i].name, msg);
   }
-  
   log_test_nfunc("TOTAL: %u, \tSUCCEDED: %u, \tFAILED: %u", test_count, test_count - test_failed, test_failed);
+  
+  free(threads);
+  free(list);
   return test_failed;
 }

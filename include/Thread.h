@@ -101,6 +101,20 @@ extern Thread* LT_Thread_Create(ThreadFuncWrapper func, const char* name);
  **/
 extern void LT_Thread_Join(const Thread* thread);
 
+
+/**
+ * @func LT_Thread_Join
+ * @brief waits for a thread to finish.
+ * @param thread:
+ *	@type const Thread pointer pointer
+ *	@brief array of thread pointers.
+ * @param count:
+ *	@type const uint32.
+ *	@brief threads count.
+ * @return void
+ **/
+extern void LT_Thread_JoinAll(const Thread** thread, const uint32 count);
+
 /**
  * @func LT_Thread_Sleep
  * @brief Sleep the thread the specified ammount of time.

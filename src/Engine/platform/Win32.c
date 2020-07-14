@@ -173,7 +173,6 @@ Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* parameter, con
 void PlatformThreadJoin(const Thread* thread) {
   HANDLE handle = ((const ThreadWin*)thread)->handle;
   WaitForSingleObject(handle, INFINITE);
-  CloseHandle(handle);
 }
 
 void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds) {

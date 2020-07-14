@@ -41,6 +41,10 @@ void LT_Thread_Join(const Thread* thread) {
   PlatformThreadJoin(thread);
 }
 
+void LT_Thread_JoinAll(const Thread** thread, const uint32 count) {
+  
+}
+
 void LT_Thread_Sleep(const Thread* thread, const uint64 miliseconds) {
   PlatformThreadSleep(thread, miliseconds);
 }
