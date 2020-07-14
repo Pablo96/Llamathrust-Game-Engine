@@ -51,14 +51,14 @@ static Prepare(TestNode* list) {
     return list;
 }
 
-void LT_TestRun() {
-  log_log(LOG_INFO,  "LT TESTS", 0, "Preparing %u Tests", test_count);
+int LT_TestRun() {
+  log_test_nfunc("Preparing %u Tests", test_count);
 
   TestNode list[test_count];
   Prepare(list);
   HANDLE threads[test_count];
 
-  log_log(LOG_INFO,  "LT TESTS", 0, "Spawning threads");
+  log_test_nfunc("Spawning threads");
   // Create a thread for every test
   for (uint64 i = 0; i < test_count; i++) {
     threads[i] = CreateThread(
@@ -75,7 +75,7 @@ void LT_TestRun() {
   // Execute tests
   for (uint64 i = 0; i < test_count; i++) {
     const char* name =  list[i].name;
-    log_log(LOG_INFO,  "LT TESTS", 0, "Running test %s", name);
+    log_test_nfunc("Running test %s", name);
 
     HANDLE thread = threads[i];
     
@@ -94,8 +94,9 @@ void LT_TestRun() {
     }
 
     /* Get current time */
-    log_log(LOG_INFO,  "LT TESTS", 0, "TEST '%s' %s", list[i].name, msg);
+    log_test_nfunc("'%s' %s", list[i].name, msg);
   }
-    
-  log_log(LOG_INFO,  "LT TESTS", 0, "TOTAL: %u, \tSUCCEDED: %u, \tFAILED: %u", test_count, test_count - test_failed, test_failed);
+  
+  log_test_nfunc("TOTAL: %u, \tSUCCEDED: %u, \tFAILED: %u", test_count, test_count - test_failed, test_failed);
+  return test_failed;
 }

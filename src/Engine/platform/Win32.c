@@ -75,7 +75,7 @@ int main(int32 argc, const char **argv) {
   // Else there is an instance of the engine running
   else {
     log_fatal("Instance already running");
-    return 48;
+    return ERROR_INSTANCE_ALREADY_RUNNING;
   }
 
   //-----------------------------------------------------------------

@@ -109,7 +109,12 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
       stderr, "%s %s%-5s\x1b[0m \x1b[90m%s:%d:\x1b[0m ",
       buf, level_colors[level], level_names[level], file, line);
 #else
-    fprintf(stderr, "%s %-5s %s:%d: ", buf, level_names[level], file, line);
+    if (level == LOG_TEST)
+      fprintf(stderr, "%s %s: ", buf, file);
+    else if (level == LOG_TEST_NFUNC)
+      fprintf(stderr, "%s ", buf);
+    else
+      fprintf(stderr, "%s %-5s %s:%d: ", buf, level_names[level], file, line);
 #endif
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
