@@ -1,9 +1,11 @@
 #include "test_framework.h"
-#include "CoreLib.h"
 #include <ErrorCodes.h>
+#include "CoreLib.h"
+#include "Threading.h"
 
 int main(int argc, const char** argv) {
-    
+    log_set_level(LOG_TEST);
+
     LT_ADD_TEST(TestArrayCount, TEST_SUCCESS);
     LT_ADD_TEST(TestArray, TEST_SUCCESS);
     LT_ADD_TEST(TestArrayOutRange, ERROR_INDEX_OUT_OF_BOUNDS);
@@ -11,7 +13,8 @@ int main(int argc, const char** argv) {
     LT_ADD_TEST(TestStack, TEST_SUCCESS);
     LT_ADD_TEST(TestQueue, TEST_SUCCESS);
 
-    LT_TestRun();
+    LT_ADD_TEST(TestThreadSpawn, TEST_SUCCESS);
 
-    return 0;
+    
+    return LT_TestRun();
 }

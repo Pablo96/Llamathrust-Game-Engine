@@ -12,4 +12,4 @@
 
 void __TestAdd(unsigned long (*func)(void*), const char* testName, const int expected_code);
 
-void LT_TestRun(void);
+int LT_TestRun(void);

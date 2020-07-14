@@ -16,7 +16,7 @@ START_TEST(TestArray)
 
   for (uint64 i = 0; i < count; i++) {
     uint64 element = *(uint64*) LT_ArrayGetElement(&array, i);
-    log_info("number: %u", element);
+    log_test("number: %u", element);
   }
 
   LT_ArrayDestroy(&array);
@@ -44,7 +44,7 @@ START_TEST(TestArrayCount)
   Array array = LT_ArrayCreate(init_count, 8);
   
   uint64 count = LT_ArrayCount(&array);  
-  log_info("Reserved count (%u): %u", init_count, count);
+  log_test("Reserved count (%u): %u", init_count, count);
 
   LT_ArrayDestroy(&array);
 
@@ -62,7 +62,7 @@ START_TEST(TestStack)
   }
 
   uint64 top = *(uint64*) LT_StackTop(&stack);
-  log_info("Top (%u): %u",  last_element, top);
+  log_test("Top (%u): %u",  last_element, top);
   
   LT_StackDestroy(&stack);
 
@@ -86,6 +86,6 @@ START_TEST(TestQueue)
 
   LT_QueueDestroy(&queue);
 
-  log_info(" Last_Push %u : Last_Pop %u", last_element_pushed, last_element_poped);
+  log_test(" Last_Push %u : Last_Pop %u", last_element_pushed, last_element_poped);
   return TEST_ASSERT(last_element_poped == last_element_pushed);
 END_TEST
