@@ -4,20 +4,20 @@
 #include <log.h>
 #include <ErrorCodes.h>
 
-Array LT_ArrayCreate(uint64 size, uint64 typeSize) {
+Array LT_ArrayCreate(uint64 count, uint64 typeSize) {
     Array array = {
-        .size = size,
+        .size = count * typeSize,
         .typeSize = typeSize
     };
 
-    array.data = malloc(size);
+    array.data = malloc(array.size);
     return array;
 }
 
-Array LT_ArrayStackCreate(void* dataBuffer, uint64 size, uint64 typeSize) {
+Array LT_ArrayStackCreate(void* dataBuffer, uint64 count, uint64 typeSize) {
     Array array = {
         .data = dataBuffer,
-        .size = size,
+        .size = count * typeSize,
         .typeSize = typeSize
     };
 

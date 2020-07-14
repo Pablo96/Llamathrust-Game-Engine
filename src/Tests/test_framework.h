@@ -2,6 +2,7 @@
 #include <log.h>
 
 #define TEST_SUCCESS 0
+#define TEST_ASSERT(condition) !(condition)
 
 #define START_TEST(name) unsigned long name(void* __ignored__) {
 

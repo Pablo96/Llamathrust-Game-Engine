@@ -32,6 +32,8 @@ typedef struct _Queue {
 
 Queue LT_QueueCreate(const uint64 size, const uint64 elementSize);
 
+void LT_QueueDestroy(Queue* queue);
+
 /**
  * @func LT_QueuePop
  * @brief Gets and delete the first element of the queue.
