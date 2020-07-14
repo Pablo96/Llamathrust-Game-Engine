@@ -1,7 +1,7 @@
 #pragma once
 #include "test_framework.h"
 #include <CoreLib/Array.h>
-#include <CoreLib/Queue.h>
+#include <CoreLib/Stack.h>
 #include <CoreLib/String.h>
 
 START_TEST(TestArray)
@@ -36,6 +36,32 @@ START_TEST(TestArrayOutRange)
   }
 
   LT_ArrayDestroy(&array);
+
+  return TEST_SUCCESS;
+END_TEST
+
+
+START_TEST(TestStack)
+  Stack stack = LT_StackCreate(8 * 10, 8);
+  
+  uint64 count = LT_ArrayCount(&stack);
+  log_info("Reserved count %u", count);
+  
+  for (uint64 i = 0; i < count; i++) {
+    uint64 element = 9 * i;
+    LT_StackPush(&stack, &element);
+    log_info("pushed number: %u", element);
+  }
+
+  uint64 top = *(uint64*) LT_StackTop(&stack);
+  log_info("top number: %u", top);
+
+  for (uint64 i = 0; i < count; i++) {
+    uint64 element = *(uint64*) LT_StackPop(&stack);
+    log_info("poped number: %u", element);
+  }
+
+  LT_StackDestroy(&stack);
 
   return TEST_SUCCESS;
 END_TEST
