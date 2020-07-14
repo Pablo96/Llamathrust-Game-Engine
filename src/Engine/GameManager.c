@@ -1,4 +1,5 @@
 #include "GameManager.h"
+#include <ErrorCodes.h>
 #include <log.h>
 #include <System.h>
 #include <stdlib.h>
@@ -15,7 +16,7 @@ void LT_GameStateInit(const char* in_gameName) {
     SharedLib lib = LT_LoadSharedLibrary("game");
     if (!lib) {
         log_error("Couldn't find library %s.dll", in_gameName);
-        exit(-1);
+        exit(ERROR_GAME_LIB_NOT_FOUND);
     }
     log_info("%s.dll open!", in_gameName);
 
@@ -23,13 +24,13 @@ void LT_GameStateInit(const char* in_gameName) {
     LT_GetInitGame GetInitGame = (LT_GetInitGame)LT_GetProcAddrFromSharedLib(lib, "GetInitGame");
     if (!GetInitGame) {
       log_error("Couldn't load proc \'GetInitGame\'");
-      exit(-1);
+      exit(ERROR_GAME_LIB_INVALID);
     }
 
     Game* initGame = GetInitGame();
     if (!initGame) {
         log_info("Couldn't load init game!");
-        exit(-1);
+        exit(ERROR_GAME_MAIN_NOT_FOUND);
     }
 
     LT_GameStateLoadGame(initGame, 0);

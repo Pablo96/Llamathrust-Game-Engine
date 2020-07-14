@@ -2,21 +2,22 @@
 #include <stdlib.h>
 #include <string.h> //memcpy
 #include <log.h>
+#include <ErrorCodes.h>
 
-Array LT_ArrayCreate(uint64 size, uint64 typeSize) {
+Array LT_ArrayCreate(uint64 count, uint64 typeSize) {
     Array array = {
-        .size = size,
+        .size = count * typeSize,
         .typeSize = typeSize
     };
 
-    array.data = malloc(size);
+    array.data = malloc(array.size);
     return array;
 }
 
-Array LT_ArrayStackCreate(void* dataBuffer, uint64 size, uint64 typeSize) {
+Array LT_ArrayStackCreate(void* dataBuffer, uint64 count, uint64 typeSize) {
     Array array = {
         .data = dataBuffer,
-        .size = size,
+        .size = count * typeSize,
         .typeSize = typeSize
     };
 
@@ -34,14 +35,14 @@ void LT_ArrayDestroy(Array* array) {
 
 void* LT_ArrayGetElement(const Array* array, const uint64 index) {
     const uint64 actual_index = index * array->typeSize;
-    LT_ASSERT(actual_index <= (array->size - array->typeSize), "Index out or range", 75);
+    LT_ASSERT(actual_index <= (array->size - array->typeSize), "Index out or range", ERROR_INDEX_OUT_OF_BOUNDS);
     return (byte*) array->data + actual_index;
 }
 
 void LT_ArraySetElement(const Array* array, const uint64 index, void* element) {
     const uint64 actual_index = index * array->typeSize;
     
-    LT_ASSERT(actual_index <= (array->size - array->typeSize), "Index out or range", 75);
+    LT_ASSERT(actual_index <= (array->size - array->typeSize), "Index out or range", ERROR_INDEX_OUT_OF_BOUNDS);
 
     memcpy((byte*) array->data + actual_index, element, array->typeSize);
 }

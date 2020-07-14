@@ -29,14 +29,14 @@ typedef struct _Array {
 /**
  * @func LT_ArrayCreate
  * @brief create an array with the data buffer on the heap.
- * @param size:
+ * @param count:
  *	@type uint64
- *	@brief size in bytes of the data buffer.
+ *	@brief max element count of the data buffer.
  * @param typeSize:
  *	@type uint64
  *	@brief size in bytes of a data element.
  **/
-Array LT_ArrayCreate(uint64 size, uint64 typeSize);
+Array LT_ArrayCreate(uint64 count, uint64 typeSize);
 
 /**
  * @func LT_ArrayStackCreate
@@ -44,16 +44,16 @@ Array LT_ArrayCreate(uint64 size, uint64 typeSize);
  * @param dataBufer:
  *	@type void pointer
  *	@brief data buffer.
- * @param size:
+ * @param count:
  *	@type uint64
- *	@brief size in bytes of the data buffer.
+ *	@brief max element count of the data buffer.
  * @param typeSize:
  *	@type uint64
  *	@brief size in bytes of a data element.
  * @return Array
  *  @brief array object
  **/
-Array LT_ArrayStackCreate(void* dataBuffer, uint64 size, uint64 typeSize);
+Array LT_ArrayStackCreate(void* dataBuffer, uint64 count, uint64 typeSize);
 
 /**
  * @func LT_ArrayCount
