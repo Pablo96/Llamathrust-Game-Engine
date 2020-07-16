@@ -206,6 +206,25 @@ void PlatformThreadDestroy(Thread* thread) {
   CloseHandle(((const ThreadWin*)thread)->handle);
 }
 
+ThreadLock* PlatformThreadLockCreate() {
+  LPCRITICAL_SECTION lock = malloc(sizeof(CRITICAL_SECTION));
+  InitializeCriticalSection(lock);
+  return lock;
+}
+
+void PlatformThreadLockLock(ThreadLock* lock) {
+  EnterCriticalSection(lock);
+}
+
+void PlatformThreadLockUnock(ThreadLock* lock) {
+  LeaveCriticalSection(lock);
+}
+
+void PlatformThreadLockDestroy(ThreadLock* lock) {
+  DeleteCriticalSection(lock);
+}
+
+
 //-----------------------------------------------------------------
 // Input
 //-----------------------------------------------------------------

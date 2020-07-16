@@ -3,13 +3,21 @@
 #include <stdlib.h>
 #include <string.h> // memset
 
+
+#ifdef LT_WINDOWS
+#define PLATFORM_THREAD_SIZE 8 * 2
+#define LOCK_SIZE 40
+#else
+#define PLATFORM_THREAD_SIZE 8 * 3
+#define LOCK_SIZE 32
+#endif
+
 static uint64 threadIDCount = 0;
 
 Thread* ConstructDummyThread(const void* platformObj, const uint16 size) {
   Thread tmp = {
     .name = NULL,
     .ID = LT_UINT64_MAX,
-    .reservedSize = (uint16) size,
     .isValid = LT_TRUE
   };
 
@@ -24,7 +32,6 @@ Thread* ConstructThread(const void* platformObj, const uint16 size, const char* 
   Thread tmp = {
     .name = name,
     .ID = threadIDCount++,
-    .reservedSize = (uint16) size,
     .isValid = LT_TRUE
   };
 
@@ -43,10 +50,6 @@ void LT_Thread_Join(const Thread* thread) {
   PlatformThreadJoin(thread);
 }
 
-void LT_Thread_JoinAll(const Thread** thread, const uint32 count) {
-  
-}
-
 void LT_Thread_Sleep(const Thread* thread, const uint64 miliseconds) {
   PlatformThreadSleep(thread, miliseconds);
 }
@@ -63,8 +66,28 @@ void LT_Thread_ExitCode(Thread* thread) {
   PlatformThreadGetExitCode(thread);
 }
 
+void LT_Thread_SetLock(Thread* thread, ThreadLock* lock) {
+  thread->lock = lock;
+}
+
 void LT_Thread_Destroy(Thread* thread) {
   PlatformThreadDestroy(thread);
-  memset(thread->reserved, 0, MAX_RESERVED_SIZE);
+  memset(thread->reserved, 0, PLATFORM_THREAD_SIZE);
   thread->isValid = LT_FALSE;
+}
+
+ThreadLock* LT_ThreadLock_Create() {
+  return PlatformThreadLockCreate();
+}
+
+void LT_ThreadLock_Lock(ThreadLock* lock) {
+  PlatformThreadLockLock(lock);
+}
+
+void LT_ThreadLock_Unlock(ThreadLock* lock) {
+  PlatformThreadLockUnock(lock);
+}
+
+void LT_ThreadLock_Destroy(ThreadLock* lock) {
+  PlatformThreadLockDestroy(lock);
 }

@@ -4,17 +4,40 @@
 #include <string.h> //memcpy
 
 /**
+ * @struct ThreadPool
+ * @brief Thread pool abstraction.
+ * @field tasks:
+ *	@type Queue
+ *	@brief queue of tasks.
+ * @field threads:
+ *	@type Thread pointer
+ *	@brief threads array.
+ * @field threadsCount:
+ *	@type uint32
+ *	@brief ammount of threads in the threads array.
+ * @field active_count:
+ *	@type uint32
+ *	@brief count of active threads:.
+ * @field isProcessing:
+ *	@type bool
+ *	@brief if true the threads can take more tasks else they will stop fetching.
+ **/
+static struct ThreadPool {
+  Queue tasks;
+  Array threads;
+  uint32 active_count;
+  volatile bool isProcessing;
+} *Pool;
+
+/**
  * @func WorkerProc
  * @brief this is the worker procedure
  *        ran by every worker to do tasks.
- * @param __ignored__:
+ * @param _worker:
  *	@type void pointer
- *	@brief ignored custom data.
+ *	@brief pointer to worker structure.
  **/
-void WorkerProc(void* __ignored__) {
-  int exit_code = 0;
-  LT_Thread_Exit(exit_code);
-}
+static void WorkerProc(void* _worker);
 
 /**
  * @struct Task
@@ -73,38 +96,31 @@ static void LT_WorkerShutdown(Worker* worker) {
   LT_Thread_Destroy(worker);
 }
 
-/**
- * @struct ThreadPool
- * @brief Thread pool abstraction.
- * @field tasks:
- *	@type Queue
- *	@brief queue of tasks.
- * @field threads:
- *	@type Thread pointer
- *	@brief threads array.
- * @field threadsCount:
- *	@type uint32
- *	@brief ammount of threads in the threads array.
- * @field active_count:
- *	@type uint32
- *	@brief count of active threads:.
- * @field process:
- *	@type bool
- *	@brief if true the threads can take more tasks else they will stop fetching.
- **/
-static struct ThreadPool {
-  Queue tasks;
-  Array threads;
-  uint32 active_count;
-  volatile bool process;
-} *Pool;
+void WorkerProc(void* _worker) {
+  Worker* this = _worker;
+
+  while(this->running)
+	{
+    LT_Thread_Sleep(this, 1);
+    if (this->task != NULL) {
+
+    }
+    
+    // If we're finished with our task, grab a new one.
+		if(this->task == NULL && Pool->isProcessing == LT_TRUE) {
+			this->task = LT_QueuePop(&Pool->tasks);
+		}
+  }
+
+  LT_Thread_Exit(0);
+}
 
 void LT_ThreadPoolInitialize(const uint32 min_threads, const uint32 max_threads, const uint64 max_tasks) {
   struct ThreadPool pool = {
     .tasks = LT_QueueCreate(sizeof(Task) * max_tasks, sizeof(Task)),
     .threads = LT_ArrayCreate(sizeof(Worker*), max_threads),
     .active_count = 0,
-    .process = LT_FALSE
+    .isProcessing = LT_FALSE
   };
   
   Pool = (struct ThreadPool*) malloc(sizeof(struct ThreadPool));
@@ -125,7 +141,7 @@ void LT_ThreadPoolInitialize(const uint32 min_threads, const uint32 max_threads,
 }
 
 void LT_ThreadPoolShutdown(void) {
-  Pool->process = LT_FALSE;
+  Pool->isProcessing = LT_FALSE;
   
   // Stop threads
   uint64 thread_count = LT_ArrayCount(&Pool->threads);
@@ -146,4 +162,7 @@ void LT_ThreadPoolAddTask(ThreadFuncWrapper taskFunc, void* data) {
   };
 
   LT_QueuePush(&Pool->tasks, &task);
+
+  if (!Pool->isProcessing)
+    Pool->isProcessing = LT_TRUE;
 }

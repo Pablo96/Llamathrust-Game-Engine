@@ -6,6 +6,7 @@ typedef void (*SwapBuffersFunc)(void);
 
 // Forward declaration
 typedef struct _Thread Thread;
+typedef struct _ThreadLock ThreadLock;
 typedef uint64 (*ThreadFuncWrapper)(void* name);
 
 
@@ -62,3 +63,9 @@ extern Thread* PlatformThreadGetCurrent(void);
 extern void PlatformThreadExit(const int16 exit_code);
 extern void PlatformThreadGetExitCode(Thread* thread);
 extern void PlatformThreadDestroy(Thread* thread);
+
+extern ThreadLock* PlatformThreadLockCreate();
+extern void PlatformThreadLockLock(ThreadLock* lock);
+extern void PlatformThreadLockUnock(ThreadLock* lock);
+extern void PlatformThreadLockDestroy(ThreadLock* lock);
+

@@ -6,12 +6,18 @@
 #pragma once
 #include <Common.h>
 
-#define MAX_RESERVED_SIZE 8 * 2
+#ifdef LT_WINDOWS
+#define PLATFORM_THREAD_SIZE 8 * 2
+#define LOCK_SIZE 40
+#else
+#define PLATFORM_THREAD_SIZE 8 * 3
+#define LOCK_SIZE 32
+#endif
 
 #ifdef LT_DEBUG
 #define ASSERT_RESERVED_SIZE(size) \
-if (size > MAX_RESERVED_SIZE) {\
-log_fatal("Size of platform object(%u) is greater than MAX_SIZE(%u)", size, MAX_RESERVED_SIZE);\
+if (size > PLATFORM_THREAD_SIZE) {\
+log_fatal("Size of platform object(%u) is greater than MAX_SIZE(%u)", size, PLATFORM_THREAD_SIZE);\
 exit(36);}
 #else
 #define ASSERT_RESERVED_SIZE(size)
@@ -19,6 +25,13 @@ exit(36);}
 
 
 typedef uint64 (*ThreadFuncWrapper)(void*);
+
+
+typedef struct _ThreadLock {
+    byte reserved[LOCK_SIZE];
+} ThreadLock;
+
+#undef LOCK_SIZE
 
 /**
  * @struct Thread
@@ -33,21 +46,21 @@ typedef uint64 (*ThreadFuncWrapper)(void*);
  * @field ID
  *  @type const uint64
  *  @brief the ID of this thread.
- * @field reservedSize
- *  @type const uint16
- *  @brief the size used by the platform representation
  * @field exitCode
  *  @type int16
  *  @brief the exitCode of the thread
  **/
 typedef struct _Thread {
-    byte reserved[MAX_RESERVED_SIZE];
-    const char* name;
+    byte reserved[PLATFORM_THREAD_SIZE];
     const uint64 ID;
-    const uint16 reservedSize;
+    const ThreadLock* lock;
+    const char* name;
     int32 exitCode;
     bool isValid;
 } Thread;
+
+#undef MAX_RESERVED_SIZE
+
 
 
 /**
@@ -152,6 +165,14 @@ extern void LT_Thread_Sleep(const Thread* thread, const uint64 miliseconds);
  **/
 extern Thread* LT_Thread_GetCurrent(void);
 
+/**
+ * @func LT_Thread_SetLock
+ * @brief add a lock to this thread accesible via thread->lock.
+ * @param lock:
+ *	@type ThreadLock pointer
+ *	@brief Lock to attach to the thread.
+ **/
+extern void LT_Thread_SetLock(Thread* thread, ThreadLock* lock);
 
 /**
  * @func LT_ThreadDestroy
@@ -162,3 +183,8 @@ extern Thread* LT_Thread_GetCurrent(void);
  **/
 extern void LT_Thread_Destroy(Thread* thread);
 
+
+extern ThreadLock* LT_ThreadLock_Create();
+extern void LT_ThreadLock_Lock(ThreadLock* lock);
+extern void LT_ThreadLock_Unlock(ThreadLock* lock);
+extern void LT_ThreadLock_Destroy(ThreadLock* lock);
