@@ -144,16 +144,20 @@ void* PlatformGetProc(const void* in_lib, const char* in_name){
   return GetProcAddress((HMODULE) in_lib, in_name);
 }
 
-Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* parameter, const char* name) {
+Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* parameter, const char* name, ThreadLock* lock) {
   ASSERT_RESERVED_SIZE(sizeof(ThreadWin))
+
+  Thread* thread = malloc(sizeof(Thread));
+  thread->data = parameter;
+  thread->lock = lock;
 
   DWORD threadID;
   HANDLE threadhandle = CreateThread(
     NULL,             // cant be inherited
     0,                // Default stack size
     funcWrapper,      // function that the thread will exec
-    parameter,        // parameter to the function
-    0,                // start immediately
+    thread,        // parameter to the function
+    CREATE_SUSPENDED, // won't start immediately
     &threadID
   );
 
@@ -167,7 +171,9 @@ Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* parameter, con
     .handle = threadhandle
   };
 
-  return ConstructThread(&winThd, sizeof(ThreadWin), name);
+  ConstructThread(thread, &winThd, sizeof(ThreadWin), name);
+  ResumeThread(threadhandle);
+  return thread;
 }
 
 void PlatformThreadJoin(const Thread* thread) {
@@ -177,18 +183,6 @@ void PlatformThreadJoin(const Thread* thread) {
 
 void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds) {
   WaitForSingleObject(((const ThreadWin*)thread)->handle, (DWORD) miliseconds);
-}
-
-Thread* PlatformThreadGetCurrent() {
-  HANDLE this = GetCurrentThread();
-  DWORD id = GetThreadId(this);
-
-  ThreadWin winThd = {
-    .id = id,
-    .handle = this
-  };
-
-  return ConstructDummyThread(&winThd, sizeof(ThreadWin));
 }
 
 void PlatformThreadExit(const int16 exit_code) {

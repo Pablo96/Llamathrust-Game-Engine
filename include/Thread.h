@@ -53,8 +53,9 @@ typedef struct _ThreadLock {
 typedef struct _Thread {
     byte reserved[PLATFORM_THREAD_SIZE];
     const uint64 ID;
-    const ThreadLock* lock;
     const char* name;
+    ThreadLock* lock;
+    void* data;
     int32 exitCode;
     bool isValid;
 } Thread;
@@ -75,25 +76,9 @@ typedef struct _Thread {
  *	@brief size of the platform obj.
  * @param name
  *  @brief OPTIONAL: name of the thread.
- * @return Thread pointer
- *  @brief pointer to the created thread obj.
+ * @return void
  **/
-extern Thread* ConstructThread(const void* platformObj, const uint16 size, const char* name);
-
-/**
- * @func ConstructDummyThread
- * @brief Create a new thread on the heap with LT_UINT64_MAX as ID.
- * @param platformObj:
- *	@type const void pointer
- *	@brief the pointer to the thread object must not be null
- *  @note data will be copied to the thread obj.
- * @param size:
- *	@type const uint16
- *	@brief size of the platform obj.
- * @return Thread pointer
- *  @brief pointer to the created thread obj.
- **/
-extern Thread* ConstructDummyThread(const void* platformObj, const uint16 size) ;
+extern void ConstructThread(Thread* thread, const void* platformObj, const uint16 size, const char* name);
 
 /**
  * @func LT_Thread_Create
@@ -107,7 +92,7 @@ extern Thread* ConstructDummyThread(const void* platformObj, const uint16 size) 
  * @return Thread pointer
  *  @brief reference to the thread created.
  **/
-extern Thread* LT_Thread_Create(ThreadFuncWrapper func, void* data, const char* name);
+extern Thread* LT_Thread_Create(ThreadFuncWrapper func, void* data, const char* name, ThreadLock* lock);
 
 /**
  * @func LT_Thread_Join
@@ -139,7 +124,6 @@ extern void LT_Thread_ExitCode(Thread* thread);
  **/
 extern void LT_Thread_Exit(const int32 exit_code);
 
-
 /**
  * @func LT_Thread_Sleep
  * @brief Sleep the thread the specified ammount of time.
@@ -155,26 +139,6 @@ extern void LT_Thread_Exit(const int32 exit_code);
 extern void LT_Thread_Sleep(const Thread* thread, const uint64 miliseconds);
 
 /**
- * @func LT_Thread_GetCurrent
- * @brief Get the thread we are currently running on.
- * @note Thread id is LT_UINT64_MAX and name is null. Only platform reserved is created.
- * @param void:
- *	@type void
- *	@brief void.
- * @return Thread pointer
- **/
-extern Thread* LT_Thread_GetCurrent(void);
-
-/**
- * @func LT_Thread_SetLock
- * @brief add a lock to this thread accesible via thread->lock.
- * @param lock:
- *	@type ThreadLock pointer
- *	@brief Lock to attach to the thread.
- **/
-extern void LT_Thread_SetLock(Thread* thread, ThreadLock* lock);
-
-/**
  * @func LT_ThreadDestroy
  * @brief invalidates this thread.
  * @param thread:
@@ -184,7 +148,7 @@ extern void LT_Thread_SetLock(Thread* thread, ThreadLock* lock);
 extern void LT_Thread_Destroy(Thread* thread);
 
 
-extern ThreadLock* LT_ThreadLock_Create();
+extern ThreadLock* LT_ThreadLock_Create(void);
 extern void LT_ThreadLock_Lock(ThreadLock* lock);
 extern void LT_ThreadLock_Unlock(ThreadLock* lock);
 extern void LT_ThreadLock_Destroy(ThreadLock* lock);

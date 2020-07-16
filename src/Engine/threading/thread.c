@@ -14,36 +14,21 @@
 
 static uint64 threadIDCount = 0;
 
-Thread* ConstructDummyThread(const void* platformObj, const uint16 size) {
-  Thread tmp = {
-    .name = NULL,
-    .ID = LT_UINT64_MAX,
-    .isValid = LT_TRUE
-  };
-
-  // Reserve heap mem and copy to heap
-  Thread* threadObj = (Thread*) malloc(sizeof(Thread));
-  memcpy(threadObj, &tmp, sizeof(Thread));
-  memcpy(threadObj->reserved, platformObj, size);
-  return threadObj;
-}
-
-Thread* ConstructThread(const void* platformObj, const uint16 size, const char* name) {
+void ConstructThread(Thread* thread, const void* platformObj, const uint16 size, const char* name) {
   Thread tmp = {
     .name = name,
     .ID = threadIDCount++,
-    .isValid = LT_TRUE
   };
 
   // Reserve heap mem and copy to heap
-  Thread* threadObj = (Thread*) malloc(sizeof(Thread));
-  memcpy(threadObj, &tmp, sizeof(Thread));
-  memcpy(threadObj->reserved, platformObj, size);
-  return threadObj;
+  memcpy(thread, &tmp.ID, sizeof(uint64) * 2);
+  memcpy(thread->reserved, platformObj, size);
+
+  thread->isValid = LT_TRUE;
 }
 
-Thread* LT_Thread_Create(ThreadFuncWrapper func, void* data, const char* name) {
-    return PlatformThreadCreate(func, data, name);
+Thread* LT_Thread_Create(ThreadFuncWrapper func, void* data, const char* name, ThreadLock* lock) {
+    return PlatformThreadCreate(func, data, name, lock);
 }
 
 void LT_Thread_Join(const Thread* thread) {
@@ -52,10 +37,6 @@ void LT_Thread_Join(const Thread* thread) {
 
 void LT_Thread_Sleep(const Thread* thread, const uint64 miliseconds) {
   PlatformThreadSleep(thread, miliseconds);
-}
-
-Thread* LT_Thread_GetCurrent() {
-  return PlatformThreadGetCurrent();
 }
 
 void LT_Thread_Exit(const int32 exit_code) {
