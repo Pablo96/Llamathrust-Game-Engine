@@ -59,3 +59,6 @@ extern Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* paramte
 extern void PlatformThreadJoin(const Thread* thread);
 extern void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds);
 extern Thread* PlatformThreadGetCurrent(void);
+extern void PlatformThreadExit(const int16 exit_code);
+extern void PlatformThreadGetExitCode(Thread* thread);
+extern void PlatformThreadDestroy(Thread* thread);

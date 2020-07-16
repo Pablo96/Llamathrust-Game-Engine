@@ -34,14 +34,19 @@ typedef uint64 (*ThreadFuncWrapper)(void*);
  *  @type const uint64
  *  @brief the ID of this thread.
  * @field reservedSize
- *  @type const uint64
+ *  @type const uint16
  *  @brief the size used by the platform representation
+ * @field exitCode
+ *  @type int16
+ *  @brief the exitCode of the thread
  **/
 typedef struct _Thread {
     byte reserved[MAX_RESERVED_SIZE];
     const char* name;
     const uint64 ID;
     const uint16 reservedSize;
+    int32 exitCode;
+    bool isValid;
 } Thread;
 
 
@@ -89,7 +94,7 @@ extern Thread* ConstructDummyThread(const void* platformObj, const uint16 size) 
  * @return Thread pointer
  *  @brief reference to the thread created.
  **/
-extern Thread* LT_Thread_Create(ThreadFuncWrapper func, const char* name);
+extern Thread* LT_Thread_Create(ThreadFuncWrapper func, void* data, const char* name);
 
 /**
  * @func LT_Thread_Join
@@ -101,19 +106,26 @@ extern Thread* LT_Thread_Create(ThreadFuncWrapper func, const char* name);
  **/
 extern void LT_Thread_Join(const Thread* thread);
 
-
 /**
- * @func LT_Thread_Join
- * @brief waits for a thread to finish.
+ * @func LT_ThreadExitCode
+ * @brief set the exit code of the thread if any.
  * @param thread:
- *	@type const Thread pointer pointer
- *	@brief array of thread pointers.
- * @param count:
- *	@type const uint32.
- *	@brief threads count.
+ *	@type Thread pointer
+ *	@brief thread to get the exit code from.
  * @return void
  **/
-extern void LT_Thread_JoinAll(const Thread** thread, const uint32 count);
+extern void LT_Thread_ExitCode(Thread* thread);
+
+/**
+ * @func LT_ThreadExit
+ * @brief Exits from current thread with the given code.
+ * @param exit_code:
+ *	@type const int32
+ *	@brief exit code of the thread.
+ * @return void
+ **/
+extern void LT_Thread_Exit(const int32 exit_code);
+
 
 /**
  * @func LT_Thread_Sleep
@@ -139,4 +151,14 @@ extern void LT_Thread_Sleep(const Thread* thread, const uint64 miliseconds);
  * @return Thread pointer
  **/
 extern Thread* LT_Thread_GetCurrent(void);
+
+
+/**
+ * @func LT_ThreadDestroy
+ * @brief invalidates this thread.
+ * @param thread:
+ *	@type thread pointer
+ *	@brief thread to invalidate.
+ **/
+extern void LT_Thread_Destroy(Thread* thread);
 

@@ -191,6 +191,20 @@ Thread* PlatformThreadGetCurrent() {
   return ConstructDummyThread(&winThd, sizeof(ThreadWin));
 }
 
+void PlatformThreadExit(const int16 exit_code) {
+  ExitThread(exit_code);
+}
+
+void PlatformThreadGetExitCode(Thread* thread) {
+  ThreadWin* this =  (const ThreadWin*)thread;
+  DWORD exit_code;
+  GetExitCodeThread(this->handle, &exit_code);
+  thread->exitCode = (int32) exit_code;
+}
+
+void PlatformThreadDestroy(Thread* thread) {
+  CloseHandle(((const ThreadWin*)thread)->handle);
+}
 
 //-----------------------------------------------------------------
 // Input

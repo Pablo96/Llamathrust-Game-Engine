@@ -4,6 +4,19 @@
 #include <string.h> //memcpy
 
 /**
+ * @func WorkerProc
+ * @brief this is the worker procedure
+ *        ran by every worker to do tasks.
+ * @param __ignored__:
+ *	@type void pointer
+ *	@brief ignored custom data.
+ **/
+void WorkerProc(void* __ignored__) {
+  int exit_code = 0;
+  LT_Thread_Exit(exit_code);
+}
+
+/**
  * @struct Task
  * @brief Task abstraction.
  * @field data:
@@ -38,16 +51,26 @@ typedef struct _Task {
 typedef struct _Worker {
   Thread base;
   bool running;
-  byte padding;
   Task* task;
 } Worker;
 
 static Worker* LT_WorkerCreate(void) {
-  // TODO: Implement Worker constructor
+  Worker* worker = malloc(sizeof(Worker));
+  worker->running = LT_TRUE;
+  worker->task = NULL;
+
+  Thread* thread = LT_Thread_Create(WorkerProc, worker, "worker");
+  memcpy(&worker->base, thread, sizeof(Thread));
+
+  return worker;
 }
 
 static void LT_WorkerShutdown(Worker* worker) {
   // TODO: Implement Worker constructor
+  worker->running = LT_FALSE;
+  LT_Thread_Join(worker);
+  LT_Thread_ExitCode(worker);
+  LT_Thread_Destroy(worker);
 }
 
 /**
