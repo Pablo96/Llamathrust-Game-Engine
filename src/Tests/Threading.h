@@ -1,11 +1,14 @@
 #pragma once
 #include "test_framework.h"
 #include <Thread.h>
+#include <ThreadPool.h>
 #include <CoreLib/Array.h>
 
 #define WAIT_TIME 1000
-#define EXIT_CODE_TEST 22
 
+//--------------------------------------------------------------------------
+// SIMPLE THREAD SPAWN
+//--------------------------------------------------------------------------
 static void function(void* param) {
   Thread* this = param;
   
@@ -14,26 +17,6 @@ static void function(void* param) {
   LT_Thread_Sleep(this, WAIT_TIME);
 
   log_test("Finished thread");
-}
-
-static void functionExit(void* param) {
-  Thread* this = param;
-
-  LT_Thread_Sleep(this, WAIT_TIME);
-
-  LT_Thread_Exit(EXIT_CODE_TEST);
-}
-
-static void functionLock(void* param) {
-  Thread* this = param;
-
-  LT_Thread_Sleep(this, 1000);
-  LT_ThreadLock_Lock(this->lock);
-
-  uint32 threadID = *(uint32*) this->data;
-  printf("Thread %d: printing!\n", threadID);
-
-  LT_ThreadLock_Unlock(this->lock);
 }
 
 START_TEST(TestThreadSpawn)
@@ -56,6 +39,19 @@ START_TEST(TestThreadSpawn)
   return TEST_SUCCESS;
 END_TEST
 
+//--------------------------------------------------------------------------
+// EXIT CODE
+//--------------------------------------------------------------------------
+#define EXIT_CODE_TEST 22
+
+static void functionExit(void* param) {
+  Thread* this = param;
+
+  LT_Thread_Sleep(this, WAIT_TIME);
+
+  LT_Thread_Exit(EXIT_CODE_TEST);
+}
+
 START_TEST(TestThreadExitCode)
   Thread* thread = LT_Thread_Create(functionExit, NULL, "thread1", NULL);
   
@@ -70,6 +66,20 @@ START_TEST(TestThreadExitCode)
   return TEST_ASSERT(thread->exitCode == EXIT_CODE_TEST);
 END_TEST
 
+//--------------------------------------------------------------------------
+// LOCKING
+//--------------------------------------------------------------------------
+static void functionLock(void* param) {
+  Thread* this = param;
+
+  LT_Thread_Sleep(this, 1000);
+  LT_ThreadLock_Lock(this->lock);
+
+  uint32 threadID = *(uint32*) this->data;
+  printf("Thread %d: printing!\n", threadID);
+
+  LT_ThreadLock_Unlock(this->lock);
+}
 
 START_TEST(TestThreadLock)
   uint32 count = 4;
@@ -97,4 +107,36 @@ START_TEST(TestThreadLock)
   free(lock);
   
   return TEST_SUCCESS;
+END_TEST
+
+
+//--------------------------------------------------------------------------
+// THREADPOOL
+//--------------------------------------------------------------------------
+static void Task1(void* worker) {
+  LT_Thread_Sleep(worker, WAIT_TIME * 2);
+  log_test("Hello from Task1!");
+}
+
+static void Task2(void* worker) {
+  LT_Thread_Sleep(worker, WAIT_TIME);
+  log_test("Hello from Task2!");
+}
+
+static void Task3(void* worker) {
+  LT_Thread_Sleep(worker, WAIT_TIME * 2);
+  log_test("Hello from Task3!");
+}
+
+static void Task4(void* worker) {
+  LT_Thread_Sleep(worker, WAIT_TIME);
+  log_test("Hello from Task4!");
+}
+
+START_TEST(TestThreadPool)
+  LT_ThreadPoolInitialize(4, 8, 16);
+
+  
+
+  LT_ThreadPoolShutdown();
 END_TEST

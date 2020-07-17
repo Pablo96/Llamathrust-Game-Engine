@@ -109,21 +109,19 @@ void WorkerProc(void* _worker) {
 	{
     LT_Thread_Sleep(this, 1);
     if (this->task != NULL) {
-      LT_ThreadLock_Lock(this->base.lock);
-      {
-        void* data = this->task->data;
-        ThreadFuncWrapper task = this->task->task;
+      void* data = this->task->data;
+      ThreadFuncWrapper task = this->task->task;
 
-        task(data);
-        
-        this->task = NULL;
-      }
-      LT_ThreadLock_Unlock(this->base.lock);
+      task(data);
+      
+      this->task = NULL;
     }
     
     // If we're finished with our task, grab a new one.
 		if(this->task == NULL && Pool->isProcessing == LT_TRUE) {
+      LT_ThreadLock_Lock(this->base.lock);
 			this->task = LT_ThreadPool_GetTask();
+      LT_ThreadLock_Unlock(this->base.lock);
 		}
   }
 
