@@ -40,59 +40,72 @@ typedef struct _ThreadLock {
  * @field reserved:
  *	@type byte pointer
  *	@brief reserved for platform representation.
- * @field name:
- *	@type const char pointer
- *	@brief OPTIONAL: name for the thread.
+ * @field lock:
+ *	@type ThreadLock pointer
+ *	@brief OPTIONAL: lock for this thread to use.
  * @field ID
  *  @type const uint64
  *  @brief the ID of this thread.
+ * @field name:
+ *	@type const char pointer
+ *	@brief OPTIONAL: name for the thread.
+ * @field data:
+ *	@type void pointer
+ *	@brief OPTIONAL: user data that this thread holds.
  * @field exitCode
- *  @type int16
+ *  @type int32
  *  @brief the exitCode of the thread
+ * @field isValid
+ *  @type bool
+ *  @brief true when the thread has not been shutdown.
  **/
 typedef struct _Thread {
     byte reserved[PLATFORM_THREAD_SIZE];
+    ThreadLock* lock;
     const uint64 ID;
     const char* name;
-    ThreadLock* lock;
-    void* data;
+    void *data;
     int32 exitCode;
     bool isValid;
 } Thread;
 
 #undef MAX_RESERVED_SIZE
 
-
-
-/**
- * @func ConstructThread
- * @brief Create a new thread on the heap.
- * @param platformObj:
- *	@type const void pointer
- *	@brief the pointer to the thread object must not be null
- *  @note data will be copied to the thread obj.
- * @param size:
- *	@type const uint16
- *	@brief size of the platform obj.
- * @param name
- *  @brief OPTIONAL: name of the thread.
- * @return void
- **/
-extern void ConstructThread(Thread* thread, const void* platformObj, const uint16 size, const char* name);
-
 /**
  * @func LT_Thread_Create
- * @brief this function does this thing.
- * @note the thread is created and suspended.
+ * @brief Creates a suspended thread.
+ * @param this
+ *  @type Thread pointer
+ *  @brief OPTIONAL: allocated memory for this thread.
+ *  @note If null the function allocate memory and returns it. This is passed as thread function param. 
  * @param func:
  *	@type ThreadFuncWrapper
  *	@brief function to execute on the thread.
+ * @param data:
+ *	@type void pointer
+ *	@brief data that this thread holds.
  * @param name
+ *  @type const char pointer
  *  @brief OPTIONAL: name of the thread.
+ * @param lock
+ *  @type ThreadLock pointer
+ *  @brief OPTIONAL: lock for this thread to use.
  * @return Thread pointer
  *  @brief reference to the thread created.
  **/
-extern Thread* LT_Thread_Create(ThreadFuncWrapper func, void* data, const char* name, ThreadLock* lock);
+extern Thread *LT_Thread_Create(Thread *this, ThreadFuncWrapper func,
+                                void* data, const char *name, ThreadLock *lock);
+
+/**
+ * @func LT_Thread_Create
+ * @brief start the thread.
+ * @note should be called once.
+ * @param thread:
+ *	@type const Thread pointer
+ *	@brief the thread to wait for.
+ * @return void
+ **/
+extern void LT_Thread_Start(Thread* thread);
 
 /**
  * @func LT_Thread_Join

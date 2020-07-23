@@ -88,14 +88,11 @@ static Worker* LT_WorkerCreate(ThreadLock* lock) {
   worker->running = LT_TRUE;
   worker->task = NULL;
 
-  Thread* thread = LT_Thread_Create(WorkerProc, worker, "worker", lock);
-  memcpy(&worker->base, thread, sizeof(Thread));
-
+  LT_Thread_Create(worker, WorkerProc, NULL, "worker", lock);
   return worker;
 }
 
 static void LT_WorkerShutdown(Worker* worker) {
-  // TODO: Implement Worker constructor
   worker->running = LT_FALSE;
   LT_Thread_Join(worker);
   LT_Thread_ExitCode(worker);
@@ -106,7 +103,7 @@ void WorkerProc(void* _worker) {
   Worker* this = _worker;
 
   while(this->running)
-	{
+  {
     LT_Thread_Sleep(this, 1);
     if (this->task != NULL) {
       void* data = this->task->data;
@@ -118,11 +115,11 @@ void WorkerProc(void* _worker) {
     }
     
     // If we're finished with our task, grab a new one.
-		if(this->task == NULL && Pool->isProcessing == LT_TRUE) {
-      LT_ThreadLock_Lock(this->base.lock);
-			this->task = LT_ThreadPool_GetTask();
-      LT_ThreadLock_Unlock(this->base.lock);
-		}
+	if(this->task == NULL && Pool->isProcessing == LT_TRUE) {
+        LT_ThreadLock_Lock(this->base.lock);
+		this->task = LT_ThreadPool_GetTask();
+        LT_ThreadLock_Unlock(this->base.lock);
+	}
   }
 
   LT_Thread_Exit(0);
@@ -144,19 +141,19 @@ void LT_ThreadPoolInitialize(const uint32 min_threads, const uint32 max_threads,
   // Initialize the min number of threads
   for(uint32 i = 0; i < min_threads; i++) {
     Worker* tmp = LT_WorkerCreate(lock);
- 		LT_ArraySetElement(&Pool->threads, i, tmp);
- 		Worker* worker =(Worker*) LT_ArrayGetElement(&Pool->threads, i);
+ 	LT_ArraySetElement(&Pool->threads, i, tmp);
+ 	Worker* worker =(Worker*) LT_ArrayGetElement(&Pool->threads, i);
     // NOTE: See if is a good idea to add the thread to the array after initialized
     // or should be alloc and then started after being inserted.
     //LT_WorkerBegin(worker);
 
     free(tmp);
-		if(worker->running)
-			Pool->active_count++;
-	}
+	if(worker->running)
+	  Pool->active_count++;
+  }
 }
 
-void LT_ThreadPoolShutdown(void) {
+void LT_ThreadPoolShutdown() {
   Pool->isProcessing = LT_FALSE;
   
   // Stop threads
@@ -167,8 +164,8 @@ void LT_ThreadPoolShutdown(void) {
   }
 
   // Clear the arrays/queues
+  LT_QueueDestroy(&Pool->tasks);
   LT_ArrayDestroy(&Pool->threads);
-  LT_ArrayDestroy((Array*) &Pool->tasks);
 }
 
 void LT_ThreadPoolAddTask(ThreadFuncWrapper taskFunc, void* data) {

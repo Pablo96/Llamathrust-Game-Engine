@@ -14,21 +14,27 @@
 
 static uint64 threadIDCount = 0;
 
-void ConstructThread(Thread* thread, const void* platformObj, const uint16 size, const char* name) {
+Thread *LT_Thread_Create(Thread *this, ThreadFuncWrapper func, void *data,
+                         const char *name, ThreadLock *lock) {
+  if (this == NULL) {
+    this = malloc(sizeof(Thread));
+  }
+  
   Thread tmp = {
-    .name = name,
-    .ID = threadIDCount++,
+      .lock = lock,
+      .ID = threadIDCount++,
+      .name = name,
+      .data = data,
+      .exitCode = 0,
+      .isValid = LT_TRUE
   };
 
-  // Reserve heap mem and copy to heap
-  memcpy(thread, &tmp.ID, sizeof(uint64) * 2);
-  memcpy(thread->reserved, platformObj, size);
-
-  thread->isValid = LT_TRUE;
+  memcpy(&this->lock, &tmp.lock, sizeof(Thread) - PLATFORM_THREAD_SIZE);
+  return PlatformThreadCreate(this, func);
 }
 
-Thread* LT_Thread_Create(ThreadFuncWrapper func, void* data, const char* name, ThreadLock* lock) {
-    return PlatformThreadCreate(func, data, name, lock);
+void LT_Thread_Start(Thread *thread) {
+  PlatformThreadStart(thread);
 }
 
 void LT_Thread_Join(const Thread* thread) {

@@ -3,6 +3,8 @@
 #include <Thread.h>
 #include <ThreadPool.h>
 #include <CoreLib/Array.h>
+#include <string.h>
+#include <stdio.h>
 
 #define WAIT_TIME 1000
 
@@ -24,9 +26,10 @@ START_TEST(TestThreadSpawn)
   Array threads = LT_ArrayCreate(threads_count, sizeof(Thread));
   
   for (uint64 i = 0; i < threads_count; i++) {
-  	Thread* thread = LT_Thread_Create(function, NULL, "thread1", NULL);
-  	LT_ArraySetElement(&threads, i, thread);
-    free(thread);
+    Thread *thread = LT_ArrayGetElement(&threads, i);
+  	
+    LT_Thread_Create(thread, function, thread, NULL, NULL);
+    LT_Thread_Start(thread);
   }
   
   for (uint64 i = 0; i < threads_count; i++) {
@@ -53,17 +56,19 @@ static void functionExit(void* param) {
 }
 
 START_TEST(TestThreadExitCode)
-  Thread* thread = LT_Thread_Create(functionExit, NULL, "thread1", NULL);
-  
+  Thread* thread = LT_Thread_Create(NULL, functionExit, NULL, "thread1", NULL);
+  LT_Thread_Start(thread);
+
   LT_Thread_Join(thread);
   LT_Thread_ExitCode(thread);
 
+  int32 exitCode = thread->exitCode;
   log_test("Thread exit code: %d", thread->exitCode);
 
   LT_Thread_Destroy(thread);
   free(thread);
 
-  return TEST_ASSERT(thread->exitCode == EXIT_CODE_TEST);
+  return TEST_ASSERT(exitCode == EXIT_CODE_TEST);
 END_TEST
 
 //--------------------------------------------------------------------------
@@ -74,25 +79,28 @@ static void functionLock(void* param) {
 
   LT_Thread_Sleep(this, 1000);
   LT_ThreadLock_Lock(this->lock);
-
-  uint32 threadID = *(uint32*) this->data;
-  printf("Thread %d: printing!\n", threadID);
+  
+  printf("Thread %s: printing!\n", this->name);
 
   LT_ThreadLock_Unlock(this->lock);
 }
 
 START_TEST(TestThreadLock)
   uint32 count = 4;
-  Array indices = LT_ArrayCreate(count, sizeof(uint32));
   Array threads = LT_ArrayCreate(count, sizeof(Thread));
   ThreadLock* lock = LT_ThreadLock_Create();
   
 
   for (uint32 i = 0; i < count; i++) {
-    LT_ArraySetElement(&indices, i, &i);
-    void* index = LT_ArrayGetElement(&indices, i);
-    Thread* thread = LT_Thread_Create(functionLock, index, "thread1", lock);
-    LT_ArraySetElement(&threads, i, thread);
+    if (i > 99)
+      break;
+    
+    char* name = malloc(10);
+    snprintf(name, 10, "Thread_%d", i);
+
+    Thread* thread = LT_ArrayGetElement(&threads, i);
+    LT_Thread_Create(thread, functionLock, NULL, name, lock);
+    LT_Thread_Start(thread);
   }
 
   for (uint32 i = 0; i < count; i++) {
@@ -102,7 +110,6 @@ START_TEST(TestThreadLock)
   }
 
   LT_ArrayDestroy(&threads);
-  LT_ArrayDestroy(&indices);
   LT_ThreadLock_Destroy(lock);
   free(lock);
   
@@ -134,9 +141,5 @@ static void Task4(void* worker) {
 }
 
 START_TEST(TestThreadPool)
-  LT_ThreadPoolInitialize(4, 8, 16);
-
-  
-
-  LT_ThreadPoolShutdown();
+  return TEST_SUCCESS;
 END_TEST

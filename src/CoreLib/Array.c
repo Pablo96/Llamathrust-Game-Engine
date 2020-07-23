@@ -5,13 +5,14 @@
 #include <ErrorCodes.h>
 
 Array LT_ArrayCreate(uint64 count, uint64 typeSize) {
-    Array array = {
-        .size = count * typeSize,
-        .typeSize = typeSize
-    };
+  Array array = {
+    .size = count * typeSize,
+    .typeSize = typeSize,
+  };
 
-    array.data = malloc(array.size);
-    return array;
+  array.data = malloc(count * typeSize);
+  memset(array.data, 0, array.size);
+  return array;
 }
 
 Array LT_ArrayStackCreate(void* dataBuffer, uint64 count, uint64 typeSize) {

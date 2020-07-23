@@ -144,19 +144,14 @@ void* PlatformGetProc(const void* in_lib, const char* in_name){
   return GetProcAddress((HMODULE) in_lib, in_name);
 }
 
-Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* parameter, const char* name, ThreadLock* lock) {
-  ASSERT_RESERVED_SIZE(sizeof(ThreadWin))
-
-  Thread* thread = malloc(sizeof(Thread));
-  thread->data = parameter;
-  thread->lock = lock;
-
+Thread *PlatformThreadCreate(const Thread *thread,
+                             ThreadFuncWrapper funcWrapper) {
   DWORD threadID;
   HANDLE threadhandle = CreateThread(
     NULL,             // cant be inherited
     0,                // Default stack size
     funcWrapper,      // function that the thread will exec
-    thread,        // parameter to the function
+    thread,             // parameter to the function
     CREATE_SUSPENDED, // won't start immediately
     &threadID
   );
@@ -171,9 +166,13 @@ Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* parameter, con
     .handle = threadhandle
   };
 
-  ConstructThread(thread, &winThd, sizeof(ThreadWin), name);
-  ResumeThread(threadhandle);
+  memcpy(thread->reserved, &winThd, sizeof(ThreadWin));
   return thread;
+}
+
+extern void PlatformThreadStart(const Thread *thread) { 
+  HANDLE handle = ((const ThreadWin *)thread)->handle;
+  ResumeThread(handle);
 }
 
 void PlatformThreadJoin(const Thread* thread) {

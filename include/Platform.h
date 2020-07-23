@@ -56,7 +56,8 @@ extern uint8 PlatformGetKeyState(int32 keyState);
 extern void* PlatformLoadSharedLib(const char* name);
 extern void* PlatformGetProc(const void* in_lib, const char* in_name);
 
-extern Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* paramter, const char* name, ThreadLock* lock);
+extern Thread* PlatformThreadCreate(const Thread *thread, ThreadFuncWrapper funcWrapper);
+extern void PlatformThreadStart(const Thread *thread);
 extern void PlatformThreadJoin(const Thread* thread);
 extern void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds);
 extern void PlatformThreadExit(const int16 exit_code);
