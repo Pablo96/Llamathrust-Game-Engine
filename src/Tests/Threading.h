@@ -13,7 +13,6 @@
 //--------------------------------------------------------------------------
 static void function(void* param) {
   Thread* this = param;
-  
   log_test("Initialized thread");
 
   LT_Thread_Sleep(this, WAIT_TIME);
@@ -120,26 +119,30 @@ END_TEST
 //--------------------------------------------------------------------------
 // THREADPOOL
 //--------------------------------------------------------------------------
-static void Task1(void* worker) {
-  LT_Thread_Sleep(worker, WAIT_TIME * 2);
+static void Task1(void* _ignored) {
   log_test("Hello from Task1!");
 }
 
-static void Task2(void* worker) {
-  LT_Thread_Sleep(worker, WAIT_TIME);
+static void Task2(void* _ignored) {
   log_test("Hello from Task2!");
 }
 
-static void Task3(void* worker) {
-  LT_Thread_Sleep(worker, WAIT_TIME * 2);
+static void Task3(void* _ignored) {
   log_test("Hello from Task3!");
 }
 
-static void Task4(void* worker) {
-  LT_Thread_Sleep(worker, WAIT_TIME);
+static void Task4(void* _ignored) {
   log_test("Hello from Task4!");
 }
 
 START_TEST(TestThreadPool)
+  LT_ThreadPoolInitialize(2, 4);
+
+  LT_ThreadPoolAddTask(Task1, NULL);
+  LT_ThreadPoolAddTask(Task2, NULL);
+  LT_ThreadPoolAddTask(Task3, NULL);
+  LT_ThreadPoolAddTask(Task4, NULL);
+
+  LT_ThreadPoolShutdown();
   return TEST_SUCCESS;
 END_TEST

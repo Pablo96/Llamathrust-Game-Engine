@@ -9,10 +9,8 @@
 
 #define LT_THREAD_CREATETASK(TaskName) void TaskName(void* data)
 
-void LT_ThreadPoolInitialize(const uint32 min_threads, const uint32 max_threads, const uint64 max_tasks);
+void LT_ThreadPoolInitialize(const uint32 threads, const uint64 max_tasks);
 
 void LT_ThreadPoolShutdown(void);
 
 void LT_ThreadPoolAddTask(ThreadFuncWrapper taskFunc, void* data);
-
-

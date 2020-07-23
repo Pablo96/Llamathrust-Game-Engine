@@ -27,6 +27,7 @@
 static struct ThreadPool {
   Queue tasks;
   Array threads;
+  ThreadLock *lock;
   uint32 active_count;
   volatile bool isProcessing;
 } *Pool;
@@ -83,20 +84,23 @@ typedef struct _Worker {
   Task* task;
 } Worker;
 
-static Worker* LT_WorkerCreate(ThreadLock* lock) {
-  Worker* worker = malloc(sizeof(Worker));
+static void LT_WorkerCreate(Worker* worker, ThreadLock* lock) {
   worker->running = LT_TRUE;
   worker->task = NULL;
 
   LT_Thread_Create(worker, WorkerProc, NULL, "worker", lock);
-  return worker;
 }
 
 static void LT_WorkerShutdown(Worker* worker) {
-  worker->running = LT_FALSE;
+  LT_ThreadLock_Lock(Pool->lock);
+
+  memset(&worker->base.isValid, 0, sizeof(Worker) - offsetof(Thread, isValid));
   LT_Thread_Join(worker);
-  LT_Thread_ExitCode(worker);
+
+  LT_Thread_ExitCode(worker); 
   LT_Thread_Destroy(worker);
+  
+  LT_ThreadLock_Unlock(Pool->lock);
 }
 
 void WorkerProc(void* _worker) {
@@ -125,10 +129,12 @@ void WorkerProc(void* _worker) {
   LT_Thread_Exit(0);
 }
 
-void LT_ThreadPoolInitialize(const uint32 min_threads, const uint32 max_threads, const uint64 max_tasks) {
+void LT_ThreadPoolInitialize(const uint32 threads_count, const uint64 max_tasks) {
+  ThreadLock* lock = LT_ThreadLock_Create();
   struct ThreadPool pool = {
     .tasks = LT_QueueCreate(sizeof(Task) * max_tasks, sizeof(Task)),
-    .threads = LT_ArrayCreate(sizeof(Worker*), max_threads),
+      .threads = LT_ArrayCreate(threads_count, sizeof(Worker)),
+    .lock = lock,
     .active_count = 0,
     .isProcessing = LT_FALSE
   };
@@ -136,20 +142,14 @@ void LT_ThreadPoolInitialize(const uint32 min_threads, const uint32 max_threads,
   Pool = (struct ThreadPool*) malloc(sizeof(struct ThreadPool));
   memcpy(Pool, &pool, sizeof(struct ThreadPool));
 
-  ThreadLock* lock = LT_ThreadLock_Create();
 
   // Initialize the min number of threads
-  for(uint32 i = 0; i < min_threads; i++) {
-    Worker* tmp = LT_WorkerCreate(lock);
- 	LT_ArraySetElement(&Pool->threads, i, tmp);
- 	Worker* worker =(Worker*) LT_ArrayGetElement(&Pool->threads, i);
-    // NOTE: See if is a good idea to add the thread to the array after initialized
-    // or should be alloc and then started after being inserted.
-    //LT_WorkerBegin(worker);
-
-    free(tmp);
-	if(worker->running)
-	  Pool->active_count++;
+  for(uint32 i = 0; i < threads_count; i++) {
+    Worker* worker =(Worker*) LT_ArrayGetElement(&Pool->threads, i);
+    LT_WorkerCreate(worker, lock);
+    LT_Thread_Start(worker);
+    if(worker->running)
+      Pool->active_count++;
   }
 }
 
@@ -170,6 +170,7 @@ void LT_ThreadPoolShutdown() {
 
 void LT_ThreadPoolAddTask(ThreadFuncWrapper taskFunc, void* data) {
   LT_ASSERT(taskFunc != NULL, "Task function null not allowed", ERROR_NULL_ARG)
+  LT_ThreadLock_Lock(Pool->lock);
   
   Task task = {
     .task = taskFunc,
@@ -180,6 +181,8 @@ void LT_ThreadPoolAddTask(ThreadFuncWrapper taskFunc, void* data) {
 
   if (!Pool->isProcessing)
     Pool->isProcessing = LT_TRUE;
+
+  LT_ThreadLock_Unlock(Pool->lock);
 }
 
 

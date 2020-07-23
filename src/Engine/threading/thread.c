@@ -29,6 +29,7 @@ Thread *LT_Thread_Create(Thread *this, ThreadFuncWrapper func, void *data,
       .isValid = LT_TRUE
   };
 
+  
   memcpy(&this->lock, &tmp.lock, sizeof(Thread) - PLATFORM_THREAD_SIZE);
   return PlatformThreadCreate(this, func);
 }
