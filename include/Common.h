@@ -21,8 +21,8 @@ typedef uint8               byte;
 
 // boolean
 typedef byte               bool;
-#define LT_FALSE 0
-#define LT_TRUE 1
+#define LT_FALSE (bool)0
+#define LT_TRUE (bool)1
 
 // MAX and MIN values
 #define LT_UINT64_MAX 0xFFFFFFFFFFFFFFFF
@@ -74,3 +74,8 @@ typedef float decimal;
 #else
 #define LT_ASSERT(positive_condition, msg, error_code)
 #endif
+
+
+#define MILISECONDS(x) x
+#define SECONDS(x) x * 1000
+#define MINUTES(x) x * 60 * 1000

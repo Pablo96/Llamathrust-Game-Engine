@@ -24,6 +24,8 @@ clang ^
 -pedantic ^
 -fsave-optimization-record=yaml ^
 -foptimization-record-file="bin/debug/optimizations.yml" ^
+-static-libgcc ^
+-ggdb ^
 -Weverything ^
 -Wno-unused-parameter ^
 -Wno-documentation ^

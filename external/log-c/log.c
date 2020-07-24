@@ -26,7 +26,12 @@
 #include <string.h>
 #include <time.h>
 
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
 #include "log.h"
+static PCRITICAL_SECTION CriticalSection;
+static unsigned char init = !0;
 
 static struct {
   void *udata;
@@ -92,8 +97,16 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
     return;
   }
 
+  if (init) {
+    CriticalSection = malloc(sizeof(CRITICAL_SECTION));
+    // Initialize the critical section one time only.
+    InitializeCriticalSectionAndSpinCount(CriticalSection, 0x00000400);
+    init = 0;
+  }
+
   /* Acquire lock */
-  lock();
+  // Request ownership of the critical section.
+  EnterCriticalSection(CriticalSection);
 
   /* Get current time */
   time_t t = time(NULL);
@@ -103,7 +116,8 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
   if (!L.quiet) {
     va_list args;
     char buf[16];
-    buf[strftime(buf, sizeof(buf), "%H:%M:%S", lt)] = '\0';
+    uint64 size = strftime(buf, sizeof(buf), "%H:%M:%S", lt);
+    buf[size] = '\0';
 #ifdef LOG_USE_COLOR
     fprintf(
       stderr, "%s %s%-5s\x1b[0m \x1b[90m%s:%d:\x1b[0m ",
@@ -137,5 +151,5 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
   }
 
   /* Release lock */
-  unlock();
+  LeaveCriticalSection(CriticalSection);
 }
