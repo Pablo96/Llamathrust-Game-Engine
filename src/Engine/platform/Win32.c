@@ -144,16 +144,15 @@ void* PlatformGetProc(const void* in_lib, const char* in_name){
   return GetProcAddress((HMODULE) in_lib, in_name);
 }
 
-Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* parameter, const char* name) {
-  ASSERT_RESERVED_SIZE(sizeof(ThreadWin))
-
+Thread *PlatformThreadCreate(const Thread *thread,
+                             ThreadFuncWrapper funcWrapper) {
   DWORD threadID;
   HANDLE threadhandle = CreateThread(
     NULL,             // cant be inherited
     0,                // Default stack size
     funcWrapper,      // function that the thread will exec
-    parameter,        // parameter to the function
-    0,                // start immediately
+    thread,             // parameter to the function
+    CREATE_SUSPENDED, // won't start immediately
     &threadID
   );
 
@@ -167,29 +166,67 @@ Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* parameter, con
     .handle = threadhandle
   };
 
-  return ConstructThread(&winThd, sizeof(ThreadWin), name);
+  memcpy(thread->reserved, &winThd, sizeof(ThreadWin));
+  return thread;
+}
+
+extern void PlatformThreadStart(const Thread *thread) { 
+  HANDLE handle = ((const ThreadWin *)thread)->handle;
+  ResumeThread(handle);
+}
+
+void PlatformGetCurrent(const Thread *thread) {
+  HANDLE threadhandle = GetCurrentThread();
+  DWORD threadID = GetCurrentThreadId();
+
+  ThreadWin winThd = {
+    .id = threadID,
+    .handle = threadhandle
+  };
+
+  memcpy(thread->reserved, &winThd, sizeof(ThreadWin));
 }
 
 void PlatformThreadJoin(const Thread* thread) {
   HANDLE handle = ((const ThreadWin*)thread)->handle;
   WaitForSingleObject(handle, INFINITE);
-  CloseHandle(handle);
 }
 
 void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds) {
   WaitForSingleObject(((const ThreadWin*)thread)->handle, (DWORD) miliseconds);
 }
 
-Thread* PlatformThreadGetCurrent() {
-  HANDLE this = GetCurrentThread();
-  DWORD id = GetThreadId(this);
+void PlatformThreadExit(const int16 exit_code) {
+  ExitThread(exit_code);
+}
 
-  ThreadWin winThd = {
-    .id = id,
-    .handle = this
-  };
+void PlatformThreadGetExitCode(Thread* thread) {
+  ThreadWin* this =  (const ThreadWin*)thread;
+  DWORD exit_code;
+  GetExitCodeThread(this->handle, &exit_code);
+  thread->exitCode = (int32) exit_code;
+}
 
-  return ConstructDummyThread(&winThd, sizeof(ThreadWin));
+void PlatformThreadDestroy(Thread* thread) {
+  CloseHandle(((const ThreadWin*)thread)->handle);
+}
+
+ThreadLock* PlatformThreadLockCreate() {
+  LPCRITICAL_SECTION lock = malloc(sizeof(CRITICAL_SECTION));
+  InitializeCriticalSection(lock);
+  return lock;
+}
+
+void PlatformThreadLockLock(ThreadLock* lock) {
+  EnterCriticalSection(lock);
+}
+
+void PlatformThreadLockUnock(ThreadLock* lock) {
+  LeaveCriticalSection(lock);
+}
+
+void PlatformThreadLockDestroy(ThreadLock* lock) {
+  DeleteCriticalSection(lock);
 }
 
 

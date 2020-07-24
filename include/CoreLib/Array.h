@@ -10,7 +10,7 @@
  * @struct Array
  * @brief Fixed size array.
  * @field data:
- *	@type void const pointer
+ *	@type void pointer
  *	@brief data buffer.
  * @field size:
  *	@type const uint64
@@ -20,7 +20,7 @@
  *	@brief data element size in bytes.
  **/
 typedef struct _Array {
-    void const* data;
+    void *data;
     const uint64 size;
     const uint64 typeSize;
 } Array;

@@ -24,6 +24,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 remove_definitions(/CMAKE_INTDIR)
 
 set(TARGET_NAME "llamathrust")
+set(TEST_EXEC "tests")
 # set output directories
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/")
@@ -33,12 +34,26 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/")
 set(Llamathrust_SRC
 external/glad/src/glad.c
 external/log-c/log.c
+src/CoreLib/Array.c
+src/CoreLib/Stack.c
+src/CoreLib/Queue.c
+src/CoreLib/String.c
 src/Engine/Engine.c
 src/Engine/Input.c
 src/Engine/GraphicsAPI.c
 src/Engine/GameManager.c
 src/Engine/System.c
 src/Engine/platform/Win32.c
+src/Engine/threading/Thread.c
+src/Engine/threading/ThreadPool.c
+)
+
+set(Test_SRC
+src/Tests/main.c
+src/Tests/test_framework.h
+src/Tests/test_framework.c
+src/Tests/CoreLib.h
+src/Tests/Threading.h
 )
 
 # executable name
@@ -71,3 +86,10 @@ set_property(TARGET ${TARGET_NAME} APPEND PROPERTY
 #RELEASE
 set_property(TARGET ${TARGET_NAME} APPEND PROPERTY
   COMPILE_DEFINITIONS $<$<CONFIG:Release>:LT_RELEASE>)
+
+# executable name
+add_executable(${TEST_EXEC} ${Test_SRC} ${Llamathrust_SRC})
+target_include_directories(${TEST_EXEC} PUBLIC "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/external/" "${CMAKE_SOURCE_DIR}/external/log-c" "${CMAKE_SOURCE_DIR}/external/glad/include")
+
+set_property(TARGET ${TEST_EXEC} APPEND PROPERTY COMPILE_DEFINITIONS LT_TEST_FRAMEWORK LT_NO_MAIN LT_DEBUG)
+target_link_libraries(${TEST_EXEC} ${OPENGL_LIBRARY})

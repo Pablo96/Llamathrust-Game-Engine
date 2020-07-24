@@ -6,6 +6,7 @@ typedef void (*SwapBuffersFunc)(void);
 
 // Forward declaration
 typedef struct _Thread Thread;
+typedef struct _ThreadLock ThreadLock;
 typedef uint64 (*ThreadFuncWrapper)(void* name);
 
 
@@ -55,7 +56,17 @@ extern uint8 PlatformGetKeyState(int32 keyState);
 extern void* PlatformLoadSharedLib(const char* name);
 extern void* PlatformGetProc(const void* in_lib, const char* in_name);
 
-extern Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* paramter, const char* name);
+extern Thread* PlatformThreadCreate(const Thread *thread, ThreadFuncWrapper funcWrapper);
+extern void PlatformThreadStart(const Thread *thread);
+extern void PlatformGetCurrent(const Thread *thread);
 extern void PlatformThreadJoin(const Thread* thread);
 extern void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds);
-extern Thread* PlatformThreadGetCurrent(void);
+extern void PlatformThreadExit(const int16 exit_code);
+extern void PlatformThreadGetExitCode(Thread* thread);
+extern void PlatformThreadDestroy(Thread* thread);
+
+extern ThreadLock* PlatformThreadLockCreate();
+extern void PlatformThreadLockLock(ThreadLock* lock);
+extern void PlatformThreadLockUnock(ThreadLock* lock);
+extern void PlatformThreadLockDestroy(ThreadLock* lock);
+
