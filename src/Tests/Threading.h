@@ -1,5 +1,6 @@
 #pragma once
 #include "test_framework.h"
+#include <Common.h>
 #include <Thread.h>
 #include <ThreadPool.h>
 #include <CoreLib/Array.h>
@@ -142,6 +143,9 @@ START_TEST(TestThreadPool)
   LT_ThreadPoolAddTask(Task2, NULL);
   LT_ThreadPoolAddTask(Task3, NULL);
   LT_ThreadPoolAddTask(Task4, NULL);
+
+  Thread* this = LT_Thread_GetCurrent(NULL);
+  LT_Thread_Sleep(this, SECONDS(1));
 
   LT_ThreadPoolShutdown();
   return TEST_SUCCESS;

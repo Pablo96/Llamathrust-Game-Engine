@@ -107,6 +107,8 @@ extern Thread *LT_Thread_Create(Thread *this, ThreadFuncWrapper func,
  **/
 extern void LT_Thread_Start(Thread* thread);
 
+extern Thread* LT_Thread_GetCurrent(Thread *this);
+
 /**
  * @func LT_Thread_Join
  * @brief waits for a thread to finish.

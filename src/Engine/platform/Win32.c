@@ -175,6 +175,18 @@ extern void PlatformThreadStart(const Thread *thread) {
   ResumeThread(handle);
 }
 
+void PlatformGetCurrent(const Thread *thread) {
+  HANDLE threadhandle = GetCurrentThread();
+  DWORD threadID = GetCurrentThreadId();
+
+  ThreadWin winThd = {
+    .id = threadID,
+    .handle = threadhandle
+  };
+
+  memcpy(thread->reserved, &winThd, sizeof(ThreadWin));
+}
+
 void PlatformThreadJoin(const Thread* thread) {
   HANDLE handle = ((const ThreadWin*)thread)->handle;
   WaitForSingleObject(handle, INFINITE);

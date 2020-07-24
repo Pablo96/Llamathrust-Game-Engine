@@ -12,7 +12,8 @@
 #define LOCK_SIZE 32
 #endif
 
-static uint64 threadIDCount = 0;
+// ID 0 is reserved for current thread
+static uint64 threadIDCount = 1;
 
 Thread *LT_Thread_Create(Thread *this, ThreadFuncWrapper func, void *data,
                          const char *name, ThreadLock *lock) {
@@ -36,6 +37,28 @@ Thread *LT_Thread_Create(Thread *this, ThreadFuncWrapper func, void *data,
 
 void LT_Thread_Start(Thread *thread) {
   PlatformThreadStart(thread);
+}
+
+Thread* LT_Thread_GetCurrent(Thread *this) {
+  if (this == NULL) {
+    this = malloc(sizeof(Thread));
+  }
+  
+  Thread tmp = {
+      .lock = NULL,
+      .ID = 0,
+      .name = NULL,
+      .data = NULL,
+      .exitCode = 0,
+      .isValid = LT_TRUE
+  };
+
+  PlatformGetCurrent(&tmp);
+
+  // Search for current thread
+  memcpy(this, &tmp, sizeof(Thread));
+
+  return this;
 }
 
 void LT_Thread_Join(const Thread* thread) {

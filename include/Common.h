@@ -74,3 +74,8 @@ typedef float decimal;
 #else
 #define LT_ASSERT(positive_condition, msg, error_code)
 #endif
+
+
+#define MILISECONDS(x) x
+#define SECONDS(x) x * 1000
+#define MINUTES(x) x * 60 * 1000
