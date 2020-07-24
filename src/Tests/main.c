@@ -16,9 +16,9 @@ int main(int argc, const char** argv) {
     LT_ADD_TEST(TestThreadSpawn, TEST_SUCCESS);
     LT_ADD_TEST(TestThreadExitCode, TEST_SUCCESS);
     LT_ADD_TEST(TestThreadLock, TEST_SUCCESS);
-    
-    
     LT_ADD_TEST(TestThreadPool, TEST_SUCCESS);
+
+    
 
     return LT_TestRun();
 }
