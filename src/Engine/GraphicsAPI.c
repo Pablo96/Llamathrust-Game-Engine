@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <log.h>
 #include <stdlib.h>
+#include <ErrorCodes.h>
 
 GraphicsAPI api = {0};
 static uint8 isDepthTestingEnabled = LT_FALSE;
@@ -30,7 +31,7 @@ void LT_GraphicsAPI_Init(const API in_api) {
     LoadProc proc = InitOpenGL();
     if (gladLoadGLLoader(proc) == 0) {
       log_fatal("Could not initialize glad.");
-      exit(50);
+      exit(ERROR_GRAPHICS_API_INITIALIZATION);
     }
     api.clearScreenColor8 = GL_ClearScreenColor8;
     api.clearScreenColor = GL_ClearScreenColor;
@@ -45,7 +46,7 @@ void LT_GraphicsAPI_Init(const API in_api) {
   }
   case LT_VULKAN: {
     log_fatal("API %d not implemented!", in_api);
-    exit(54);
+    exit(ERROR_GRAPHICS_API_NOT_IMPLEMENTED);
     api.setViewport = VK_SetViewport;
   }
   }

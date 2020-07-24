@@ -1,18 +1,6 @@
 #pragma once
 #include "Common.h"
 
-#ifdef _WIN64
-#define LT_WINDOWS
-#elif defined(_WIN32)
-#error "Windows 32bit is not supported!"
-#elif defined(__ANDROID__)
-#define LT_ANDROID
-#elif defined(__linux__)
-#define LT_LINUX
-#elif defined(__APPLE__)
-#error "APPLE is not supported!"
-#endif
-
 typedef void* (*LoadProc)(const char* name);
 typedef void (*SwapBuffersFunc)(void);
 
@@ -60,18 +48,15 @@ Game* game = (Game*) malloc(sizeof(Game)); return GameConstructor(game); }
 typedef struct _Socket Socket;
 
 // GRAPHICS
-
 extern Window window;
 extern LoadProc InitOpenGL(void);
 extern SwapBuffersFunc GetPlatformSwapBuffer(void);
 
 // INPUT
-
 extern void PlatformInitInput(int32* in_keyStates);
 extern uint8 PlatformGetKeyState(int32 keyState);
 
 // DYNAMIC LIB
-
 extern void* PlatformLoadSharedLib(const char* name);
 extern void* PlatformGetProc(const void* in_lib, const char* in_name);
 
@@ -83,5 +68,9 @@ extern void PlatformSocketClose(const Socket* socket);
 extern bool PlatformSocketConnClose(const Socket* socket);
 extern bool PlatformSocketSend(const Socket* socket, const char* msg, const uint32 msg_len);
 extern bool PlatformSocketRecieve(const Socket* socket, char* msg, uint32* msg_len);
-extern Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* paramter, const char* name);
 
+// THREADING
+extern Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* paramter, const char* name);
+extern void PlatformThreadJoin(const Thread* thread);
+extern void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds);
+extern Thread* PlatformThreadGetCurrent(void);

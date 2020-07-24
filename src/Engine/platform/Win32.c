@@ -3,9 +3,10 @@
 #include "../Engine.h"
 #include "../Input.h"
 #include "../Performance.h"
-#include "../threading/thread.h"
 #include "ArgsParsing.h"
 #include <Networking.h>
+#include <Thread.h>
+#include <ErrorCodes.h>
 
 #include <log.h>
 
@@ -20,9 +21,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __clang__
+#ifdef LT_CLANG
 #include <stdnoreturn.h>
-#elif defined(_MSC_VER)
+#elif defined(LT_VS)
 #define noreturn
 #endif
 
@@ -57,6 +58,7 @@ static const LPTSTR CLASS_NAME = "GameWindow";
 static const LPTSTR GHOST_CLASS_NAME = "GhostWindow";
 noreturn static void Win32HandleError(int32 in_exitCode);
 
+#ifndef LT_NO_MAIN //used for running tests
 int main(int32 argc, const char **argv) {
   // Get handle to this executable
   hInstance = GetModuleHandle(NULL);
@@ -74,34 +76,17 @@ int main(int32 argc, const char **argv) {
   //-----------------------------------------------------------------
   // Check if is the only instance running
   //-----------------------------------------------------------------
-  if (config != NULL && config->isServer) {
-    // Try to open the mutex.
-    const char mutex_name[] = "LlamathrustMutexServer";
-    HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, mutex_name);
 
-    // If mutex doesnt exists create it and run the engine
-    if (!hMutex)
-      hMutex = CreateMutex(NULL, FALSE, mutex_name);
-    // Else there is an instance of the engine running
-    else {
-      const char error[] = "Server instance already running";
-      log_fatal(error);
-      return 48;
-    }
-  } else {
-    // Try to open the mutex.
-    const char mutex_name[] = "LlamathrustMutexClient";
-    HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, mutex_name);
+  // Try to open the mutex.
+  HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, "LlamathrustMutex");
 
-    // If mutex doesnt exists create it and run the engine
-    if (!hMutex)
-      hMutex = CreateMutex(NULL, FALSE, mutex_name);
-    // Else there is an instance of the engine running
-    else {
-      const char error[] = "Client instance already running";
-      log_fatal(error);
-      return 48;
-    }
+  // If mutex doesnt exists create it and run the engine
+  if (!hMutex)
+    hMutex = CreateMutex(NULL, FALSE, "LlamathrustMutex");
+  // Else there is an instance of the engine running
+  else {
+    log_fatal("Instance already running");
+    return ERROR_INSTANCE_ALREADY_RUNNING;
   }
   //-----------------------------------------------------------------
   // Start setting app the platform layer
@@ -151,7 +136,7 @@ int main(int32 argc, const char **argv) {
   
   return 0;
 }
-
+#endif
 //-----------------------------------------------------------------
 // System
 //-----------------------------------------------------------------
@@ -287,7 +272,7 @@ Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* parameter, con
     0,                // Default stack size
     funcWrapper,      // function that the thread will exec
     parameter,        // parameter to the function
-    CREATE_SUSPENDED, // do not start immediately
+    0,                // start immediately
     &threadID
   );
 
@@ -303,6 +288,29 @@ Thread* PlatformThreadCreate(ThreadFuncWrapper funcWrapper, void* parameter, con
 
   return ConstructThread(&winThd, sizeof(ThreadWin), name);
 }
+
+void PlatformThreadJoin(const Thread* thread) {
+  HANDLE handle = ((const ThreadWin*)thread)->handle;
+  WaitForSingleObject(handle, INFINITE);
+  CloseHandle(handle);
+}
+
+void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds) {
+  WaitForSingleObject(((const ThreadWin*)thread)->handle, (DWORD) miliseconds);
+}
+
+Thread* PlatformThreadGetCurrent() {
+  HANDLE this = GetCurrentThread();
+  DWORD id = GetThreadId(this);
+
+  ThreadWin winThd = {
+    .id = id,
+    .handle = this
+  };
+
+  return ConstructDummyThread(&winThd, sizeof(ThreadWin));
+}
+
 
 //-----------------------------------------------------------------
 // Input
@@ -448,9 +456,8 @@ void *Win32GetProc(const char *name) {
   proc = (void *)GetProcAddress(glInstance, name);
 
   if (proc == 0) {
-    const char log_fatal[] = "Retrieving %s failed.";
-    log_fatal(log_fatal, name);
-    Win32HandleError(50);
+    log_fatal("Retrieving %s failed.", name);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PROC_NOT_FOUND);
   }
 
   return proc;
@@ -460,7 +467,7 @@ LoadProc Win32InitOpenGL(void) {
   glInstance = LoadLibraryA("opengl32.dll");
   if (glInstance == 0) {
     log_fatal("Couldn't load opengl library.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_LIB_NOT_FOUND);
   }
 
   Window ghostWnd;
@@ -479,19 +486,19 @@ LoadProc Win32InitOpenGL(void) {
   int pixelFormat = ChoosePixelFormat(ghostWnd.device, &pfd);
   if (pixelFormat == 0) {
     log_fatal("ChoosePixelFormat failed.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
   }
 
   if (SetPixelFormat(ghostWnd.device, pixelFormat, &pfd) == 0) {
     log_fatal("SetPixelFormat failed.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
   }
 
   // Create temporary legacy context
   HGLRC oldOGLcontext = wglCreateContext(ghostWnd.device);
   if (oldOGLcontext == NULL) {
-    log_fatal("Create modern gl context failed.");
-    Win32HandleError(50);
+    log_fatal("Create gl context failed.");
+    Win32HandleError(ERROR_PLATFORM_OPENGL_CREATE_FAILED);
   }
   wglMakeCurrent(ghostWnd.device, oldOGLcontext);
 
@@ -536,19 +543,19 @@ LoadProc Win32InitOpenGL(void) {
 
   if (status == FALSE || numFormats == 0) {
     log_fatal("wglChoosePixelFormatARB() failed.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
   }
 
   PIXELFORMATDESCRIPTOR PFD;
   if (DescribePixelFormat(window.device, pixelFormatID, sizeof(PFD), &PFD) ==
       0) {
     log_fatal("Describe Modern PixelFormat failed.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
   }
 
   if (SetPixelFormat(window.device, pixelFormatID, &PFD) == 0) {
     log_fatal("Set Modern PixelFormat failed.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
   }
 
   const int major_min = 4;
@@ -565,7 +572,7 @@ LoadProc Win32InitOpenGL(void) {
       wglCreateContextAttribsARB(window.device, 0, contextAttribs);
   if (modernGLcontext == NULL) {
     log_fatal("Create modern gl context failed.");
-    Win32HandleError(50);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_CREATE_MODERN_FAILED);
   }
 
   // Delete legacy context and ghost window
@@ -611,9 +618,8 @@ void Win32_Helper_CreateWindow(Window *wnd, const char *in_wndClassName,
   );
 
   if (hwnd == NULL) {
-    const char log_msg[] = "Error creating window of class \"%s\".";
-    log_fatal(log_msg, in_wndClassName);
-    Win32HandleError(1);
+    log_fatal("Error creating window of class \"%s\".", in_wndClassName);
+    Win32HandleError(ERROR_PLATFORM_WINDOW_CREATION);
   }
 
   // save the window in the vector
@@ -631,9 +637,8 @@ void Win32_Helper_RegisterWindowClasses() {
   wcGame.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 
   if (!RegisterClassEx(&wcGame)) {
-    const char log_msg[] = "Error: Could not register Window Class \"%s\".";
-    log_fatal(log_msg, CLASS_NAME);
-    Win32HandleError(49);
+    log_fatal("Error: Could not register Window Class \"%s\".", CLASS_NAME);
+    Win32HandleError(ERROR_PLATFORM_WINDOWS_REGISTERCLASS);
   }
 
   // Register the game window class.
@@ -645,9 +650,9 @@ void Win32_Helper_RegisterWindowClasses() {
   wcGhost.lpszClassName = GHOST_CLASS_NAME;
 
   if (!RegisterClassEx(&wcGhost)) {
-    const char log_msg[] = "Error: Could not register Window Class \"%s\".";
-    log_fatal(log_msg, GHOST_CLASS_NAME);
-    Win32HandleError(49);
+    log_fatal("Error: Could not register Window Class \"%s\".",
+              GHOST_CLASS_NAME);
+    Win32HandleError(ERROR_PLATFORM_WINDOWS_REGISTERCLASS);
   }
 }
 
