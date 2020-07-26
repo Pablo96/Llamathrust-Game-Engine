@@ -1,11 +1,11 @@
 #include "Engine.h"
 #include "GraphicsAPI.h"
 #include "Input.h"
-#include <Networking.h>
 #include <GameManager.h>
+#include <Networking.h>
 #include <log.h>
 
-typedef void (RunFunc*)(const double deltaTime);
+typedef void(RunFunc *)(const double deltaTime);
 
 static RunFunc run;
 
@@ -13,16 +13,16 @@ void ServerRunFunc(const double deltaTime);
 void ClientRunFunc(const double deltaTime);
 void LocalRunFunc(const double deltaTime);
 
-void Engine_Start(const ConfigArgs* args) {
+void Engine_Start(const ConfigArgs *args) {
   log_trace("Engine is starting...");
 
   // load config file
   Config config = {
-    .graphic_api = LT_OPENGL,
-    .networking_support = LT_TRUE,
-    .is_server = LT_FALSE,
-    .port = 27854,
-    .ip = "127.0.0.1",
+      .graphic_api = LT_OPENGL,
+      .networking_support = LT_TRUE,
+      .is_server = LT_FALSE,
+      .port = 27854,
+      .ip = "127.0.0.1",
   };
 
   // override config with args
@@ -40,10 +40,9 @@ void Engine_Start(const ConfigArgs* args) {
     run = ServerRunFunc;
   else
     run = ClientRunFunc;
-  
 
   LT_InputInit();
-  
+
   LT_GraphicsAPI_Init(config.graphic_api);
 
   LT_NetworkingInit(&config);
@@ -53,18 +52,14 @@ void Engine_Start(const ConfigArgs* args) {
   log_info("Engine started!");
 }
 
-void Engine_Run(const double deltaTime) {
-  run(deltaTime);
-}
+void Engine_Run(const double deltaTime) { run(deltaTime); }
 
 void Engine_Shutdown() {
   log_trace("Engine is shuting down...");
   log_info("Engine shut down.");
 }
 
-
 // Main Funcitons
-
 
 void ServerRunFunc(const double deltaTime) {
   uint32 read;
@@ -72,16 +67,14 @@ void ServerRunFunc(const double deltaTime) {
 
   LT_NetworkingListen();
 
-  for (uint32 i=0; i < clientsCount; i++) {
+  for (uint32 i = 0; i < clientsCount; i++) {
     LT_NetworkingRead(readable, &read, 128);
     readable[read] = 0;
     log_info("client %u: %s", i, readable);
   }
 }
 
-void ClientRunFunc(const double deltaTime) {
-
-}
+void ClientRunFunc(const double deltaTime) {}
 
 void LocalRunFunc(const double deltaTime) {
   LT_GameStateUpdateCurrent(deltaTime);

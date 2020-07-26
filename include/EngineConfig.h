@@ -31,9 +31,9 @@ typedef enum _APIs API;
  *  @brief ip of the networking socket
  **/
 typedef struct _Config {
-    API graphic_api;
-    bool networking_support;
-    bool is_server;
-    uint16 port;
-    char ip[16];
+  API graphic_api;
+  bool networking_support;
+  bool is_server;
+  uint16 port;
+  char ip[16];
 } Config;

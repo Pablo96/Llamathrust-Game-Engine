@@ -4,23 +4,23 @@
  * @brief Here are all common types and defines.
  **/
 #pragma once
-#define NULL (void*)0
+#define NULL (void *)0
 #include <stdlib.h>
 
 // signed types
-typedef char        int8;
-typedef short int   int16;
-typedef int         int32;
-typedef long long   int64;
+typedef char int8;
+typedef short int int16;
+typedef int int32;
+typedef long long int64;
 // unsigned types
-typedef unsigned char       uint8;
-typedef unsigned short int  uint16;
-typedef unsigned int        uint32;
-typedef unsigned long long  uint64;
-typedef uint8               byte;
+typedef unsigned char uint8;
+typedef unsigned short int uint16;
+typedef unsigned int uint32;
+typedef unsigned long long uint64;
+typedef uint8 byte;
 
 // boolean
-typedef byte               bool;
+typedef byte bool;
 #define LT_FALSE (bool)0
 #define LT_TRUE (bool)1
 
@@ -34,7 +34,7 @@ typedef double decimal;
 typedef float decimal;
 #endif
 
-#define MAKE_FN_NAME(prefix, subfix) prefix ## subfix
+#define MAKE_FN_NAME(prefix, subfix) prefix##subfix
 
 #ifdef __clang__
 #define LT_CLANG
@@ -58,23 +58,25 @@ typedef float decimal;
 #error "APPLE is not supported!"
 #endif
 
-
 #ifdef LT_WINDOWS
-  #ifdef LT_TEST_FRAMEWORK
-    #define LT_DEBUG_BREAK(error_code) ExitThread(error_code)
-  #else
-    #define LT_DEBUG_BREAK(error_code) __debugbreak()
-  #endif
+#ifdef LT_TEST_FRAMEWORK
+#define LT_DEBUG_BREAK(error_code) ExitThread(error_code)
+#else
+#define LT_DEBUG_BREAK(error_code) __debugbreak()
+#endif
 #else
 #define LT_DEBUG_BREAK raise(SIGTRAP)
 #endif
 
 #ifdef LT_DEBUG
-#define LT_ASSERT(positive_condition, msg, error_code) if (!(positive_condition)) {log_error(msg); LT_DEBUG_BREAK(error_code);}
+#define LT_ASSERT(positive_condition, msg, error_code)                         \
+  if (!(positive_condition)) {                                                 \
+    log_error(msg);                                                            \
+    LT_DEBUG_BREAK(error_code);                                                \
+  }
 #else
 #define LT_ASSERT(positive_condition, msg, error_code)
 #endif
-
 
 #define MILISECONDS(x) x
 #define SECONDS(x) x * 1000

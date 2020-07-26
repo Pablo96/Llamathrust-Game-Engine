@@ -20,11 +20,10 @@
  *	@brief data element size in bytes.
  **/
 typedef struct _Array {
-    void *data;
-    const uint64 size;
-    const uint64 typeSize;
+  void *data;
+  const uint64 size;
+  const uint64 typeSize;
 } Array;
-
 
 /**
  * @func LT_ArrayCreate
@@ -53,7 +52,7 @@ Array LT_ArrayCreate(uint64 count, uint64 typeSize);
  * @return Array
  *  @brief array object
  **/
-Array LT_ArrayStackCreate(void* dataBuffer, uint64 count, uint64 typeSize);
+Array LT_ArrayStackCreate(void *dataBuffer, uint64 count, uint64 typeSize);
 
 /**
  * @func LT_ArrayCount
@@ -63,7 +62,7 @@ Array LT_ArrayStackCreate(void* dataBuffer, uint64 count, uint64 typeSize);
  *	@brief the array to operate on.
  * @return uint64
  **/
-uint64 LT_ArrayCount(const Array* array);
+uint64 LT_ArrayCount(const Array *array);
 
 /**
  * @func LT_ArrayDestroy
@@ -73,7 +72,7 @@ uint64 LT_ArrayCount(const Array* array);
  *	@type const Array pointer
  *	@brief the array to operate on.
  **/
-void LT_ArrayDestroy(Array* array);
+void LT_ArrayDestroy(Array *array);
 
 /**
  * @func LT_ArrayGetElement
@@ -87,7 +86,7 @@ void LT_ArrayDestroy(Array* array);
  * @return void pointer
  *  @brief pointer to the element at that index.
  **/
-void* LT_ArrayGetElement(const Array* array, const uint64 index);
+void *LT_ArrayGetElement(const Array *array, const uint64 index);
 
 /**
  * @func LT_ArrayGetElement
@@ -104,4 +103,4 @@ void* LT_ArrayGetElement(const Array* array, const uint64 index);
  *	@brief the element to set at the index position.
  * @return void
  **/
-void LT_ArraySetElement(const Array* array, const uint64 index, void* element);
+void LT_ArraySetElement(const Array *array, const uint64 index, void *element);

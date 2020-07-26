@@ -1,9 +1,9 @@
 #include "Input.h"
 #include <Common.h>
+#include <ErrorCodes.h>
 #include <Platform.h>
 #include <log.h>
 #include <stdlib.h>
-#include <ErrorCodes.h>
 static int32 key_states[KEYS_COUNT];
 
 void LT_InputInit() {

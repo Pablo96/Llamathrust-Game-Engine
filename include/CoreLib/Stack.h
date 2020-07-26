@@ -4,8 +4,8 @@
  * @brief Fixed size buffer Stack API.
  **/
 #pragma once
-#include <Common.h>
 #include "Array.h"
+#include <Common.h>
 
 /**
  * @struct Stack
@@ -22,11 +22,10 @@
  *	@brief if empty is set to LT_TRUE.
  **/
 typedef struct _Stack {
-    Array array;
-    uint64 elements_count;
-    bool isEmpty;
+  Array array;
+  uint64 elements_count;
+  bool isEmpty;
 } Stack;
-
 
 /**
  * @func LT_StackCreate
@@ -48,7 +47,7 @@ Stack LT_StackCreate(uint64 size, uint64 typeSize);
  *	@type const Array pointer
  *	@brief the array to operate on.
  **/
-void LT_StackDestroy(Stack* stack);
+void LT_StackDestroy(Stack *stack);
 
 /**
  * @func LT_StackPop
@@ -61,8 +60,7 @@ void LT_StackDestroy(Stack* stack);
  * @return void pointer
  *  @brief The last element.
  **/
-void* LT_StackPop(Stack* stack);
-
+void *LT_StackPop(Stack *stack);
 
 /**
  * @func LT_StackTop
@@ -75,7 +73,7 @@ void* LT_StackPop(Stack* stack);
  * @return void pointer
  *  @brief The last element.
  **/
-void* LT_StackTop(Stack* stack);
+void *LT_StackTop(Stack *stack);
 
 /**
  * @func LT_StackPush
@@ -87,4 +85,4 @@ void* LT_StackTop(Stack* stack);
  *	@type void pointer
  *	@brief element to put at top of the stack
  **/
-void LT_StackPush(Stack* stack, void* element);
+void LT_StackPush(Stack *stack, void *element);

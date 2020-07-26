@@ -5,15 +5,15 @@
  * for systems initialization, main loop and systems shutdown.
  **/
 #pragma once
-#include <Common.h>
 #include "platform/ArgsParsing.h"
+#include <Common.h>
 extern void LT_CloseWindow(void);
 
 /**
  * @func Engine_Start
  * @brief Initialize all systems and the game_client/game_server.
  **/
-void Engine_Start(const ConfigArgs* args);
+void Engine_Start(const ConfigArgs *args);
 
 /**
  * @func Engine_Run

@@ -1,6 +1,6 @@
 #pragma once
-#include <Common.h>
 #include "Array.h"
+#include <Common.h>
 
 /**
  * @struct Queue
@@ -23,16 +23,16 @@
  *	@brief if empty is set to LT_TRUE.
  **/
 typedef struct _Queue {
-    Array array;
-    uint64 last_element_index;
-    uint64 first_element_index;
-    uint64 count;
-    bool isEmpty;
+  Array array;
+  uint64 last_element_index;
+  uint64 first_element_index;
+  uint64 count;
+  bool isEmpty;
 } Queue;
 
 Queue LT_QueueCreate(const uint64 size, const uint64 elementSize);
 
-void LT_QueueDestroy(Queue* queue);
+void LT_QueueDestroy(Queue *queue);
 
 /**
  * @func LT_QueuePop
@@ -43,9 +43,8 @@ void LT_QueueDestroy(Queue* queue);
  * @return void pointer
  *  @brief The first element.
  **/
-void* LT_QueuePop(Queue* queue);
+void *LT_QueuePop(Queue *queue);
 
-void* LT_QueueFirst(Queue* queue);
+void *LT_QueueFirst(Queue *queue);
 
-void LT_QueuePush(Queue* queue, void* element);
-
+void LT_QueuePush(Queue *queue, void *element);

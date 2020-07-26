@@ -5,7 +5,7 @@
  **/
 #pragma once
 #include <Common.h>
-typedef void* SharedLib;
+typedef void *SharedLib;
 
 /**
  * @func LT_LoadSharedLibrary
@@ -14,7 +14,7 @@ typedef void* SharedLib;
  *   @type const char pointer
  *   @brief name of the shared library without extension
  **/
-SharedLib LT_LoadSharedLibrary(const char* in_name);
+SharedLib LT_LoadSharedLibrary(const char *in_name);
 
 /**
  * @func LT_GetProcAddrFromSharedLib
@@ -26,4 +26,4 @@ SharedLib LT_LoadSharedLibrary(const char* in_name);
  *   @type const char* pointer
  *   @brief name of the asset in the shared library
  **/
-void* LT_GetProcAddrFromSharedLib(const SharedLib in_lib, const char* in_name);
+void *LT_GetProcAddrFromSharedLib(const SharedLib in_lib, const char *in_name);

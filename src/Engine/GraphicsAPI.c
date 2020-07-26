@@ -1,9 +1,9 @@
 #include "GraphicsAPI.h"
+#include <ErrorCodes.h>
 #include <Platform.h>
 #include <glad/glad.h>
 #include <log.h>
 #include <stdlib.h>
-#include <ErrorCodes.h>
 
 GraphicsAPI api = {0};
 static uint8 isDepthTestingEnabled = LT_FALSE;
@@ -93,11 +93,11 @@ void GL_EnableDepthTesting(const uint8 in_value) {
 }
 
 void GL_EnableStencilTesting(const uint8 in_value) {
-   if (in_value == LT_FALSE && isStencilTestingEnabled == LT_TRUE) {
+  if (in_value == LT_FALSE && isStencilTestingEnabled == LT_TRUE) {
     glDisable(GL_STENCIL_TEST);
     isStencilTestingEnabled = LT_FALSE;
   }
-   if (in_value == LT_TRUE && isStencilTestingEnabled == LT_FALSE) {
+  if (in_value == LT_TRUE && isStencilTestingEnabled == LT_FALSE) {
     glEnable(GL_STENCIL_TEST);
     isStencilTestingEnabled = LT_TRUE;
   }
@@ -119,7 +119,7 @@ void GL_EnableScissorTesting(const uint8 in_value) {
     glDisable(GL_SCISSOR_TEST);
     isScissorTestingEnabled = LT_FALSE;
   }
-   if (in_value == LT_TRUE && isScissorTestingEnabled == LT_FALSE) {
+  if (in_value == LT_TRUE && isScissorTestingEnabled == LT_FALSE) {
     glEnable(GL_SCISSOR_TEST);
     isScissorTestingEnabled = LT_TRUE;
   }

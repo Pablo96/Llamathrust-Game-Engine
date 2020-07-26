@@ -15,43 +15,52 @@ typedef struct _Game Game;
  * @brief Generates a function OnCreate for the GameStructName
  * @example MAKE_ON_CREATE(Test) => void TestOnCreate(params...)
  **/
-#define MAKE_ON_CREATE(GameStructName) void MAKE_FN_NAME(GameStructName, OnCreate)(Game* this, const char* callerGame, const void* stateData)
+#define MAKE_ON_CREATE(GameStructName)                                         \
+  void MAKE_FN_NAME(GameStructName, OnCreate)(                                 \
+      Game * this, const char *callerGame, const void *stateData)
 /**
  * @def MAKE_ON_RESUME
  * @param GameStructName
  * @brief Generates a function OnResume for the GameStructName
  * @example MAKE_ON_RESUME(Test) => void TestOnResume(params...)
  **/
-#define MAKE_ON_RESUME(GameStructName) void MAKE_FN_NAME(GameStructName, OnResume)(Game* this)
+#define MAKE_ON_RESUME(GameStructName)                                         \
+  void MAKE_FN_NAME(GameStructName, OnResume)(Game * this)
 /**
  * @def MAKE_ON_UPDATE
  * @param GameStructName
  * @brief Generates a function OnUpdate for the GameStructName
  * @example MAKE_ON_UPDATE(Test) => void TestOnUpdate(params...)
  **/
-#define MAKE_ON_UPDATE(GameStructName) void MAKE_FN_NAME(GameStructName, OnUpdate)(Game* this, const double deltaTime)
+#define MAKE_ON_UPDATE(GameStructName)                                         \
+  void MAKE_FN_NAME(GameStructName, OnUpdate)(Game * this,                     \
+                                              const double deltaTime)
 /**
  * @def MAKE_ON_STOP
  * @param GameStructName
  * @brief Generates a function OnStop for the GameStructName
  * @example MAKE_ON_STOP(Test) => void TestOnStop(params...)
  **/
-#define MAKE_ON_STOP(GameStructName) void MAKE_FN_NAME(GameStructName, OnStop)(Game* this)
+#define MAKE_ON_STOP(GameStructName)                                           \
+  void MAKE_FN_NAME(GameStructName, OnStop)(Game * this)
 /**
  * @def MAKE_ON_DESTROY
  * @param GameStructName
  * @brief Generates a function OnDestroy for the GameStructName
  * @example MAKE_ON_DESTROY(Test) => void TestOnDestroy(params...)
  **/
-#define MAKE_ON_DESTROY(GameStructName) void MAKE_FN_NAME(GameStructName, OnDestroy)(Game* this)
+#define MAKE_ON_DESTROY(GameStructName)                                        \
+  void MAKE_FN_NAME(GameStructName, OnDestroy)(Game * this)
 
 /**
  * @def MAKE_CONSTRUCTOR
  * @param GameStructName
- * @brief Generates a function declaration with the naming convection for constructors
+ * @brief Generates a function declaration with the naming convection for
+ *constructors
  * @example MAKE_CONSTRUCTOR(Test) Game* TestConstructor(Game* gameObject)
  **/
-#define MAKE_CONSTRUCTOR(GameStructName) Game* MAKE_FN_NAME(GameStructName, Constructor)(Game* gameObject)
+#define MAKE_CONSTRUCTOR(GameStructName)                                       \
+  Game *MAKE_FN_NAME(GameStructName, Constructor)(Game * gameObject)
 
 /**
  * @func OnCreateFunc
@@ -69,7 +78,8 @@ typedef struct _Game Game;
  *   @brief Data passed by the caller game.
  *   @note This param is null if this is the first game loaded
  **/
-typedef void (*OnCreateFunc)(Game* this, const char* callerGame, const void* stateData);
+typedef void (*OnCreateFunc)(Game *this, const char *callerGame,
+                             const void *stateData);
 
 /**
  * @func OnResumeFunc
@@ -79,7 +89,7 @@ typedef void (*OnCreateFunc)(Game* this, const char* callerGame, const void* sta
  *   @type Game pointer
  *   @brief Reference to the game object it works on
  **/
-typedef void (*OnResumeFunc)(Game* this);
+typedef void (*OnResumeFunc)(Game *this);
 
 /**
  * @func OnUpdateFunc
@@ -92,7 +102,7 @@ typedef void (*OnResumeFunc)(Game* this);
  *   @type const double
  *   @brief The elapsed time between frames.
  **/
-typedef void (*OnUpdateFunc)(Game* this, const double deltaTime);
+typedef void (*OnUpdateFunc)(Game *this, const double deltaTime);
 
 /**
  * @func OnStopFunc
@@ -102,7 +112,7 @@ typedef void (*OnUpdateFunc)(Game* this, const double deltaTime);
  *   @type Game pointer
  *   @brief Reference to the game object it works on
  **/
-typedef void (*OnStopFunc)(Game* this);
+typedef void (*OnStopFunc)(Game *this);
 /**
  * @func OnDestroyFunc
  * @brief Called when the game is destroyed.
@@ -111,12 +121,12 @@ typedef void (*OnStopFunc)(Game* this);
  *   @type Game pointer
  *   @brief Reference to the game object it works on
  **/
-typedef void (*OnDestroyFunc)(Game* this);
+typedef void (*OnDestroyFunc)(Game *this);
 
 /**
  * @struct Game
  * @brief Defines a game.
- * 
+ *
  * @field idName
  *   @type const char pointer
  *   @brief is the id_name of the game.
@@ -141,11 +151,11 @@ typedef void (*OnDestroyFunc)(Game* this);
  *   @see @func OnDestroyFunc
  **/
 typedef struct _Game {
-    const char* idName;
-    void* customData;
-    OnCreateFunc OnCreate;
-    OnResumeFunc OnResume;
-    OnUpdateFunc OnUpdate;
-    OnStopFunc OnStop;
-    OnDestroyFunc OnDestroy;
+  const char *idName;
+  void *customData;
+  OnCreateFunc OnCreate;
+  OnResumeFunc OnResume;
+  OnUpdateFunc OnUpdate;
+  OnStopFunc OnStop;
+  OnDestroyFunc OnDestroy;
 } Game;

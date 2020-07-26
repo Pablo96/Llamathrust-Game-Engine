@@ -4,16 +4,15 @@
 #include "../Input.h"
 #include "../Performance.h"
 #include "ArgsParsing.h"
+#include <ErrorCodes.h>
 #include <Networking.h>
 #include <Thread.h>
-#include <ErrorCodes.h>
 
 #include <log.h>
 
-#include <WinSock2.h>
 #include <WS2tcpip.h>
+#include <WinSock2.h>
 #include <wingdi.h>
-
 
 #include <gl/GL.h>
 #include <gl/wglext.h>
@@ -58,7 +57,7 @@ static const LPTSTR CLASS_NAME = "GameWindow";
 static const LPTSTR GHOST_CLASS_NAME = "GhostWindow";
 noreturn static void Win32HandleError(int32 in_exitCode);
 
-#ifndef LT_NO_MAIN //used for running tests
+#ifndef LT_NO_MAIN // used for running tests
 int main(int32 argc, const char **argv) {
   // Get handle to this executable
   hInstance = GetModuleHandle(NULL);
@@ -66,7 +65,7 @@ int main(int32 argc, const char **argv) {
   //-----------------------------------------------------------------
   // Parse command line arguments
   //-----------------------------------------------------------------
-  const ConfigArgs* config = NULL;
+  const ConfigArgs *config = NULL;
   if (argc > 1) {
     config = parseArgs(argv, argc);
     const char log_msg[] = "Command line arguments parsed!.";
@@ -94,7 +93,7 @@ int main(int32 argc, const char **argv) {
   Win32_Helper_RegisterWindowClasses();
 
   // NetWorking
-  Win32_Helper_InitNetworking(); 
+  Win32_Helper_InitNetworking();
 
   //-----------------------------------------------------------------
   // Start the engine
@@ -133,30 +132,30 @@ int main(int32 argc, const char **argv) {
   // Networking
   if (has_networking)
     WSACleanup();
-  
+
   return 0;
 }
 #endif
 //-----------------------------------------------------------------
 // System
 //-----------------------------------------------------------------
-void* PlatformLoadSharedLib(const char* in_name) {
+void *PlatformLoadSharedLib(const char *in_name) {
   const size_t size = strlen(in_name);
-  
-  char* name_dll = malloc(size + 5);
+
+  char *name_dll = malloc(size + 5);
   memcpy(name_dll, in_name, size);
   name_dll[size] = 0;
 
   strcat(name_dll, ".dll");
-  
-  void* lib = LoadLibrary(name_dll);
+
+  void *lib = LoadLibrary(name_dll);
   free(name_dll);
-  
+
   return lib;
 }
 
-void* PlatformGetProc(const void* in_lib, const char* in_name){
-  return (void*) GetProcAddress((HMODULE) in_lib, in_name);
+void *PlatformGetProc(const void *in_lib, const char *in_name) {
+  return (void *)GetProcAddress((HMODULE)in_lib, in_name);
 }
 
 //-----------------------------------------------------------------
@@ -165,7 +164,7 @@ void* PlatformGetProc(const void* in_lib, const char* in_name){
 
 void Win32_Helper_InitNetworking(void) {
   WSADATA wsaData;
-  int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+  int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
   if (iResult != 0) {
     const char log_msg[] = "WSAStartup failed with error: %d";
     log_error(log_msg, iResult);
@@ -175,27 +174,34 @@ void Win32_Helper_InitNetworking(void) {
   has_networking = TRUE;
 }
 
-void PlatformSocketCreate(const Socket* in_socket, bool is_server, bool is_IPv6) {
+void PlatformSocketCreate(const NetSocket *in_socket, bool is_IPv6) {
   hints.sin_family = is_IPv6 ? AF_INET6 : AF_INET;
   hints.sin_port = htons(in_socket->port);
   // convert ip name to binary address
-  inet_pton(hints.sin_family, in_socket->ip,  &hints.sin_addr);
+  inet_pton(hints.sin_family, in_socket->ip, &hints.sin_addr);
 
   // Create a SOCKET for connecting to server
-  in_socket->reserved = socket(
-    hints.sin_family,                      
-    SOCK_DGRAM,                             //SOCK_DGRAM = UDP SOCK_STREAM = TCP
-    is_server ? AI_PASSIVE : AI_NUMERICHOST // if server then say is gonna be bind else specify it should be a numeric IP
-    );
+  in_socket->reserved =
+      socket(hints.sin_family,
+             in_socket->type == UDP
+                 ? SOCK_DGRAM
+                 : SOCK_STREAM, // SOCK_DGRAM = UDP SOCK_STREAM = TCP
+             in_socket->type == UDP
+                 ? IPPROTO_UDP
+                 : IPPROTO_TCP // if server then say is gonna be bind else
+                               // specify it should be a numeric IP
+      );
 
   // Check if it is a valid socket
-  if (in_socket->reserved == INVALID_SOCKET) {
+  in_socket->isValid = in_socket->reserved == INVALID_SOCKET;
+  if (in_socket->isValid) {
     log_error("socket failed with error: %ld\n", WSAGetLastError());
   }
 }
 
-bool PlatformSocketBind(const Socket* in_socket) {
-  int result = bind((SOCKET) in_socket->reserved, (sockaddr*)&hints, sizeof(hints));
+bool PlatformSocketBind(const NetSocket *in_socket) {
+  int result =
+      bind((SOCKET)in_socket->reserved, (sockaddr *)&hints, sizeof(hints));
   if (result == SOCKET_ERROR) {
     log_error("Couldnt bind socket!");
     return LT_FALSE;
@@ -203,22 +209,26 @@ bool PlatformSocketBind(const Socket* in_socket) {
   return LT_TRUE;
 }
 
-Socket* PlatformSocketListenAndAccept(const Socket* in_socket) {
-  SOCKET sock = (SOCKET) in_socket->reserved;
+bool PlatformSocketListen(const NetSocket *in_socket) {
+  SOCKET sock = (SOCKET)in_socket->reserved;
   int result = listen(sock, SOMAXCONN);
   if (result == SOCKET_ERROR) {
-      log_error("Listen failed with error: %d", WSAGetLastError());
-      return NULL;
+    log_error("Listen failed with error: %d", WSAGetLastError());
+    return LT_FALSE;
   }
+  return LT_TRUE;
+}
 
+NetSocket *PlatformSocketAccept(const NetSocket *in_socket) {
+  SOCKET sock = (SOCKET)in_socket->reserved;
   struct sockaddr_in addr = {0};
-  SOCKET clientSocket = accept(sock, (struct sockaddr*)&addr, NULL);
+  SOCKET clientSocket = accept(sock, (struct sockaddr *)&addr, NULL);
   if (ClientSocket == INVALID_SOCKET) {
     log_error("Accept failed with error: %d", WSAGetLastError());
     return NULL;
   }
 
-  Socket* client = (Socket*) malloc(sizeof(Socket));
+  NetSocket *client = (NetSocket *)malloc(sizeof(Socket));
   client->ip = inet_ntoa(addr.sin_addr);
   client->port = ntohs(addr.sin_port);
   client->type = 0;
@@ -226,14 +236,14 @@ Socket* PlatformSocketListenAndAccept(const Socket* in_socket) {
   return client;
 }
 
-void PlatformSocketClose(const Socket* socket) {
-  closesocket((SOCKET) socket->reserved);
+void PlatformSocketClose(const NetSocket *socket) {
+  closesocket((SOCKET)socket->reserved);
   socket->reserved = NULL;
 }
 
-bool PlatformSocketConnClose(const Socket* socket) {
+bool PlatformSocketConnClose(const NetSocket *socket) {
   // shutdown the connection since no more data will be sent
-  int iResult = shutdown((SOCKET) socket->reserved, SD_SEND);
+  int iResult = shutdown((SOCKET)socket->reserved, SD_SEND);
   if (iResult == SOCKET_ERROR) {
     log_error("Shutdown failed with error: %d", WSAGetLastError());
     closesocket(ConnectSocket);
@@ -243,8 +253,9 @@ bool PlatformSocketConnClose(const Socket* socket) {
   return LT_TRUE;
 }
 
-bool PlatformSocketSend(const Socket* socket, const char* msg, const uint32 msg_len) {
-  int iResult = send((SOCKET) socket->reserved, msg, (int) msg_len, 0 );
+bool PlatformSocketSend(const NetSocket *socket, const char *msg,
+                        const uint32 msg_len) {
+  int iResult = send((SOCKET)socket->reserved, msg, (int)msg_len, 0);
   if (iResult == SOCKET_ERROR) {
     log_error("Send failed with error: %d", WSAGetLastError());
     return LT_FALSE;
@@ -252,12 +263,15 @@ bool PlatformSocketSend(const Socket* socket, const char* msg, const uint32 msg_
   return LT_TRUE;
 }
 
-bool PlatformSocketRecieve(const Socket* socket, char* msg, uint32* msg_len, const uint32 max_size) {
-  int buffer_size = max_size > MAX_PACKET_SIZE ? (int) MAX_PACKET_SIZE : (int) max_size;
-  *msg_len = recv((SOCKET) socket->reserved, msg, buffer_size, 0);
-  if (*msg_len  == 0 ) {
-    if (*msg_len < 0 )
-      log_error("connection closed or send failed with error: %d", WSAGetLastError());
+bool PlatformSocketRecieve(const NetSocket *socket, char *msg, uint32 *msg_len,
+                           const uint32 max_size) {
+  int buffer_size =
+      max_size > MAX_PACKET_SIZE ? (int)MAX_PACKET_SIZE : (int)max_size;
+  *msg_len = recv((SOCKET)socket->reserved, msg, buffer_size, 0);
+  if (*msg_len == 0) {
+    if (*msg_len < 0)
+      log_error("connection closed or send failed with error: %d",
+                WSAGetLastError());
     return LT_FALSE;
   }
   return LT_TRUE;
@@ -266,30 +280,26 @@ bool PlatformSocketRecieve(const Socket* socket, char* msg, uint32* msg_len, con
 Thread *PlatformThreadCreate(const Thread *thread,
                              ThreadFuncWrapper funcWrapper) {
   DWORD threadID;
-  HANDLE threadhandle = CreateThread(
-    NULL,             // cant be inherited
-    0,                // Default stack size
-    funcWrapper,      // function that the thread will exec
-    thread,             // parameter to the function
-    CREATE_SUSPENDED, // won't start immediately
-    &threadID
-  );
+  HANDLE threadhandle =
+      CreateThread(NULL,             // cant be inherited
+                   0,                // Default stack size
+                   funcWrapper,      // function that the thread will exec
+                   thread,           // parameter to the function
+                   CREATE_SUSPENDED, // won't start immediately
+                   &threadID);
 
   if (threadhandle == NULL) {
     log_error("Failed to create thread.");
     Win32HandleError(54);
   }
 
-  ThreadWin winThd = {
-    .id = threadID,
-    .handle = threadhandle
-  };
+  ThreadWin winThd = {.id = threadID, .handle = threadhandle};
 
   memcpy(thread->reserved, &winThd, sizeof(ThreadWin));
   return thread;
 }
 
-extern void PlatformThreadStart(const Thread *thread) { 
+extern void PlatformThreadStart(const Thread *thread) {
   HANDLE handle = ((const ThreadWin *)thread)->handle;
   ResumeThread(handle);
 }
@@ -298,56 +308,46 @@ void PlatformGetCurrent(const Thread *thread) {
   HANDLE threadhandle = GetCurrentThread();
   DWORD threadID = GetCurrentThreadId();
 
-  ThreadWin winThd = {
-    .id = threadID,
-    .handle = threadhandle
-  };
+  ThreadWin winThd = {.id = threadID, .handle = threadhandle};
 
   memcpy(thread->reserved, &winThd, sizeof(ThreadWin));
 }
 
-void PlatformThreadJoin(const Thread* thread) {
-  HANDLE handle = ((const ThreadWin*)thread)->handle;
+void PlatformThreadJoin(const Thread *thread) {
+  HANDLE handle = ((const ThreadWin *)thread)->handle;
   WaitForSingleObject(handle, INFINITE);
 }
 
-void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds) {
-  WaitForSingleObject(((const ThreadWin*)thread)->handle, (DWORD) miliseconds);
+void PlatformThreadSleep(const Thread *thread, const uint64 miliseconds) {
+  WaitForSingleObject(((const ThreadWin *)thread)->handle, (DWORD)miliseconds);
 }
 
-void PlatformThreadExit(const int16 exit_code) {
-  ExitThread(exit_code);
-}
+void PlatformThreadExit(const int16 exit_code) { ExitThread(exit_code); }
 
-void PlatformThreadGetExitCode(Thread* thread) {
-  ThreadWin* this =  (const ThreadWin*)thread;
+void PlatformThreadGetExitCode(Thread *thread) {
+  ThreadWin *this = (const ThreadWin *)thread;
   DWORD exit_code;
   GetExitCodeThread(this->handle, &exit_code);
-  thread->exitCode = (int32) exit_code;
+  thread->exitCode = (int32)exit_code;
 }
 
-void PlatformThreadDestroy(Thread* thread) {
-  CloseHandle(((const ThreadWin*)thread)->handle);
+void PlatformThreadDestroy(Thread *thread) {
+  CloseHandle(((const ThreadWin *)thread)->handle);
 }
 
-ThreadLock* PlatformThreadLockCreate() {
+ThreadLock *PlatformThreadLockCreate() {
   LPCRITICAL_SECTION lock = malloc(sizeof(CRITICAL_SECTION));
   InitializeCriticalSection(lock);
   return lock;
 }
 
-void PlatformThreadLockLock(ThreadLock* lock) {
-  EnterCriticalSection(lock);
-}
+void PlatformThreadLockLock(ThreadLock *lock) { EnterCriticalSection(lock); }
 
-void PlatformThreadLockUnock(ThreadLock* lock) {
-  LeaveCriticalSection(lock);
-}
+void PlatformThreadLockUnock(ThreadLock *lock) { LeaveCriticalSection(lock); }
 
-void PlatformThreadLockDestroy(ThreadLock* lock) {
+void PlatformThreadLockDestroy(ThreadLock *lock) {
   DeleteCriticalSection(lock);
 }
-
 
 //-----------------------------------------------------------------
 // Input
@@ -481,9 +481,7 @@ uint8 PlatformGetKeyState(int32 key_state) { return win32KeyStates[key_state]; }
 //-----------------------------------------------------------------
 // Window | Graphics
 //-----------------------------------------------------------------
-void LT_CloseWindow(void) {
-  shouldClose = TRUE;
-}
+void LT_CloseWindow(void) { shouldClose = TRUE; }
 
 void *Win32GetProc(const char *name) {
   void *proc = (void *)wglGetProcAddress(name);
@@ -783,6 +781,5 @@ noreturn void Win32HandleError(int32 in_exitCode) {
 
   exit(in_exitCode);
 }
-
 
 #endif

@@ -14,7 +14,7 @@
  *	@brief If this is a server application for a game.
  **/
 typedef struct _ConfigArgs {
-    bool isServer;
+  bool isServer;
 } ConfigArgs;
 
 /**
@@ -29,4 +29,4 @@ typedef struct _ConfigArgs {
  * @return Config
  *  @brief configuration struct
  **/
-extern const ConfigArgs* parseArgs(const char** argsv, const int size);
+extern const ConfigArgs *parseArgs(const char **argsv, const int size);

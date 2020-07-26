@@ -105,7 +105,11 @@ typedef struct _Color {
  * @tag LT_STENCIL_BIT
  *    @brief Stencil buffer
  **/
-typedef enum _BufferBit { LT_COLOR_BIT = 1, LT_DEPTH_BIT = 2, LT_STENCIL_BIT = 4 } BufferBit;
+typedef enum _BufferBit {
+  LT_COLOR_BIT = 1,
+  LT_DEPTH_BIT = 2,
+  LT_STENCIL_BIT = 4
+} BufferBit;
 
 /**
  * @struct GraphicsAPI
@@ -123,7 +127,6 @@ typedef struct _GraphicsAPI {
   void (*setViewport)(const Rect *in_value);
   void (*swapBuffers)(void);
 } GraphicsAPI;
-
 
 extern GraphicsAPI api;
 

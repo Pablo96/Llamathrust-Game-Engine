@@ -15,20 +15,20 @@
 #endif
 
 #ifdef LT_DEBUG
-#define ASSERT_RESERVED_SIZE(size) \
-if (size > PLATFORM_THREAD_SIZE) {\
-log_fatal("Size of platform object(%u) is greater than MAX_SIZE(%u)", size, PLATFORM_THREAD_SIZE);\
-exit(36);}
+#define ASSERT_RESERVED_SIZE(size)                                             \
+  if (size > PLATFORM_THREAD_SIZE) {                                           \
+    log_fatal("Size of platform object(%u) is greater than MAX_SIZE(%u)",      \
+              size, PLATFORM_THREAD_SIZE);                                     \
+    exit(36);                                                                  \
+  }
 #else
 #define ASSERT_RESERVED_SIZE(size)
 #endif
 
-
-typedef uint64 (*ThreadFuncWrapper)(void*);
-
+typedef uint64 (*ThreadFuncWrapper)(void *);
 
 typedef struct _ThreadLock {
-    byte reserved[LOCK_SIZE];
+  byte reserved[LOCK_SIZE];
 } ThreadLock;
 
 #undef LOCK_SIZE
@@ -60,13 +60,13 @@ typedef struct _ThreadLock {
  *  @brief true when the thread has not been shutdown.
  **/
 typedef struct _Thread {
-    byte reserved[PLATFORM_THREAD_SIZE];
-    ThreadLock* lock;
-    const uint64 ID;
-    const char* name;
-    void *data;
-    int32 exitCode;
-    bool isValid;
+  byte reserved[PLATFORM_THREAD_SIZE];
+  ThreadLock *lock;
+  const uint64 ID;
+  const char *name;
+  void *data;
+  int32 exitCode;
+  bool isValid;
 } Thread;
 
 #undef MAX_RESERVED_SIZE
@@ -77,7 +77,8 @@ typedef struct _Thread {
  * @param this
  *  @type Thread pointer
  *  @brief OPTIONAL: allocated memory for this thread.
- *  @note If null the function allocate memory and returns it. This is passed as thread function param. 
+ *  @note If null the function allocate memory and returns it. This is passed as
+ *thread function param.
  * @param func:
  *	@type ThreadFuncWrapper
  *	@brief function to execute on the thread.
@@ -94,7 +95,7 @@ typedef struct _Thread {
  *  @brief reference to the thread created.
  **/
 extern Thread *LT_Thread_Create(Thread *this, ThreadFuncWrapper func,
-                                void* data, const char *name, ThreadLock *lock);
+                                void *data, const char *name, ThreadLock *lock);
 
 /**
  * @func LT_Thread_Create
@@ -105,9 +106,9 @@ extern Thread *LT_Thread_Create(Thread *this, ThreadFuncWrapper func,
  *	@brief the thread to wait for.
  * @return void
  **/
-extern void LT_Thread_Start(Thread* thread);
+extern void LT_Thread_Start(Thread *thread);
 
-extern Thread* LT_Thread_GetCurrent(Thread *this);
+extern Thread *LT_Thread_GetCurrent(Thread *this);
 
 /**
  * @func LT_Thread_Join
@@ -117,7 +118,7 @@ extern Thread* LT_Thread_GetCurrent(Thread *this);
  *	@brief the thread to wait for.
  * @return void
  **/
-extern void LT_Thread_Join(const Thread* thread);
+extern void LT_Thread_Join(const Thread *thread);
 
 /**
  * @func LT_ThreadExitCode
@@ -127,7 +128,7 @@ extern void LT_Thread_Join(const Thread* thread);
  *	@brief thread to get the exit code from.
  * @return void
  **/
-extern void LT_Thread_ExitCode(Thread* thread);
+extern void LT_Thread_ExitCode(Thread *thread);
 
 /**
  * @func LT_ThreadExit
@@ -151,7 +152,7 @@ extern void LT_Thread_Exit(const int32 exit_code);
  *	@brief the amount of millisecond to wait.
  * @return void
  **/
-extern void LT_Thread_Sleep(const Thread* thread, const uint64 miliseconds);
+extern void LT_Thread_Sleep(const Thread *thread, const uint64 miliseconds);
 
 /**
  * @func LT_ThreadDestroy
@@ -160,10 +161,9 @@ extern void LT_Thread_Sleep(const Thread* thread, const uint64 miliseconds);
  *	@type thread pointer
  *	@brief thread to invalidate.
  **/
-extern void LT_Thread_Destroy(Thread* thread);
+extern void LT_Thread_Destroy(Thread *thread);
 
-
-extern ThreadLock* LT_ThreadLock_Create(void);
-extern void LT_ThreadLock_Lock(ThreadLock* lock);
-extern void LT_ThreadLock_Unlock(ThreadLock* lock);
-extern void LT_ThreadLock_Destroy(ThreadLock* lock);
+extern ThreadLock *LT_ThreadLock_Create(void);
+extern void LT_ThreadLock_Lock(ThreadLock *lock);
+extern void LT_ThreadLock_Unlock(ThreadLock *lock);
+extern void LT_ThreadLock_Destroy(ThreadLock *lock);
