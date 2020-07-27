@@ -8,7 +8,11 @@
  * @enum SOCKET_TYPE
  * @brief Represent the types of sokcet communication.
  **/
-typedef enum _SocketTypeEnum { UDP, TCP } SOCKET_TYPE;
+typedef enum _ProtocolEnum { PROT_UDP, PROT_TCP } PROTOCOL;
+
+typedef enum _AddressVersionEnum { ADDR_IPV4, ADDR_IPV6 } ADDRESS_VERSION;
+
+typedef enum _AddressTypeEnum { ADDR_NUMERIC, ADDR_DOMAIN } ADDRESS_TYPE;
 
 /**
  * @struct NetAddress
@@ -22,10 +26,21 @@ typedef enum _SocketTypeEnum { UDP, TCP } SOCKET_TYPE;
  *	@brief port that the server listen to.
  **/
 typedef struct _NetAddress {
-  const byte reserved[16];
+  void *reserved;
   const char *ip;
+  const ADDRESS_VERSION version;
+  const ADDRESS_TYPE type;
+  const PROTOCOL protocol;
   const uint16 port;
+  bool isValid;
 } NetAddress;
+
+extern NetAddress *LT_NetAddressCreate(NetAddress *in_mem, const char *ip,
+                                       const uint16 port,
+                                       const ADDRESS_VERSION version,
+                                       const ADDRESS_TYPE type,
+                                       const PROTOCOL protocol);
+extern void LT_NetAddressDestroy(NetAddress *address);
 
 /**
  * @struct NetSocket
@@ -42,8 +57,7 @@ typedef struct _NetAddress {
  **/
 typedef struct _NetSocket {
   void *reserved;
-  NetAddress *address;
-  SOCKET_TYPE type;
+  const NetAddress *address;
   bool isValid;
 } NetSocket;
 
@@ -53,29 +67,20 @@ typedef struct _NetSocket {
  * @param socket:
  *	@type NetSocket pointer
  *	@brief OPTIONAL: reserved memory for the socket
- * @param type:
- *	@type SOCKET_TYPE
- *	@brief type of the socket
- * @param ip:
- *	@type const char pointer
- *	@brief ip of the socket
- *  @note should be in the format of (nnn.nnn.nnn.nnn) if null is a listener
- *socket.
- * @param port:
- *	@type const uint16
- *	@brief port of the socket
+ * @param address:
+ *	@type NetAddress
+ *	@brief addres info of the socket to create
  * @return NetSocket pointer
  *  @brief The socket param value if any or the created socket
  **/
-extern NetSocket *LT_SocketCreateAndOpen(NetSocket *socket, SOCKET_TYPE type,
-                                         const char *ip, const uint16 port);
+extern NetSocket *LT_SocketCreate(NetSocket *socket, const NetAddress *address);
 extern bool LT_SocketBind(const NetSocket *socket);
 extern bool LT_SocketListen(const NetSocket *socket);
 extern NetSocket *LT_SocketAccept(const NetSocket *socket);
-extern bool LT_SocketConnect(const NetSocket *socket);
+extern bool LT_SocketConnect(NetSocket *socket, const NetAddress *address);
 extern bool LT_SocketCloseConnection(const NetSocket *socket);
 extern bool LT_SocketRead(const NetSocket *socket, byte *stream,
                           uint32 *streamSize);
 extern bool LT_SocketWrite(const NetSocket *socket, const byte *stream,
                            const uint32 streamSize);
-extern void LT_SocketCloseAndDestroy(const NetSocket *socket);
+extern void LT_SocketCloseAndDestroy(NetSocket *socket);

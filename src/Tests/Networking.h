@@ -6,8 +6,11 @@
 
 void ServerThread(void *this) {
   // start server
+  NetAddress *address = malloc(sizeof(NetAddress));
+  LT_NetAddressCreate(address, "localhost", 44754, ADDR_IPV4, ADDR_DOMAIN,
+                      PROT_UDP);
   NetSocket *server = malloc(sizeof(NetSocket));
-  LT_SocketCreateAndOpen(server, NULL, 44754);
+  LT_SocketCreate(server, address);
   LT_SocketBind(server);
 
   // listen for connections
@@ -23,23 +26,42 @@ void ServerThread(void *this) {
 
   // close server
   LT_SocketCloseAndDestroy(server);
-
   free(server);
+  LT_NetAddressDestroy(address);
+  free(address);
 
   LT_Thread_Exit(TEST_SUCCESS);
 }
 
 void ClientThread(void *this) {
-  // recieve package from server
+  // Get server address
+  NetAddress *server_address = LT_NetAddressCreate(
+      NULL, "127.0.0.1", 44754, ADDR_IPV4, ADDR_DOMAIN, PROT_UDP);
+  NetAddress *address = LT_NetAddressCreate(NULL, "localhost", 44755, ADDR_IPV4,
+                                            ADDR_DOMAIN, PROT_UDP);
+  // Create the client
   NetSocket *client = malloc(sizeof(NetSocket));
-  LT_SocketCreateAndOpen(client, "127.0.0.1", 44754);
+  LT_SocketCreate(client, address);
+
+  // Connect to the server
+  LT_SocketConnect(client, server_address);
+
+  // recieve package from server
 
   // close client
+  LT_SocketCloseConnection(client);
   LT_SocketCloseAndDestroy(client);
+
+  LT_NetAddressDestroy(address);
+  LT_NetAddressDestroy(server_address);
+  free(client);
+  free(address);
+  free(server_address);
 
   LT_Thread_Exit(TEST_SUCCESS);
 }
 
-START_TEST(NetworkingTest)
+START_TEST(TestNetworking)
 
-return TEST_ASSERT() END_TEST
+return TEST_SUCCESS;
+END_TEST

@@ -26,7 +26,7 @@
  *	@brief data size.
  * @return void
  **/
-typedef void(SocketClientUpdateCallback *)(const byte *stream,
+typedef void (*SocketClientUpdateCallback)(const byte *stream,
                                            const uint32 streamSize);
 /**
  * @func SocketServerUpdateCallback
@@ -42,11 +42,11 @@ typedef void(SocketClientUpdateCallback *)(const byte *stream,
  *	@brief data size.
  * @return void
  **/
-typedef void(SocketServerUpdateCallback *)(const double deltaTime,
+typedef void (*SocketServerUpdateCallback)(const double deltaTime,
                                            byte *out_stream,
                                            uint32 *out_streamSize);
 
-extern struct _Client;
+typedef struct _NetSocket NetSocket;
 typedef struct _Client Client;
 extern Client *LT_CreateClient(const NetSocket *socket,
                                SocketClientUpdateCallback callback);

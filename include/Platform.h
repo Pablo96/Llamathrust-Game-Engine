@@ -9,6 +9,7 @@ typedef struct _Thread Thread;
 typedef struct _ThreadLock ThreadLock;
 typedef uint64 (*ThreadFuncWrapper)(void *name);
 typedef struct _NetSocket NetSocket;
+typedef struct _NetAddress NetAddress;
 
 // WINDOWS
 #ifdef LT_WINDOWS
@@ -71,11 +72,14 @@ extern void *PlatformLoadSharedLib(const char *name);
 extern void *PlatformGetProc(const void *in_lib, const char *in_name);
 
 // NETWORKING
-extern void PlatformSocketCreate(const NetSocket *socket, bool is_IPv6);
+extern void PlatformNetAddress(NetAddress *address);
+extern void PlatformNetAddressDestroy(NetAddress *address);
+extern void PlatformSocketCreate(NetSocket *socket);
 extern bool PlatformSocketBind(const NetSocket *socket);
 extern bool PlatformSocketListen(const NetSocket *socket);
 extern NetSocket *PlatformSocketAccept(const NetSocket *in_socket);
-extern void PlatformSocketClose(const NetSocket *socket);
+extern void PlatformSocketClose(NetSocket *socket);
+extern bool PlatformSocketConnect(NetSocket *socket, const NetAddress *address);
 extern bool PlatformSocketConnClose(const NetSocket *socket);
 extern bool PlatformSocketSend(const NetSocket *socket, const char *msg,
                                const uint32 msg_len);
@@ -93,7 +97,7 @@ extern void PlatformThreadExit(const int16 exit_code);
 extern void PlatformThreadGetExitCode(Thread *thread);
 extern void PlatformThreadDestroy(Thread *thread);
 
-extern ThreadLock *PlatformThreadLockCreate();
+extern ThreadLock *PlatformThreadLockCreate(void);
 extern void PlatformThreadLockLock(ThreadLock *lock);
 extern void PlatformThreadLockUnock(ThreadLock *lock);
 extern void PlatformThreadLockDestroy(ThreadLock *lock);

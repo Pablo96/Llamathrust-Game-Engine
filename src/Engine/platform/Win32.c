@@ -3,6 +3,7 @@
 #include "../Engine.h"
 #include "../Input.h"
 #include "../Performance.h"
+#include "../networking/Socket.h"
 #include "ArgsParsing.h"
 #include <ErrorCodes.h>
 #include <Networking.h>
@@ -37,7 +38,6 @@ static BOOL shouldClose = FALSE;
 // Networking
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
-static struct sockaddr_in hints = {0};
 
 // Win32
 static HINSTANCE hInstance;
@@ -130,8 +130,7 @@ int main(int32 argc, const char **argv) {
   Engine_Shutdown();
 
   // Networking
-  if (has_networking)
-    WSACleanup();
+  WSACleanup();
 
   return 0;
 }
@@ -170,23 +169,44 @@ void Win32_Helper_InitNetworking(void) {
     log_error(log_msg, iResult);
     return;
   }
-
-  has_networking = TRUE;
 }
 
-void PlatformSocketCreate(const NetSocket *in_socket, bool is_IPv6) {
-  hints.sin_family = is_IPv6 ? AF_INET6 : AF_INET;
-  hints.sin_port = htons(in_socket->port);
+void PlatformNetAddress(NetAddress *address) {
+  ADDRINFOA hints = {
+      .ai_flags = address->type == ADDR_NUMERIC ? AI_NUMERICHOST : AI_CANONNAME,
+      .ai_family = address->version == ADDR_IPV4 ? AF_INET : AF_INET6,
+      .ai_socktype = address->protocol == PROT_UDP ? SOCK_DGRAM : SOCK_STREAM,
+      .ai_protocol = address->protocol == PROT_UDP ? IPPROTO_UDP : IPPROTO_TCP,
+      .ai_canonname = address->ip};
+
+  PADDRINFOA result = malloc(sizeof(ADDRINFOA));
+  char *buffer = malloc(sizeof(7));
+  _itoa(address->port, buffer, 10);
+
+  int iResult = getaddrinfo(address->ip, buffer, &hints, &result);
+  if (iResult != 0)
+    log_error("Could get address.");
+
+  address->reserved = result;
+  address->isValid = iResult == 0;
+}
+
+void PlatformNetAddressDestroy(NetAddress *address) {
+  PADDRINFOA info = address->reserved;
+  freeaddrinfo(info);
+}
+
+void PlatformSocketCreate(NetSocket *in_socket) {
   // convert ip name to binary address
-  inet_pton(hints.sin_family, in_socket->ip, &hints.sin_addr);
+  PADDRINFOA hints = in_socket->address->reserved;
 
   // Create a SOCKET for connecting to server
   in_socket->reserved =
-      socket(hints.sin_family,
-             in_socket->type == UDP
+      socket(hints->ai_family,
+             in_socket->address->protocol == PROT_UDP
                  ? SOCK_DGRAM
                  : SOCK_STREAM, // SOCK_DGRAM = UDP SOCK_STREAM = TCP
-             in_socket->type == UDP
+             in_socket->address->protocol == PROT_UDP
                  ? IPPROTO_UDP
                  : IPPROTO_TCP // if server then say is gonna be bind else
                                // specify it should be a numeric IP
@@ -200,8 +220,8 @@ void PlatformSocketCreate(const NetSocket *in_socket, bool is_IPv6) {
 }
 
 bool PlatformSocketBind(const NetSocket *in_socket) {
-  int result =
-      bind((SOCKET)in_socket->reserved, (sockaddr *)&hints, sizeof(hints));
+  PSOCKADDR hints = in_socket->reserved;
+  int result = bind((SOCKET)in_socket->reserved, hints, sizeof(SOCKADDR));
   if (result == SOCKET_ERROR) {
     log_error("Couldnt bind socket!");
     return LT_FALSE;
@@ -223,22 +243,38 @@ NetSocket *PlatformSocketAccept(const NetSocket *in_socket) {
   SOCKET sock = (SOCKET)in_socket->reserved;
   struct sockaddr_in addr = {0};
   SOCKET clientSocket = accept(sock, (struct sockaddr *)&addr, NULL);
-  if (ClientSocket == INVALID_SOCKET) {
+  if (clientSocket == INVALID_SOCKET) {
     log_error("Accept failed with error: %d", WSAGetLastError());
     return NULL;
   }
 
-  NetSocket *client = (NetSocket *)malloc(sizeof(Socket));
-  client->ip = inet_ntoa(addr.sin_addr);
-  client->port = ntohs(addr.sin_port);
-  client->type = 0;
-  client->reserved = clientSocket;
+  NetSocket *client = (NetSocket *)malloc(sizeof(NetSocket));
+  NetSocket *address = (NetSocket *)malloc(sizeof(NetAddress));
+  LT_NetAddressCreate(address, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port),
+                      in_socket->address->version, in_socket->address->type,
+                      in_socket->address->protocol);
+  NetSocket tmp = {
+      .address = address,
+      .reserved = clientSocket,
+  };
+
+  memcpy(client, &tmp, sizeof(NetSocket));
   return client;
 }
 
-void PlatformSocketClose(const NetSocket *socket) {
+void PlatformSocketClose(NetSocket *socket) {
   closesocket((SOCKET)socket->reserved);
   socket->reserved = NULL;
+}
+
+bool PlatformSocketConnect(NetSocket *in_socket, const NetAddress *address) {
+  // Connect to server.
+  PADDRINFOA ptr = address->reserved;
+  SOCKET *socket = in_socket->reserved;
+  int iResult = connect(socket, ptr->ai_addr, (int)ptr->ai_addrlen);
+  if (iResult == SOCKET_ERROR) {
+    in_socket->isValid = LT_FALSE;
+  }
 }
 
 bool PlatformSocketConnClose(const NetSocket *socket) {
@@ -246,8 +282,6 @@ bool PlatformSocketConnClose(const NetSocket *socket) {
   int iResult = shutdown((SOCKET)socket->reserved, SD_SEND);
   if (iResult == SOCKET_ERROR) {
     log_error("Shutdown failed with error: %d", WSAGetLastError());
-    closesocket(ConnectSocket);
-    WSACleanup();
     return LT_FALSE;
   }
   return LT_TRUE;
@@ -263,10 +297,10 @@ bool PlatformSocketSend(const NetSocket *socket, const char *msg,
   return LT_TRUE;
 }
 
-bool PlatformSocketRecieve(const NetSocket *socket, char *msg, uint32 *msg_len,
-                           const uint32 max_size) {
+bool PlatformSocketRecieve(const NetSocket *socket, char *msg,
+                           uint32 *msg_len) {
   int buffer_size =
-      max_size > MAX_PACKET_SIZE ? (int)MAX_PACKET_SIZE : (int)max_size;
+      msg_len > MAX_PACKET_SIZE ? (int)MAX_PACKET_SIZE : (int)msg_len;
   *msg_len = recv((SOCKET)socket->reserved, msg, buffer_size, 0);
   if (*msg_len == 0) {
     if (*msg_len < 0)

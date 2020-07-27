@@ -63,7 +63,8 @@ src/Engine/Performance.h
 src/Engine/System.c
 src/Engine/platform/Win32.c
 src/Engine/platform/ArgsParsing.c
-src/Engine/networking/Networking.c
+src/Engine/networking/Socket.h
+src/Engine/networking/Socket.c
 src/Engine/threading/Thread.c
 src/Engine/threading/ThreadPool.c
 )

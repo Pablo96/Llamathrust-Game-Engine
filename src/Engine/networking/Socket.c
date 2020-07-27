@@ -2,17 +2,42 @@
 #include <Platform.h>
 #include <string.h>
 
-NetSocket *LT_SocketCreateAndOpen(NetSocket *socket, SOCKET_TYPE type,
-                                  const char *ip, const uint16 port) {
-  if (socket == NULL) {
-    socket = malloc(sizeof(Socket));
-    memset(socket, 0, sizeof(Socket));
+NetAddress *LT_NetAddressCreate(NetAddress *in_mem, const char *ip,
+                                const uint16 port,
+                                const ADDRESS_VERSION version,
+                                const ADDRESS_TYPE type,
+                                const PROTOCOL protocol) {
+  if (in_mem == NULL) {
+    in_mem = malloc(sizeof(NetAddress));
+    memset(in_mem, 0, sizeof(NetAddress));
   }
-  Socket tmp = {.type = type, .ip = ip, .port = port};
 
-  memcpy(socket, &tmp, sizeof(Socket));
+  NetAddress tmp = {.ip = ip,
+                    .port = port,
+                    .version = version,
+                    .type = type,
+                    .protocol = protocol};
 
-  PlatformSocketCreate(socket, LT_FALSE);
+  PlatformNetAddress(in_mem);
+
+  return in_mem;
+}
+
+void LT_NetAddressDestroy(NetAddress *address) {
+  PlatformNetAddressDestroy(address);
+}
+
+NetSocket *LT_SocketCreate(NetSocket *socket, const NetAddress *address) {
+  if (socket == NULL) {
+    socket = malloc(sizeof(NetSocket));
+    memset(socket, 0, sizeof(NetSocket));
+  }
+
+  NetSocket tmp = {.address = address};
+  memcpy(socket, &tmp, sizeof(NetSocket));
+
+  PlatformSocketCreate(socket);
+  return socket;
 }
 
 bool LT_SocketBind(const NetSocket *socket) {
@@ -25,6 +50,10 @@ bool LT_SocketListen(const NetSocket *socket) {
 
 NetSocket *LT_SocketAccept(const NetSocket *socket) {
   return PlatformSocketAccept(socket);
+}
+
+bool LT_SocketConnect(NetSocket *socket, const NetAddress *address) {
+  return PlatformSocketConnect(socket, address);
 }
 
 bool LT_SocketCloseConnection(const NetSocket *socket) {
@@ -40,7 +69,7 @@ bool LT_SocketWrite(const NetSocket *socket, const byte *stream,
   return PlatformSocketSend(socket, stream, streamSize);
 }
 
-void LT_SocketCloseAndDestroy(const NetSocket *socket) {
+void LT_SocketCloseAndDestroy(NetSocket *socket) {
   PlatformSocketClose(socket);
   socket->isValid = LT_FALSE;
 }

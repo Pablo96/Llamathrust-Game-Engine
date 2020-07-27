@@ -18,7 +18,7 @@ clang ^
 -lGdi32.lib ^
 -lUser32.lib ^
 -lKernel32.lib ^
--lws2_32.lib ^
+-lWs2_32.lib ^
 -fcolor-diagnostics ^
 -fomit-frame-pointer ^
 -pedantic ^
