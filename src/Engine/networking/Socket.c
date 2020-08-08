@@ -17,6 +17,7 @@ NetAddress *LT_NetAddressCreate(NetAddress *in_mem, const char *ip,
                     .version = version,
                     .type = type,
                     .protocol = protocol};
+  memcpy(in_mem, &tmp, sizeof(NetAddress));
 
   PlatformNetAddress(in_mem);
 

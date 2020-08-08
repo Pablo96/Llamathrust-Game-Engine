@@ -7,8 +7,7 @@
 void ServerThread(void *this) {
   // start server
   NetAddress *address = malloc(sizeof(NetAddress));
-  LT_NetAddressCreate(address, "localhost", 44754, ADDR_IPV4, ADDR_DOMAIN,
-                      PROT_UDP);
+  LT_NetAddressCreate(address, "localhost", 44754, ADDR_IPV4, ADDR_DOMAIN, PROT_UDP);
   NetSocket *server = malloc(sizeof(NetSocket));
   LT_SocketCreate(server, address);
   LT_SocketBind(server);
@@ -37,8 +36,8 @@ void ClientThread(void *this) {
   // Get server address
   NetAddress *server_address = LT_NetAddressCreate(
       NULL, "127.0.0.1", 44754, ADDR_IPV4, ADDR_DOMAIN, PROT_UDP);
-  NetAddress *address = LT_NetAddressCreate(NULL, "localhost", 44755, ADDR_IPV4,
-                                            ADDR_DOMAIN, PROT_UDP);
+  NetAddress *address = LT_NetAddressCreate(NULL, "127.0.0.1", 44755, ADDR_IPV4,
+                                            ADDR_NUMERIC, PROT_UDP);
   // Create the client
   NetSocket *client = malloc(sizeof(NetSocket));
   LT_SocketCreate(client, address);
@@ -62,6 +61,33 @@ void ClientThread(void *this) {
 }
 
 START_TEST(TestNetworking)
+  Thread *serverThread = malloc(sizeof(Thread));
+  LT_Thread_Create(serverThread, ServerThread, NULL, "Server Thread", NULL);
 
-return TEST_SUCCESS;
+  Thread *clientThread = malloc(sizeof(Thread));
+  LT_Thread_Create(clientThread, ClientThread, NULL, "Client Thread", NULL);
+
+  LT_Thread_Start(serverThread);
+
+  Thread *this = LT_Thread_GetCurrent(NULL);
+  LT_Thread_Sleep(this, SECONDS(1));
+
+  LT_Thread_Start(clientThread);
+
+  LT_Thread_Join(serverThread);
+  LT_Thread_Join(clientThread);
+
+  LT_Thread_ExitCode(serverThread);
+  LT_Thread_ExitCode(clientThread);
+
+  int32 exitCodeServer = serverThread->exitCode;
+  int32 exitCodeClient = clientThread->exitCode;
+
+  LT_Thread_Destroy(serverThread);
+  LT_Thread_Destroy(clientThread);
+
+  free(serverThread);
+  free(clientThread);
+
+  return TEST_ASSERT(exitCodeClient == 0 && exitCodeServer == 0);
 END_TEST

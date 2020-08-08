@@ -135,6 +135,16 @@ int main(int32 argc, const char **argv) {
   return 0;
 }
 #endif
+
+static LPVOID GetErrorMsg(DWORD errorCode) {
+  LPVOID lpMsgBuf;
+  FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                    FORMAT_MESSAGE_IGNORE_INSERTS,
+                NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                (LPSTR)&lpMsgBuf, 0, NULL);
+  return lpMsgBuf;
+}
+
 //-----------------------------------------------------------------
 // System
 //-----------------------------------------------------------------
@@ -177,7 +187,11 @@ void PlatformNetAddress(NetAddress *address) {
       .ai_family = address->version == ADDR_IPV4 ? AF_INET : AF_INET6,
       .ai_socktype = address->protocol == PROT_UDP ? SOCK_DGRAM : SOCK_STREAM,
       .ai_protocol = address->protocol == PROT_UDP ? IPPROTO_UDP : IPPROTO_TCP,
-      .ai_canonname = address->ip};
+      .ai_canonname = 0,
+      .ai_addrlen = 0,
+      .ai_addr = 0,
+      .ai_next = 0
+  };
 
   PADDRINFOA result = malloc(sizeof(ADDRINFOA));
   char *buffer = malloc(sizeof(7));
@@ -213,17 +227,19 @@ void PlatformSocketCreate(NetSocket *in_socket) {
       );
 
   // Check if it is a valid socket
-  in_socket->isValid = in_socket->reserved == INVALID_SOCKET;
-  if (in_socket->isValid) {
+  in_socket->isValid = in_socket->reserved != INVALID_SOCKET;
+  if (!in_socket->isValid) {
     log_error("socket failed with error: %ld\n", WSAGetLastError());
   }
 }
 
 bool PlatformSocketBind(const NetSocket *in_socket) {
-  PSOCKADDR hints = in_socket->reserved;
+  PSOCKADDR hints = in_socket->address->reserved;
   int result = bind((SOCKET)in_socket->reserved, hints, sizeof(SOCKADDR));
-  if (result == SOCKET_ERROR) {
-    log_error("Couldnt bind socket!");
+  if (result != 0) {
+    const char *msgError = GetErrorMsg(WSAGetLastError());
+    log_error("Couldnt bind socket! Error: %s", msgError);
+    LocalFree(msgError);
     return LT_FALSE;
   }
   return LT_TRUE;
@@ -232,8 +248,10 @@ bool PlatformSocketBind(const NetSocket *in_socket) {
 bool PlatformSocketListen(const NetSocket *in_socket) {
   SOCKET sock = (SOCKET)in_socket->reserved;
   int result = listen(sock, SOMAXCONN);
-  if (result == SOCKET_ERROR) {
-    log_error("Listen failed with error: %d", WSAGetLastError());
+  if (result != 0) {
+    const char *msgError = GetErrorMsg(WSAGetLastError());
+    log_error("Listen failed with error: %s", msgError);
+    LocalFree(msgError);
     return LT_FALSE;
   }
   return LT_TRUE;
@@ -244,7 +262,9 @@ NetSocket *PlatformSocketAccept(const NetSocket *in_socket) {
   struct sockaddr_in addr = {0};
   SOCKET clientSocket = accept(sock, (struct sockaddr *)&addr, NULL);
   if (clientSocket == INVALID_SOCKET) {
-    log_error("Accept failed with error: %d", WSAGetLastError());
+    const char *msgError = GetErrorMsg(WSAGetLastError());
+    log_error("Accept failed with error: %s", msgError);
+    LocalFree(msgError);
     return NULL;
   }
 

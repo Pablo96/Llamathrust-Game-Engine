@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #define WIN32_LEAN_AND_MEAN
+#include <WS2tcpip.h>
+#include <WinSock2.h>
 #include <Windows.h>
 #include <malloc.h>
 
@@ -53,6 +55,13 @@ static void Prepare(TestNode *list) {
 int LT_TestRun() {
   log_test_nfunc("Preparing %u Tests", test_count);
 
+  WSADATA wsaData;
+  int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+  if (iResult != 0) {
+    const char log_msg[] = "WSAStartup failed with error: %d";
+    log_error(log_msg, iResult);
+  }
+
   HANDLE *threads = malloc(sizeof(HANDLE) * test_count);
   TestNode *list = malloc(sizeof(TestNode) * test_count);
 
@@ -95,5 +104,7 @@ int LT_TestRun() {
 
   free(threads);
   free(list);
+  WSACleanup();
+
   return test_failed;
 }

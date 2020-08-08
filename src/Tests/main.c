@@ -5,7 +5,7 @@
 #include <ErrorCodes.h>
 
 int main(int argc, const char **argv) {
-  log_set_level(LOG_TEST);
+  log_set_level(LOG_ERROR);
 
   LT_ADD_TEST(TestArrayCount, TEST_SUCCESS);
   LT_ADD_TEST(TestArray, TEST_SUCCESS);
