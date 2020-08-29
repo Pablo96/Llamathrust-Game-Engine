@@ -7,7 +7,7 @@
 void ServerThread(void *this) {
   // start server
   NetAddress *address = malloc(sizeof(NetAddress));
-  LT_NetAddressCreate(address, "localhost", 44754, ADDR_IPV4, ADDR_DOMAIN, PROT_UDP);
+  LT_NetAddressCreate(address, "127.0.0.1", 44754, ADDR_IPV4, ADDR_NUMERIC, PROT_UDP, LT_TRUE);
   NetSocket *server = malloc(sizeof(NetSocket));
   LT_SocketCreate(server, address);
   LT_SocketBind(server);
@@ -35,9 +35,9 @@ void ServerThread(void *this) {
 void ClientThread(void *this) {
   // Get server address
   NetAddress *server_address = LT_NetAddressCreate(
-      NULL, "127.0.0.1", 44754, ADDR_IPV4, ADDR_DOMAIN, PROT_UDP);
+      NULL, "127.0.0.1", 44754, ADDR_IPV4, ADDR_DOMAIN, PROT_UDP, LT_FALSE);
   NetAddress *address = LT_NetAddressCreate(NULL, "127.0.0.1", 44755, ADDR_IPV4,
-                                            ADDR_NUMERIC, PROT_UDP);
+                                            ADDR_NUMERIC, PROT_UDP, LT_FALSE);
   // Create the client
   NetSocket *client = malloc(sizeof(NetSocket));
   LT_SocketCreate(client, address);

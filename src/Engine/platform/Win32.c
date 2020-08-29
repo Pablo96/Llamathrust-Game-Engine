@@ -183,10 +183,10 @@ void Win32_Helper_InitNetworking(void) {
 
 void PlatformNetAddress(NetAddress *address) {
   ADDRINFOA hints = {
-      .ai_flags = address->type == ADDR_NUMERIC ? AI_NUMERICHOST : AI_CANONNAME,
       .ai_family = address->version == ADDR_IPV4 ? AF_INET : AF_INET6,
       .ai_socktype = address->protocol == PROT_UDP ? SOCK_DGRAM : SOCK_STREAM,
       .ai_protocol = address->protocol == PROT_UDP ? IPPROTO_UDP : IPPROTO_TCP,
+      .ai_flags = address->willBind ? AI_PASSIVE : 0,
       .ai_canonname = 0,
       .ai_addrlen = 0,
       .ai_addr = 0,
@@ -194,7 +194,7 @@ void PlatformNetAddress(NetAddress *address) {
   };
 
   PADDRINFOA result = malloc(sizeof(ADDRINFOA));
-  char *buffer = malloc(sizeof(7));
+  char buffer[7];
   _itoa(address->port, buffer, 10);
 
   int iResult = getaddrinfo(address->ip, buffer, &hints, &result);
@@ -213,17 +213,20 @@ void PlatformNetAddressDestroy(NetAddress *address) {
 void PlatformSocketCreate(NetSocket *in_socket) {
   // convert ip name to binary address
   PADDRINFOA hints = in_socket->address->reserved;
+  hints->ai_flags = AI_PASSIVE;
 
   // Create a SOCKET for connecting to server
   in_socket->reserved =
-      socket(hints->ai_family,
+      socket(in_socket->address->type == ADDR_IPV4
+             ? AF_INET 
+             : AF_INET6,
+      // SOCK_DGRAM = UDP SOCK_STREAM = TCP
              in_socket->address->protocol == PROT_UDP
                  ? SOCK_DGRAM
-                 : SOCK_STREAM, // SOCK_DGRAM = UDP SOCK_STREAM = TCP
+                 : SOCK_STREAM, 
              in_socket->address->protocol == PROT_UDP
                  ? IPPROTO_UDP
-                 : IPPROTO_TCP // if server then say is gonna be bind else
-                               // specify it should be a numeric IP
+                 : IPPROTO_TCP
       );
 
   // Check if it is a valid socket
@@ -272,7 +275,7 @@ NetSocket *PlatformSocketAccept(const NetSocket *in_socket) {
   NetSocket *address = (NetSocket *)malloc(sizeof(NetAddress));
   LT_NetAddressCreate(address, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port),
                       in_socket->address->version, in_socket->address->type,
-                      in_socket->address->protocol);
+                      in_socket->address->protocol, LT_FALSE);
   NetSocket tmp = {
       .address = address,
       .reserved = clientSocket,

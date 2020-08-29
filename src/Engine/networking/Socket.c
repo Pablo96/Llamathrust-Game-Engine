@@ -6,7 +6,8 @@ NetAddress *LT_NetAddressCreate(NetAddress *in_mem, const char *ip,
                                 const uint16 port,
                                 const ADDRESS_VERSION version,
                                 const ADDRESS_TYPE type,
-                                const PROTOCOL protocol) {
+                                const PROTOCOL protocol,
+                                const bool will_bind) {
   if (in_mem == NULL) {
     in_mem = malloc(sizeof(NetAddress));
     memset(in_mem, 0, sizeof(NetAddress));
@@ -16,7 +17,9 @@ NetAddress *LT_NetAddressCreate(NetAddress *in_mem, const char *ip,
                     .port = port,
                     .version = version,
                     .type = type,
-                    .protocol = protocol};
+                    .protocol = protocol,
+                    .willBind = will_bind
+  };
   memcpy(in_mem, &tmp, sizeof(NetAddress));
 
   PlatformNetAddress(in_mem);
