@@ -35,22 +35,31 @@ typedef struct {
  * @note A Game is soposed to be in one library but it could be in multiple ones
  *if that lib loads another
  **/
-#define LT_CREATEGAME()                                                        \
-  BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,                     \
-                      LPVOID lpReserved) {                                     \
-    switch (fdwReason) {                                                       \
-    case DLL_PROCESS_ATTACH:                                                   \
-      break;                                                                   \
-    case DLL_THREAD_ATTACH:                                                    \
-      break;                                                                   \
-    case DLL_THREAD_DETACH:                                                    \
-      break;                                                                   \
-    case DLL_PROCESS_DETACH:                                                   \
-      break;                                                                   \
-    }                                                                          \
-    return TRUE;                                                               \
-  }
-#endif // End Windows
+#define LT_CREATEGAME()\
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {\
+switch( fdwReason ) {\
+  case DLL_PROCESS_ATTACH: break;\
+  case DLL_THREAD_ATTACH: break;\
+  case DLL_THREAD_DETACH: break;\
+  case DLL_PROCESS_DETACH: break;\
+} return TRUE;}
+#elif defined(LT_LINUX)
+#define LT_EXPORT __attribute__((visibility("default")))
+
+typedef struct {
+} ThreadWin;
+
+typedef struct {
+} Window;
+
+/**
+ * @def LT_CREATEGAME
+ * @brief Generates the entrypoint for the game library
+ * @note Only needed in one .c file per shared library of a game
+ * @note A Game is soposed to be in one library but it could be in multiple ones if that lib loads another
+ **/
+#define LT_CREATEGAME()
+#endif
 
 #define LT_Init(GameConstructor)                                               \
   LT_EXPORT void *GetInitGame() {                                              \

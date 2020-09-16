@@ -34,7 +34,6 @@ enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL, LOG_TEST,
 #define log_test_nfunc(...) log_log(LOG_TEST_NFUNC, 0, 0, __VA_ARGS__)
 
 void log_set_udata(void *udata);
-void log_set_lock(log_LockFn fn);
 void log_set_fp(FILE *fp);
 void log_set_level(int level);
 void log_set_quiet(int enable);

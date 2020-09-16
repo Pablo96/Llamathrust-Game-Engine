@@ -36,12 +36,16 @@ typedef float decimal;
 
 #define MAKE_FN_NAME(prefix, subfix) prefix##subfix
 
-#ifdef __clang__
-#define LT_CLANG
+#ifdef __GNUC__
+  #ifdef __clang__
+    #define LT_CLANG
+  #else
+    #define LT_GCC
+  #endif
 #elif defined(_MSC_VER)
-#define LT_VS
+  #define LT_VS
 #else
-#error "Compiler not supported!"
+  #error "Compiler not supported!"
 #endif
 
 #ifdef _WIN64
@@ -53,7 +57,6 @@ typedef float decimal;
 #error "ANDORID is not supported!"
 #elif defined(__linux__)
 #define LT_LINUX
-#error "LINUX is not supported!"
 #elif defined(__APPLE__)
 #error "APPLE is not supported!"
 #endif
@@ -65,7 +68,8 @@ typedef float decimal;
 #define LT_DEBUG_BREAK(error_code) __debugbreak()
 #endif
 #else
-#define LT_DEBUG_BREAK raise(SIGTRAP)
+#include <signal.h>
+#define LT_DEBUG_BREAK(error_code) raise(SIGTRAP)
 #endif
 
 #ifdef LT_DEBUG

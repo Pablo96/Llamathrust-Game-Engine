@@ -5,6 +5,10 @@
 #include <log.h>
 #include <string.h> //memcpy
 
+#ifdef LT_LINUX
+// Include for offsetof
+#include <stddef.h>
+#endif
 /**
  * @struct ThreadPool
  * @brief Thread pool abstraction.

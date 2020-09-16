@@ -25,17 +25,22 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
+#include <Common.h>
 
+#ifdef LT_WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+static PCRITICAL_SECTION CriticalSection;
+#elif defined(LT_LINUX)
+#include <pthread.h>
+static pthread_mutex_t mutex;
+#endif
 
 #include "log.h"
-static PCRITICAL_SECTION CriticalSection;
 static unsigned char init = !0;
 
 static struct {
   void *udata;
-  log_LockFn lock;
   FILE *fp;
   int level;
   int quiet;
@@ -52,30 +57,9 @@ static const char *level_colors[] = {
 };
 #endif
 
-
-static void lock(void)   {
-  if (L.lock) {
-    L.lock(L.udata, 1);
-  }
-}
-
-
-static void unlock(void) {
-  if (L.lock) {
-    L.lock(L.udata, 0);
-  }
-}
-
-
 void log_set_udata(void *udata) {
   L.udata = udata;
 }
-
-
-void log_set_lock(log_LockFn fn) {
-  L.lock = fn;
-}
-
 
 void log_set_fp(FILE *fp) {
   L.fp = fp;
@@ -97,16 +81,25 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
     return;
   }
 
+#ifdef LT_WINDOWS
   if (init) {
     CriticalSection = malloc(sizeof(CRITICAL_SECTION));
     // Initialize the critical section one time only.
     InitializeCriticalSectionAndSpinCount(CriticalSection, 0x00000400);
     init = 0;
   }
-
   /* Acquire lock */
   // Request ownership of the critical section.
   EnterCriticalSection(CriticalSection);
+#elif defined(LT_LINUX)
+  if (init) {
+    pthread_mutex_init(&mutex, NULL);
+    init = 0;
+  }
+  /* Acquire lock */
+  // Request ownership of the mutex.
+  pthread_mutex_lock(&mutex);
+#endif
 
   /* Get current time */
   time_t t = time(NULL);
@@ -151,5 +144,9 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
   }
 
   /* Release lock */
+#ifdef LT_WINDOWS
   LeaveCriticalSection(CriticalSection);
+#elif defined(LT_LINUX)
+  pthread_mutex_unlock(&mutex);
+#endif
 }
