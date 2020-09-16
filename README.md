@@ -16,11 +16,6 @@ It aims to cover:
 
 You can see tutorials and progress in facebook.com/LlamathrustGE
 
-## Build
-- Clone the repository
-- Execute the script in /{repoDir}/scripts/windows/clang_build_{debug/editor_release/release}.bat
-- Run /repoDir/bin/{debug/editor_release/release}/*.exe
-
 # IMPORTANT
 If you decide to contribute to the project you need to document
 the implementation and why you made some decisions in the code.
@@ -29,34 +24,24 @@ https://pablonarvaja.wixsite.com/llamathrustengine
 
 # Implemented Features
 ## Supported Builds
-- Windows 10 x64: WIP
-- Linux 4+ x64: Not implemented
+- Windows 10 x64: clang | vs 2019
+- Linux 4+ x64: gcc
 - Android 4.4+ x64: Not implemented
 
-## Engine
+## Render API Engine
 - OpenGL 3.3+
+- Vulkan (to be supported)
 
-# Miscellaneous
-## Errors list
-<table>
-  <tr>
-    <th>Code</th>
-    <th>Description</th>
-  </tr>
-  <tr>
-    <td>0</td>
-    <td>Succesful Run</td>
-  </tr>
-  <tr>
-    <td>1</td>
-    <td>Couldn't create the window</td>
-  </tr>
-  <tr>
-    <td>48</td>
-    <td>Instance already running</td>
-  </tr>
-  <tr>
-    <td>50</td>
-    <td>Graphic API initialization error</td>
-  </tr>
-</table>
+
+# Build Instructions
+## Windows
+- Clone the repository
+- Install visual studio 2019
+- Run the script ```./scripts/windows/vs_build_debug.bat```
+- Run ```./bin/{debug/editor_release/release}/*.exe```
+
+## Linux
+- Clone the repository
+- Install gcc and libgl1-mesa-dev
+- Run the script ```./scripts/linux/build_engine_debug.sh```
+- Run ```./bin/{debug/editor_release/release}/engine_linux```

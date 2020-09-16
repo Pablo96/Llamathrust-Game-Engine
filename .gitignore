@@ -14,3 +14,4 @@ x64/
 *.cmake
 CMakeCache.txt
 *.ll
+*.optimized

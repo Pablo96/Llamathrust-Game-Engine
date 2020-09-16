@@ -3,15 +3,6 @@
 #include <stdlib.h>
 #include <string.h> // memset
 
-
-#ifdef LT_WINDOWS
-#define PLATFORM_THREAD_SIZE 8 * 2
-#define LOCK_SIZE 40
-#else
-#define PLATFORM_THREAD_SIZE 8 * 3
-#define LOCK_SIZE 32
-#endif
-
 // ID 0 is reserved for current thread
 static uint64 threadIDCount = 1;
 

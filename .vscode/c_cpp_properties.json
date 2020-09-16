@@ -20,6 +20,24 @@
             "cStandard": "c18",
             "cppStandard": "c++20",
             "intelliSenseMode": "clang-x64"
+        },
+        {
+            "name": "Linux_DEBUG",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/include/",
+                "${workspaceFolder}/external/",
+                "${workspaceFolder}/external/log-c",
+                "${workspaceFolder}/external/glad/include"
+            ],
+            "defines": [
+                "LT_DEBUG",
+                "_DEBUG"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "gcc-x64"
         }
     ],
     "version": 4

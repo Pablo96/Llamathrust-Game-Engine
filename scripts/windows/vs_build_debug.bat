@@ -11,7 +11,7 @@ cl /nologo /std:c++17 /GS  /W3 /Gd /MDd /fp:precise ^
 /I".\external\log-c" ^
 /I".\external\glad\include" ^
 /Z7 /Od /Ob0 ^
-/TC ./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/platform/*.c
+/TC ./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/platform/Win32.c
 /link ^
 /DEBUG ^
 /SUBSYSTEM:CONSOLE ^

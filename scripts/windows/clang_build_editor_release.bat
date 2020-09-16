@@ -25,4 +25,4 @@ clang ^
 -Weverything ^
 -Wno-documentation ^
 -O3  ^
-./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/platform/*.c
+./external/glad/src/glad.c ./external/log-c/log.c ./src/engine/*.c ./src/engine/platform/Win32.c
