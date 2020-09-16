@@ -7,13 +7,13 @@ typedef void (*SwapBuffersFunc)(void);
 // Forward declaration
 typedef struct _Thread Thread;
 typedef struct _ThreadLock ThreadLock;
-typedef uint64 (*ThreadFuncWrapper)(void *name);
 typedef struct _NetSocket NetSocket;
 typedef struct _NetAddress NetAddress;
 
 // WINDOWS
 #ifdef LT_WINDOWS
 #define LT_EXPORT __declspec(dllexport)
+typedef uint64 (*ThreadFuncWrapper)(void *name);
 typedef struct HWND__ *HWND;
 typedef struct HDC__ *HDC;
 typedef void *HANDLE;
@@ -21,7 +21,7 @@ typedef void *HANDLE;
 typedef struct {
   HANDLE handle;
   const unsigned long id;
-} ThreadWin;
+} ThreadLinuxThreadWin;
 
 typedef struct {
   HWND handle;
@@ -45,9 +45,13 @@ switch( fdwReason ) {\
 } return TRUE;}
 #elif defined(LT_LINUX)
 #define LT_EXPORT __attribute__((visibility("default")))
-
+typedef void* (*ThreadFuncWrapper)(void *name);
 typedef struct {
-} ThreadWin;
+  union {
+    uint32 *id;
+    uint32 *handle;
+  }
+} ThreadLinux;
 
 typedef struct {
 } Window;
@@ -96,8 +100,7 @@ extern bool PlatformSocketRecieve(const NetSocket *socket, char *msg,
                                   uint32 *msg_len);
 
 // THREADING
-extern Thread *PlatformThreadCreate(const Thread *thread,
-                                    ThreadFuncWrapper funcWrapper);
+extern Thread *PlatformThreadCreate(const Thread *thread, ThreadFuncWrapper funcWrapper);
 extern void PlatformThreadStart(const Thread *thread);
 extern void PlatformGetCurrent(const Thread *thread);
 extern void PlatformThreadJoin(const Thread *thread);

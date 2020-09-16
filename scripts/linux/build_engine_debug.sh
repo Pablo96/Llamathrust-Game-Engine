@@ -16,6 +16,7 @@ gcc \
 -o "bin/debug/engine_linux" \
 -m64 \
 -lGL \
+-pthread \
 -fomit-frame-pointer \
 -pedantic \
 -fdump-tree-optimized \

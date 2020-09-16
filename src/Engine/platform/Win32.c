@@ -4,7 +4,7 @@
 #include "../Input.h"
 #include "../Performance.h"
 #include "../networking/Socket.h"
-#include "ArgsParsing.h"
+#include "../ArgsParsing.h"
 #include <ErrorCodes.h>
 #include <Networking.h>
 #include <Thread.h>
@@ -347,7 +347,7 @@ Thread *PlatformThreadCreate(const Thread *thread,
 
   if (threadhandle == NULL) {
     log_error("Failed to create thread.");
-    Win32HandleError(54);
+    Win32HandleError(ERROR_PLATFORM_THREAD_CREATE);
   }
 
   ThreadWin winThd = {.id = threadID, .handle = threadhandle};
@@ -384,12 +384,17 @@ void PlatformThreadExit(const int16 exit_code) { ExitThread(exit_code); }
 void PlatformThreadGetExitCode(Thread *thread) {
   ThreadWin *this = (const ThreadWin *)thread;
   DWORD exit_code;
-  GetExitCodeThread(this->handle, &exit_code);
-  thread->exitCode = (int32)exit_code;
+  if (GetExitCodeThread(this->handle, &exit_code) == STILL_ACTIVE) {
+    log_error("Thread still active.")
+  } else {
+    thread->isValid = LT_FALSE;
+    thread->exitCode = (int32)exit_code;
+  }
 }
 
 void PlatformThreadDestroy(Thread *thread) {
   CloseHandle(((const ThreadWin *)thread)->handle);
+  thread->isValid = LT_FALSE;
 }
 
 ThreadLock *PlatformThreadLockCreate() {

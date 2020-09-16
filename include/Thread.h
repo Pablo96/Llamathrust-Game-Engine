@@ -9,9 +9,11 @@
 #ifdef LT_WINDOWS
 #define PLATFORM_THREAD_SIZE 8 * 2
 #define LOCK_SIZE 40
+typedef uint64 (*ThreadFuncWrapper)(void *);
 #else
-#define PLATFORM_THREAD_SIZE 8 * 3
-#define LOCK_SIZE 32
+#define PLATFORM_THREAD_SIZE sizeof(uint32)
+#define LOCK_SIZE 40
+typedef void* (*ThreadFuncWrapper)(void *);
 #endif
 
 #ifdef LT_DEBUG
@@ -24,8 +26,6 @@
 #else
 #define ASSERT_RESERVED_SIZE(size)
 #endif
-
-typedef uint64 (*ThreadFuncWrapper)(void *);
 
 typedef struct _ThreadLock {
   byte reserved[LOCK_SIZE];
@@ -65,7 +65,7 @@ typedef struct _Thread {
   const uint64 ID;
   const char *name;
   void *data;
-  int32 exitCode;
+  int64 exitCode;
   bool isValid;
 } Thread;
 
