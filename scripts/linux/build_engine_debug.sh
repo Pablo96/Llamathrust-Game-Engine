@@ -15,7 +15,6 @@ gcc \
 -I"./external/glad/include" \
 -o "bin/debug/engine_linux" \
 -m64 \
--lGL \
 -pthread \
 -fomit-frame-pointer \
 -pedantic \
@@ -27,3 +26,5 @@ gcc \
 -O0 \
 ./external/glad/src/glad.c ./external/log-c/log.c ./src/CoreLib/*.c ./src/Engine/*.c ./src/Engine/threading/*.c ./src/Engine/platform/Linux.c \
 -ldl \
+-lGL \
+-lX11 \

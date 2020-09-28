@@ -32,7 +32,7 @@ static const uint64 win32KeyStatesSize = VK_RMENU + 1;
 static uint8 *win32KeyStates;
 
 // Windows
-Window window;
+LT_Window_t window;
 static BOOL shouldClose = FALSE;
 
 // Networking
@@ -107,18 +107,18 @@ int main(int32 argc, const char **argv) {
   while (shouldClose == FALSE) {
     LT_START_TIME();
 
+    // Retrieve OS messages
+    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
+      TranslateMessage(&msg);
+      DispatchMessage(&msg);
+    }
+
     // Run engine
     double deltaTime = 1.0 / t;
     Engine_Run(deltaTime);
 
     // Reset key state cache
     memset(win32KeyStates, LT_KEY_UP, win32KeyStatesSize);
-
-    // Retrieve OS messages
-    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
-      TranslateMessage(&msg);
-      DispatchMessage(&msg);
-    }
 
     LT_END_TIME();
   }
@@ -540,156 +540,18 @@ void PlatformInitInput(int32 *key_states) {
 
 uint8 PlatformGetKeyState(int32 key_state) { return win32KeyStates[key_state]; }
 
-//-----------------------------------------------------------------
-// Window | Graphics
-//-----------------------------------------------------------------
+//-------------------------------------------
+// Window
+//-------------------------------------------
 void LT_CloseWindow(void) { shouldClose = TRUE; }
-
-void *Win32GetProc(const char *name) {
-  void *proc = (void *)wglGetProcAddress(name);
-  if (proc)
-    return proc;
-
-  proc = (void *)GetProcAddress(glInstance, name);
-
-  if (proc == 0) {
-    log_fatal("Retrieving %s failed.", name);
-    Win32HandleError(ERROR_PLATFORM_OPENGL_PROC_NOT_FOUND);
-  }
-
-  return proc;
-}
-
-LoadProc Win32InitOpenGL(void) {
-  glInstance = LoadLibraryA("opengl32.dll");
-  if (glInstance == 0) {
-    log_fatal("Couldn't load opengl library.");
-    Win32HandleError(ERROR_PLATFORM_OPENGL_LIB_NOT_FOUND);
-  }
-
-  Window ghostWnd;
-  Win32_Helper_CreateWindow(&ghostWnd, GHOST_CLASS_NAME, CW_USEDEFAULT,
-                            CW_USEDEFAULT, "");
-
-  // IMPORTANT: before creating the contex pixel format must be set
-  PIXELFORMATDESCRIPTOR pfd = {0};
-  pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-  pfd.nVersion = 1; // Always set to 1
-  pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
-  pfd.iPixelType = PFD_TYPE_RGBA;
-  pfd.cColorBits = 32;
-  pfd.cDepthBits = 16;
-
-  int pixelFormat = ChoosePixelFormat(ghostWnd.device, &pfd);
-  if (pixelFormat == 0) {
-    log_fatal("ChoosePixelFormat failed.");
-    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
-  }
-
-  if (SetPixelFormat(ghostWnd.device, pixelFormat, &pfd) == 0) {
-    log_fatal("SetPixelFormat failed.");
-    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
-  }
-
-  // Create temporary legacy context
-  HGLRC oldOGLcontext = wglCreateContext(ghostWnd.device);
-  if (oldOGLcontext == NULL) {
-    log_fatal("Create gl context failed.");
-    Win32HandleError(ERROR_PLATFORM_OPENGL_CREATE_FAILED);
-  }
-  wglMakeCurrent(ghostWnd.device, oldOGLcontext);
-
-  // Get GL extensions
-  PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB =
-      (PFNWGLCHOOSEPIXELFORMATARBPROC)Win32GetProc("wglChoosePixelFormatARB");
-  PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =
-      (PFNWGLCREATECONTEXTATTRIBSARBPROC)Win32GetProc(
-          "wglCreateContextAttribsARB");
-
-  // Create modern context
-  Win32_Helper_CreateWindow(&window, CLASS_NAME, 720, 480, WINDOW_TITLE);
-
-  const int32 pixelAttribs[] = {WGL_DRAW_TO_WINDOW_ARB,
-                                GL_TRUE,
-                                WGL_SUPPORT_OPENGL_ARB,
-                                GL_TRUE,
-                                WGL_DOUBLE_BUFFER_ARB,
-                                GL_TRUE,
-                                WGL_PIXEL_TYPE_ARB,
-                                WGL_TYPE_RGBA_ARB,
-                                WGL_ACCELERATION_ARB,
-                                WGL_FULL_ACCELERATION_ARB,
-                                WGL_COLOR_BITS_ARB,
-                                32,
-                                WGL_ALPHA_BITS_ARB,
-                                8,
-                                WGL_DEPTH_BITS_ARB,
-                                24,
-                                WGL_STENCIL_BITS_ARB,
-                                8,
-                                WGL_SAMPLE_BUFFERS_ARB,
-                                GL_TRUE,
-                                WGL_SAMPLES_ARB,
-                                4,
-                                0};
-
-  int32 pixelFormatID;
-  uint32 numFormats;
-  BOOL status = wglChoosePixelFormatARB(window.device, pixelAttribs, NULL, 1,
-                                        &pixelFormatID, &numFormats);
-
-  if (status == FALSE || numFormats == 0) {
-    log_fatal("wglChoosePixelFormatARB() failed.");
-    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
-  }
-
-  PIXELFORMATDESCRIPTOR PFD;
-  if (DescribePixelFormat(window.device, pixelFormatID, sizeof(PFD), &PFD) ==
-      0) {
-    log_fatal("Describe Modern PixelFormat failed.");
-    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
-  }
-
-  if (SetPixelFormat(window.device, pixelFormatID, &PFD) == 0) {
-    log_fatal("Set Modern PixelFormat failed.");
-    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
-  }
-
-  const int major_min = 4;
-  const int minor_min = 3;
-  int contextAttribs[] = {WGL_CONTEXT_MAJOR_VERSION_ARB,
-                          major_min,
-                          WGL_CONTEXT_MINOR_VERSION_ARB,
-                          minor_min,
-                          WGL_CONTEXT_PROFILE_MASK_ARB,
-                          WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-                          0};
-
-  modernGLcontext =
-      wglCreateContextAttribsARB(window.device, 0, contextAttribs);
-  if (modernGLcontext == NULL) {
-    log_fatal("Create modern gl context failed.");
-    Win32HandleError(ERROR_PLATFORM_OPENGL_CREATE_MODERN_FAILED);
-  }
-
-  // Delete legacy context and ghost window
-  wglMakeCurrent(NULL, NULL);
-  wglDeleteContext(oldOGLcontext);
-  ReleaseDC(ghostWnd.handle, ghostWnd.device);
-  DestroyWindow(ghostWnd.handle);
-
-  // Make the modern GL context the current
-  wglMakeCurrent(window.device, modernGLcontext);
-  ShowWindow(window.handle, SW_SHOW);
-  log_info("Win32 OpenGL initialized.");
-  return Win32GetProc;
-}
 
 void Win32SwapBuffer() { SwapBuffers(window.device); }
 
-//-----------------------------------------------------------------
-// Exporters
-//-----------------------------------------------------------------
+//-------------------------------------------
+// Graphics
+//-------------------------------------------
+
+
 LoadProc InitOpenGL(void) { return Win32InitOpenGL(); }
 
 SwapBuffersFunc GetPlatformSwapBuffer(void) { return Win32SwapBuffer; }
@@ -697,7 +559,7 @@ SwapBuffersFunc GetPlatformSwapBuffer(void) { return Win32SwapBuffer; }
 //-----------------------------------------------------------------
 // HELPERS
 //-----------------------------------------------------------------
-void Win32_Helper_CreateWindow(Window *wnd, const char *in_wndClassName,
+void Win32_Helper_CreateWindow(LT_Window_t *wnd, const char *in_wndClassName,
                                int width, int height, const char *title) {
   DWORD styleEx = in_wndClassName == CLASS_NAME ? WINDOW_STYLE_EX : WS_DISABLED;
   DWORD style = in_wndClassName == CLASS_NAME ? WINDOW_STYLE : 0;
@@ -828,6 +690,146 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc(hwnd, msg, wParam, lParam);
   }
   return 0;
+}
+
+void *Win32GetProc(const char *name) {
+  void *proc = (void *)wglGetProcAddress(name);
+  if (proc)
+    return proc;
+
+  proc = (void *)GetProcAddress(glInstance, name);
+
+  if (proc == 0) {
+    log_fatal("Retrieving %s failed.", name);
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PROC_NOT_FOUND);
+  }
+
+  return proc;
+}
+
+LoadProc Win32InitOpenGL(void) {
+  glInstance = LoadLibraryA("opengl32.dll");
+  if (glInstance == 0) {
+    log_fatal("Couldn't load opengl library.");
+    Win32HandleError(ERROR_PLATFORM_OPENGL_LIB_NOT_FOUND);
+  }
+
+  LT_Window_t ghostWnd;
+  Win32_Helper_CreateWindow(&ghostWnd, GHOST_CLASS_NAME, CW_USEDEFAULT,
+                            CW_USEDEFAULT, "");
+
+  // IMPORTANT: before creating the contex pixel format must be set
+  PIXELFORMATDESCRIPTOR pfd = {0};
+  pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+  pfd.nVersion = 1; // Always set to 1
+  pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+  pfd.iPixelType = PFD_TYPE_RGBA;
+  pfd.cColorBits = 32;
+  pfd.cDepthBits = 16;
+
+  int pixelFormat = ChoosePixelFormat(ghostWnd.device, &pfd);
+  if (pixelFormat == 0) {
+    log_fatal("ChoosePixelFormat failed.");
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
+  }
+
+  if (SetPixelFormat(ghostWnd.device, pixelFormat, &pfd) == 0) {
+    log_fatal("SetPixelFormat failed.");
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
+  }
+
+  // Create temporary legacy context
+  HGLRC oldOGLcontext = wglCreateContext(ghostWnd.device);
+  if (oldOGLcontext == NULL) {
+    log_fatal("Create gl context failed.");
+    Win32HandleError(ERROR_PLATFORM_OPENGL_CREATE_FAILED);
+  }
+  wglMakeCurrent(ghostWnd.device, oldOGLcontext);
+
+  // Get GL extensions
+  PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB =
+      (PFNWGLCHOOSEPIXELFORMATARBPROC)Win32GetProc("wglChoosePixelFormatARB");
+  PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =
+      (PFNWGLCREATECONTEXTATTRIBSARBPROC)Win32GetProc(
+          "wglCreateContextAttribsARB");
+
+  // Create modern context
+  Win32_Helper_CreateWindow(&window, CLASS_NAME, 720, 480, WINDOW_TITLE);
+
+  const int32 pixelAttribs[] = {WGL_DRAW_TO_WINDOW_ARB,
+                                GL_TRUE,
+                                WGL_SUPPORT_OPENGL_ARB,
+                                GL_TRUE,
+                                WGL_DOUBLE_BUFFER_ARB,
+                                GL_TRUE,
+                                WGL_PIXEL_TYPE_ARB,
+                                WGL_TYPE_RGBA_ARB,
+                                WGL_ACCELERATION_ARB,
+                                WGL_FULL_ACCELERATION_ARB,
+                                WGL_COLOR_BITS_ARB,
+                                32,
+                                WGL_ALPHA_BITS_ARB,
+                                8,
+                                WGL_DEPTH_BITS_ARB,
+                                24,
+                                WGL_STENCIL_BITS_ARB,
+                                8,
+                                WGL_SAMPLE_BUFFERS_ARB,
+                                GL_TRUE,
+                                WGL_SAMPLES_ARB,
+                                4,
+                                0};
+
+  int32 pixelFormatID;
+  uint32 numFormats;
+  BOOL status = wglChoosePixelFormatARB(window.device, pixelAttribs, NULL, 1,
+                                        &pixelFormatID, &numFormats);
+
+  if (status == FALSE || numFormats == 0) {
+    log_fatal("wglChoosePixelFormatARB() failed.");
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
+  }
+
+  PIXELFORMATDESCRIPTOR PFD;
+  if (DescribePixelFormat(window.device, pixelFormatID, sizeof(PFD), &PFD) ==
+      0) {
+    log_fatal("Describe Modern PixelFormat failed.");
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
+  }
+
+  if (SetPixelFormat(window.device, pixelFormatID, &PFD) == 0) {
+    log_fatal("Set Modern PixelFormat failed.");
+    Win32HandleError(ERROR_PLATFORM_OPENGL_PIXELFORMAT);
+  }
+
+  const int major_min = 4;
+  const int minor_min = 3;
+  int contextAttribs[] = {WGL_CONTEXT_MAJOR_VERSION_ARB,
+                          major_min,
+                          WGL_CONTEXT_MINOR_VERSION_ARB,
+                          minor_min,
+                          WGL_CONTEXT_PROFILE_MASK_ARB,
+                          WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+                          0};
+
+  modernGLcontext =
+      wglCreateContextAttribsARB(window.device, 0, contextAttribs);
+  if (modernGLcontext == NULL) {
+    log_fatal("Create modern gl context failed.");
+    Win32HandleError(ERROR_PLATFORM_OPENGL_CREATE_MODERN_FAILED);
+  }
+
+  // Delete legacy context and ghost window
+  wglMakeCurrent(NULL, NULL);
+  wglDeleteContext(oldOGLcontext);
+  ReleaseDC(ghostWnd.handle, ghostWnd.device);
+  DestroyWindow(ghostWnd.handle);
+
+  // Make the modern GL context the current
+  wglMakeCurrent(window.device, modernGLcontext);
+  ShowWindow(window.handle, SW_SHOW);
+  log_info("Win32 OpenGL initialized.");
+  return Win32GetProc;
 }
 
 noreturn void Win32HandleError(int32 in_exitCode) {

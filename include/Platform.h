@@ -21,12 +21,12 @@ typedef void *HANDLE;
 typedef struct {
   HANDLE handle;
   const unsigned long id;
-} ThreadLinuxThreadWin;
+} ThreadWin;
 
 typedef struct {
   HWND handle;
   HDC device;
-} Window;
+} LT_Window;
 
 /**
  * @def LT_CREATEGAME
@@ -54,7 +54,7 @@ typedef struct {
 } ThreadLinux;
 
 typedef struct {
-} Window;
+} LT_Window;
 
 /**
  * @def LT_CREATEGAME
@@ -72,7 +72,7 @@ typedef struct {
   }
 
 // GRAPHICS
-extern Window window;
+extern LT_Window window;
 extern LoadProc InitOpenGL(void);
 extern SwapBuffersFunc GetPlatformSwapBuffer(void);
 
