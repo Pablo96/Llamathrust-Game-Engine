@@ -4,21 +4,24 @@
 #include <Platform.hpp>
 #include <log.hpp>
 #include <stdlib.h>
-static int32 key_states[KEYS_COUNT];
 
-void LT_InputInit() {
-  log_trace("Initializing Input...");
-  PlatformInitInput(key_states);
-  log_info("Input Initialized...");
-}
+namespace LT {
+    static int32 key_states[(uint64) INPUT_KEY::KEYS_COUNT];
 
-LT_INPUT_STATE LT_GetKeyState(const LT_INPUT_KEY in_key) {
+    void InputInit() {
+        log_trace("Initializing Input...");
+        PlatformInitInput(key_states);
+        log_info("Input Initialized...");
+    }
+
+    INPUT_STATE GetKeyState(const INPUT_KEY in_key) {
 #ifdef LT_DEBUG
-  if (in_key >= KEYS_COUNT) {
-    log_fatal("Key %u does not exists. Max key value is %u", in_key,
-              KEYS_COUNT);
-    exit(ERROR_INPUT_KEY_INVALID_VALUE);
-  }
+        if (in_key >= INPUT_KEY::KEYS_COUNT) {
+            log_fatal("Key %u does not exists. Max key value is %u", in_key,
+                INPUT_KEY::KEYS_COUNT);
+            exit(ERROR_INPUT_KEY_INVALID_VALUE);
+        }
 #endif
-  return (LT_INPUT_STATE)PlatformGetKeyState(key_states[in_key]);
+        return (INPUT_STATE)PlatformGetKeyState(key_states[in_key]);
+    }
 }
