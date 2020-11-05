@@ -1,9 +1,10 @@
-#include "Engine.h"
-#include "GraphicsAPI.h"
-#include "Input.h"
-#include <GameManager.h>
-#include <Networking.h>
-#include <log.h>
+#include "Engine.hpp"
+#include "GraphicsAPI.hpp"
+#include "Input.hpp"
+#include <GameManager.hpp>
+#include <Networking.hpp>
+#include <log.hpp>
+#include <memory>
 
 void Engine_Start(const ConfigArgs *args) {
   log_trace("Engine is starting...");
@@ -11,8 +12,8 @@ void Engine_Start(const ConfigArgs *args) {
   // load config file
   Config config = {
       .graphic_api = LT_OPENGL,
-      .networking_support = LT_TRUE,
-      .is_server = LT_FALSE,
+      .networking_support = true,
+      .is_server = false,
       .port = 27854,
       .ip = "127.0.0.1",
   };
@@ -22,7 +23,7 @@ void Engine_Start(const ConfigArgs *args) {
     config.is_server = args->isServer;
 
     // free mem after use
-    free(args);
+    delete args;
   }
 
   LT_InputInit();

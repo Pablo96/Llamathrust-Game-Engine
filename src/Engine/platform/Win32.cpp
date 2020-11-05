@@ -1,22 +1,22 @@
-#include "Win32.h"
+#include "Win32.hpp"
 #ifdef LT_WINDOWS
-#include "../Engine.h"
-#include "../Input.h"
-#include "../Performance.h"
-#include "../networking/Socket.h"
-#include "../ArgsParsing.h"
-#include <ErrorCodes.h>
-#include <Networking.h>
-#include <Thread.h>
+#include "../Engine.hpp"
+#include "../Input.hpp"
+#include "../Performance.hpp"
+#include "../networking/Socket.hpp"
+#include "../ArgsParsing.hpp"
+#include <ErrorCodes.hpp>
+#include <Networking.hpp>
+#include <Thread.hpp>
 
-#include <log.h>
+#include <log.hpppp>
 
 #include <WS2tcpip.h>
 #include <WinSock2.h>
 #include <wingdi.h>
 
 #include <gl/GL.h>
-#include <gl/wglext.h>
+#include <gl/wglext.hpp>
 
 #include <stdlib.h>
 #include <string.h>
@@ -151,7 +151,7 @@ static LPVOID GetErrorMsg(DWORD errorCode) {
 void *PlatformLoadSharedLib(const char *in_name) {
   const size_t size = strlen(in_name);
 
-  char *name_dll = malloc(size + 5);
+  char *name_dll = (char*) malloc(size + 5);
   memcpy(name_dll, in_name, size);
   name_dll[size] = 0;
 
@@ -193,7 +193,7 @@ void PlatformNetAddress(NetAddress *address) {
       .ai_next = 0
   };
 
-  PADDRINFOA result = malloc(sizeof(ADDRINFOA));
+  PADDRINFOA result = (PADDRINFOA) malloc(sizeof(ADDRINFOA));
   char buffer[7];
   _itoa(address->port, buffer, 10);
 
@@ -206,17 +206,17 @@ void PlatformNetAddress(NetAddress *address) {
 }
 
 void PlatformNetAddressDestroy(NetAddress *address) {
-  PADDRINFOA info = address->reserved;
+  PADDRINFOA info = (PADDRINFOA) address->reserved;
   freeaddrinfo(info);
 }
 
 void PlatformSocketCreate(NetSocket *in_socket) {
   // convert ip name to binary address
-  PADDRINFOA hints = in_socket->address->reserved;
+  PADDRINFOA hints = (PADDRINFOA) in_socket->address->reserved;
   hints->ai_flags = AI_PASSIVE;
 
   // Create a SOCKET for connecting to server
-  in_socket->reserved =
+  in_socket->reserved = (void*)
       socket(in_socket->address->type == ADDR_IPV4
              ? AF_INET 
              : AF_INET6,
@@ -230,22 +230,22 @@ void PlatformSocketCreate(NetSocket *in_socket) {
       );
 
   // Check if it is a valid socket
-  in_socket->isValid = in_socket->reserved != INVALID_SOCKET;
+  in_socket->isValid = reinterpret_cast<SOCKET>(in_socket->reserved) != INVALID_SOCKET;
   if (!in_socket->isValid) {
     log_error("socket failed with error: %ld\n", WSAGetLastError());
   }
 }
 
 bool PlatformSocketBind(const NetSocket *in_socket) {
-  PSOCKADDR hints = in_socket->address->reserved;
+  PSOCKADDR hints = (PSOCKADDR) in_socket->address->reserved;
   int result = bind((SOCKET)in_socket->reserved, hints, sizeof(SOCKADDR));
   if (result != 0) {
     const char *msgError = GetErrorMsg(WSAGetLastError());
     log_error("Couldnt bind socket! Error: %s", msgError);
     LocalFree(msgError);
-    return LT_FALSE;
+    return false;
   }
-  return LT_TRUE;
+  return true;
 }
 
 bool PlatformSocketListen(const NetSocket *in_socket) {
@@ -255,9 +255,9 @@ bool PlatformSocketListen(const NetSocket *in_socket) {
     const char *msgError = GetErrorMsg(WSAGetLastError());
     log_error("Listen failed with error: %s", msgError);
     LocalFree(msgError);
-    return LT_FALSE;
+    return false;
   }
-  return LT_TRUE;
+  return true;
 }
 
 NetSocket *PlatformSocketAccept(const NetSocket *in_socket) {
@@ -275,7 +275,7 @@ NetSocket *PlatformSocketAccept(const NetSocket *in_socket) {
   NetSocket *address = (NetSocket *)malloc(sizeof(NetAddress));
   LT_NetAddressCreate(address, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port),
                       in_socket->address->version, in_socket->address->type,
-                      in_socket->address->protocol, LT_FALSE);
+                      in_socket->address->protocol, false);
   NetSocket tmp = {
       .address = address,
       .reserved = clientSocket,
@@ -292,11 +292,11 @@ void PlatformSocketClose(NetSocket *socket) {
 
 bool PlatformSocketConnect(NetSocket *in_socket, const NetAddress *address) {
   // Connect to server.
-  PADDRINFOA ptr = address->reserved;
-  SOCKET *socket = in_socket->reserved;
+  PADDRINFOA ptr = (PADDRINFOA)address->reserved;
+  SOCKET socket = (SOCKET)in_socket->reserved;
   int iResult = connect(socket, ptr->ai_addr, (int)ptr->ai_addrlen);
   if (iResult == SOCKET_ERROR) {
-    in_socket->isValid = LT_FALSE;
+    in_socket->isValid = false;
   }
 }
 
@@ -305,9 +305,9 @@ bool PlatformSocketConnClose(const NetSocket *socket) {
   int iResult = shutdown((SOCKET)socket->reserved, SD_SEND);
   if (iResult == SOCKET_ERROR) {
     log_error("Shutdown failed with error: %d", WSAGetLastError());
-    return LT_FALSE;
+    return false;
   }
-  return LT_TRUE;
+  return true;
 }
 
 bool PlatformSocketSend(const NetSocket *socket, const char *msg,
@@ -315,23 +315,23 @@ bool PlatformSocketSend(const NetSocket *socket, const char *msg,
   int iResult = send((SOCKET)socket->reserved, msg, (int)msg_len, 0);
   if (iResult == SOCKET_ERROR) {
     log_error("Send failed with error: %d", WSAGetLastError());
-    return LT_FALSE;
+    return false;
   }
-  return LT_TRUE;
+  return true;
 }
 
 bool PlatformSocketRecieve(const NetSocket *socket, char *msg,
                            uint32 *msg_len) {
   int buffer_size =
-      msg_len > MAX_PACKET_SIZE ? (int)MAX_PACKET_SIZE : (int)msg_len;
+      *msg_len > MAX_PACKET_SIZE ? (int)MAX_PACKET_SIZE : (int)*msg_len;
   *msg_len = recv((SOCKET)socket->reserved, msg, buffer_size, 0);
   if (*msg_len == 0) {
     if (*msg_len < 0)
       log_error("connection closed or send failed with error: %d",
                 WSAGetLastError());
-    return LT_FALSE;
+    return false;
   }
-  return LT_TRUE;
+  return true;
 }
 
 Thread *PlatformThreadCreate(const Thread *thread,
@@ -387,14 +387,14 @@ void PlatformThreadGetExitCode(Thread *thread) {
   if (GetExitCodeThread(this->handle, &exit_code) == STILL_ACTIVE) {
     log_error("Thread still active.")
   } else {
-    thread->isValid = LT_FALSE;
+    thread->isValid = false;
     thread->exitCode = (int32)exit_code;
   }
 }
 
 void PlatformThreadDestroy(Thread *thread) {
   CloseHandle(((const ThreadWin *)thread)->handle);
-  thread->isValid = LT_FALSE;
+  thread->isValid = false;
 }
 
 ThreadLock *PlatformThreadLockCreate() {

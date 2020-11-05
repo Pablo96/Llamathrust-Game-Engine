@@ -1,5 +1,5 @@
 #pragma once
-#include "Common.h"
+#include "Common.hpp"
 
 typedef void *(*LoadProc)(const char *name);
 typedef void (*SwapBuffersFunc)(void);

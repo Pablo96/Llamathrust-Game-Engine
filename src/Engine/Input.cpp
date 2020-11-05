@@ -1,8 +1,8 @@
-#include "Input.h"
-#include <Common.h>
-#include <ErrorCodes.h>
-#include <Platform.h>
-#include <log.h>
+#include "Input.hpp"
+#include <Common.hpp>
+#include <ErrorCodes.hpp>
+#include <Platform.hpp>
+#include <log.hpp>
 #include <stdlib.h>
 static int32 key_states[KEYS_COUNT];
 

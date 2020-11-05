@@ -4,7 +4,7 @@
  * @brief Code needed to parse Config arguments.
  **/
 #pragma once
-#include <Common.h>
+#include <Common.hpp>
 
 /**
  * @struct ConfigArgs
@@ -13,9 +13,9 @@
  *	@type bool
  *	@brief If this is a server application for a game.
  **/
-typedef struct _ConfigArgs {
+struct ConfigArgs {
   bool isServer;
-} ConfigArgs;
+};
 
 /**
  * @func parseArgs
@@ -29,4 +29,4 @@ typedef struct _ConfigArgs {
  * @return Config
  *  @brief configuration struct
  **/
-extern const ConfigArgs *parseArgs(const char **argsv, const int size);
+const ConfigArgs *parseArgs(const char **argsv, const int size);

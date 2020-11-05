@@ -4,7 +4,7 @@
  * @brief Strings API.
  **/
 #pragma once
-#include <Common.h>
+#include <Common.hpp>
 
 #define LT_STACK_STRING(name, max_length) char name[max_length]
 

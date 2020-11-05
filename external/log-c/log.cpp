@@ -36,7 +36,7 @@ static PCRITICAL_SECTION CriticalSection;
 static pthread_mutex_t mutex;
 #endif
 
-#include "log.h"
+#include "log.hpp"
 static unsigned char init = !0;
 
 static struct {

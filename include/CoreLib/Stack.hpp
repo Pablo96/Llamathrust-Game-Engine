@@ -4,8 +4,8 @@
  * @brief Fixed size buffer Stack API.
  **/
 #pragma once
-#include "Array.h"
-#include <Common.h>
+#include "Array.hpp"
+#include <Common.hpp>
 
 /**
  * @struct Stack

@@ -4,8 +4,6 @@
  * @brief Here are all common types and defines.
  **/
 #pragma once
-#define NULL (void *)0
-#include <stdlib.h>
 
 // signed types
 typedef char int8;
@@ -19,10 +17,6 @@ typedef unsigned int uint32;
 typedef unsigned long long uint64;
 typedef uint8 byte;
 
-// boolean
-typedef byte bool;
-#define LT_FALSE (bool)0
-#define LT_TRUE (bool)1
 
 // MAX and MIN values
 #define LT_UINT64_MAX 0xFFFFFFFFFFFFFFFF

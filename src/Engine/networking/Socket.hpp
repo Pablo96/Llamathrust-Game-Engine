@@ -1,5 +1,5 @@
 #pragma once
-#include <Common.h>
+#include <Common.hpp>
 
 #define MAX_PORT 65535
 #define MAX_CHAR_IP 16
@@ -55,7 +55,7 @@ extern void LT_NetAddressDestroy(NetAddress *address);
  *	@brief server type can be TCP or UDP.
  * @field isValid:
  *	@type bool
- *	@brief LT_FALSE if the socket is invalid because of an error.
+ *	@brief false if the socket is invalid because of an error.
  **/
 typedef struct _NetSocket {
   void *reserved;

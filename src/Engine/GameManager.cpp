@@ -1,7 +1,7 @@
-#include "GameManager.h"
-#include <ErrorCodes.h>
-#include <System.h>
-#include <log.h>
+#include "GameManager.hpp"
+#include <ErrorCodes.hpp>
+#include <System.hpp>
+#include <log.hpppp>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -38,7 +38,7 @@ void LT_GameStateInit(const char *in_gameName) {
 
 void LT_GameStateUpdateCurrent(const double deltaTime) {
   Game *game = gameState.currentGame;
-  game->OnUpdate(game, deltaTime);
+  game->OnUpdate(deltaTime);
 }
 
 void LT_GameStateLoadGame(Game *in_game, void *in_customData) {
@@ -49,17 +49,17 @@ void LT_GameStateLoadGame(Game *in_game, void *in_customData) {
     Game *game = gameState.currentGame;
     gameState.callerGame = game->idName;
 
-    game->OnStop(game);
-    game->OnDestroy(game);
+    game->OnStop();
+    game->OnDestroy();
 
     free(gameState.currentGame);
   }
   // Set current game as the loaded game
   gameState.currentGame = in_game;
   // Call OnCreate and OnResume
-  gameState.currentGame->OnCreate(in_game, gameState.callerGame,
+  gameState.currentGame->OnCreate(gameState.callerGame,
                                   gameState.customData);
-  gameState.currentGame->OnResume(in_game);
+  gameState.currentGame->OnResume();
 
   log_info("Loaded game: %s", gameState.currentGame->idName);
 }

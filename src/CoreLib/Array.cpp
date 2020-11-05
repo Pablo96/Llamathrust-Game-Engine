@@ -1,8 +1,8 @@
-#include <CoreLib/Array.h>
-#include <ErrorCodes.h>
+#include <CoreLib/Array.hpp>
+#include <ErrorCodes.hpp>
 #include <log.h>
 #include <stdlib.h>
-#include <string.h> //memcpy
+#include <string> //memcpy
 
 Array LT_ArrayCreate(uint64 count, uint64 typeSize) {
   Array array = {
@@ -17,7 +17,10 @@ Array LT_ArrayCreate(uint64 count, uint64 typeSize) {
 
 Array LT_ArrayStackCreate(void *dataBuffer, uint64 count, uint64 typeSize) {
   Array array = {
-      .data = dataBuffer, .size = count * typeSize, .typeSize = typeSize};
+      .data = dataBuffer,
+      .size = count * typeSize,
+      .typeSize = typeSize
+  };
 
   return array;
 }

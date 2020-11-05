@@ -1,11 +1,13 @@
-#include <CoreLib/Queue.h>
+#include <CoreLib/Queue.hpp>
 
 Queue LT_QueueCreate(const uint64 count, const uint64 elementSize) {
-  Queue queue = {.array = LT_ArrayCreate(count, elementSize),
-                 .last_element_index = 0,
-                 .first_element_index = 0,
-                 .count = count,
-                 .isEmpty = LT_TRUE};
+  Queue queue = {
+    .array = LT_ArrayCreate(count, elementSize),
+    .last_element_index = 0,
+    .first_element_index = 0,
+    .count = count,
+    .isEmpty = LT_TRUE
+  };
 
   return queue;
 }

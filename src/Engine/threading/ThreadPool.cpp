@@ -1,8 +1,8 @@
-#include "ThreadPool.h"
-#include <CoreLib/Array.h>
-#include <CoreLib/Queue.h>
-#include <ErrorCodes.h>
-#include <log.h>
+#include "ThreadPool.hpp"
+#include <CoreLib/Array.hpp>
+#include <CoreLib/Queue.hpp>
+#include <ErrorCodes.hpp>
+#include <log.hpp>
 #include <string.h> //memcpy
 
 #ifdef LT_LINUX
@@ -81,7 +81,7 @@ typedef struct _Worker {
 } Worker;
 
 static void LT_WorkerCreate(Worker *worker, ThreadLock *lock) {
-  worker->running = LT_TRUE;
+  worker->running = true;
   worker->task = NULL;
 
   LT_Thread_Create(worker, WorkerProc, NULL, "worker", lock);
@@ -115,7 +115,7 @@ static void WorkerProc(void *_worker) {
       this->task = NULL;
     }
 
-    if (Pool->isProcessing == LT_TRUE) {
+    if (Pool->isProcessing == true) {
       LT_ThreadLock_Lock(this->base.lock);
       this->task = LT_ThreadPool_GetTask();
       LT_ThreadLock_Unlock(this->base.lock);
@@ -132,7 +132,7 @@ void LT_ThreadPoolInitialize(const uint32 threads_count,
       .tasks = LT_QueueCreate(sizeof(Task) * max_tasks, sizeof(Task)),
       .threads = LT_ArrayCreate(threads_count, sizeof(Worker)),
       .lock = lock,
-      .isProcessing = LT_FALSE};
+      .isProcessing = false};
 
   Pool = (struct ThreadPool *)malloc(sizeof(struct ThreadPool));
   memcpy(Pool, &pool, sizeof(struct ThreadPool));
@@ -147,7 +147,7 @@ void LT_ThreadPoolInitialize(const uint32 threads_count,
 
 void LT_ThreadPoolShutdown() {
   // Stop task retrieving
-  Pool->isProcessing = LT_FALSE;
+  Pool->isProcessing = false;
 
   // Stop threads
   uint32 threads_count = (uint32)LT_ArrayCount(&Pool->threads);
@@ -169,7 +169,7 @@ void LT_ThreadPoolAddTask(ThreadFuncWrapper taskFunc, void *data) {
   Task task = {.task = taskFunc, .data = data};
 
   LT_QueuePush(&Pool->tasks, &task);
-  Pool->isProcessing = LT_TRUE;
+  Pool->isProcessing = true;
 }
 
 Task *LT_ThreadPool_GetTask() {

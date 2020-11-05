@@ -4,7 +4,7 @@
  * @brief Here you'll find the configuration struct for storing config data.
  **/
 #pragma once
-#include "Common.h"
+#include "Common.hpp"
 
 // forward declarations
 typedef enum _ServerTypeEnum SERVER_TYPE;

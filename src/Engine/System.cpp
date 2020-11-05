@@ -1,5 +1,5 @@
-#include "Platform.h"
-#include <System.h>
+#include "Platform.hpp"
+#include <System.hpp>
 
 SharedLib LT_LoadSharedLibrary(const char *in_name) {
   return PlatformLoadSharedLib(in_name);

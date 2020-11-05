@@ -1,7 +1,7 @@
-#include "Thread.h"
-#include <Platform.h>
+#include "Thread.hpp"
+#include <Platform.hpp>
 #include <stdlib.h>
-#include <string.h> // memset
+#include <string> // memset
 
 // ID 0 is reserved for current thread
 static uint64 threadIDCount = 1;
@@ -17,7 +17,7 @@ Thread *LT_Thread_Create(Thread *this, ThreadFuncWrapper func, void *data,
                 .name = name,
                 .data = data,
                 .exitCode = 0,
-                .isValid = LT_TRUE};
+                .isValid = true};
 
   memcpy(&this->lock, &tmp.lock, sizeof(Thread) - PLATFORM_THREAD_SIZE);
   return PlatformThreadCreate(this, func);
@@ -35,7 +35,7 @@ Thread *LT_Thread_GetCurrent(Thread *this) {
                 .name = NULL,
                 .data = NULL,
                 .exitCode = 0,
-                .isValid = LT_TRUE};
+                .isValid = true};
 
   PlatformGetCurrent(&tmp);
 
@@ -62,7 +62,7 @@ void LT_Thread_SetLock(Thread *thread, ThreadLock *lock) {
 void LT_Thread_Destroy(Thread *thread) {
   PlatformThreadDestroy(thread);
   memset(thread->reserved, 0, PLATFORM_THREAD_SIZE);
-  thread->isValid = LT_FALSE;
+  thread->isValid = false;
 }
 
 ThreadLock *LT_ThreadLock_Create() { return PlatformThreadLockCreate(); }

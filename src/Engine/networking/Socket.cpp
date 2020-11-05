@@ -1,6 +1,6 @@
-#include "Socket.h"
-#include <Platform.h>
-#include <string.h>
+#include "Socket.hpp"
+#include <Platform.hpp>
+#include <string>
 
 NetAddress *LT_NetAddressCreate(NetAddress *in_mem, const char *ip,
                                 const uint16 port,
@@ -75,5 +75,5 @@ bool LT_SocketWrite(const NetSocket *socket, const byte *stream,
 
 void LT_SocketCloseAndDestroy(NetSocket *socket) {
   PlatformSocketClose(socket);
-  socket->isValid = LT_FALSE;
+  socket->isValid = false;
 }

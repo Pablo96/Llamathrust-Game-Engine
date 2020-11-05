@@ -4,8 +4,8 @@
  * @brief All the networking public API is found in this file.
  **/
 #pragma once
-#include "Common.h"
-#include "EngineConfig.h"
+#include "Common.hpp"
+#include "EngineConfig.hpp"
 
 /**
  * NOTE:

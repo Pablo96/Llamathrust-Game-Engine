@@ -5,8 +5,8 @@
  * for systems initialization, main loop and systems shutdown.
  **/
 #pragma once
-#include "ArgsParsing.h"
-#include <Common.h>
+#include "ArgsParsing.hpp"
+#include <Common.hpp>
 extern void LT_CloseWindow(void);
 
 /**
