@@ -7,72 +7,45 @@ namespace LT {
     // ID 0 is reserved for current thread
     static uint64 threadIDCount = 1;
 
-    Thread* LT_Thread_Create(Thread* this, ThreadFuncWrapper func, void* data,
-        const char* name, ThreadLock* lock) {
-        if (this == NULL) {
-            this = malloc(sizeof(Thread));
-        }
-
-        Thread tmp = { .lock = lock,
-                      .ID = threadIDCount++,
-                      .name = name,
-                      .data = data,
-                      .exitCode = 0,
-                      .isValid = true };
-
-        memcpy(&this->lock, &tmp.lock, sizeof(Thread) - PLATFORM_THREAD_SIZE);
-        return PlatformThreadCreate(this, func);
+    Thread::Thread(ThreadFuncWrapper func, void* in_data, const char* in_name, ThreadLock* in_lock)
+        : ID(threadIDCount++), lock(in_lock), name(in_name), data(in_data), exitCode(0), isValid(true) {
+        Platform::PlatformThreadCreate(this, func);
     }
 
-    void LT_Thread_Start(Thread* thread) { PlatformThreadStart(thread); }
+    void Thread::Start() { Platform::PlatformThreadStart(this); }
 
-    Thread* LT_Thread_GetCurrent(Thread* this) {
-        if (this == NULL) {
-            this = malloc(sizeof(Thread));
-        }
-
-        Thread tmp = { .lock = NULL,
-                      .ID = 0,
-                      .name = NULL,
-                      .data = NULL,
-                      .exitCode = 0,
-                      .isValid = true };
-
-        PlatformGetCurrent(&tmp);
-
-        // Search for current thread
-        memcpy(this, &tmp, sizeof(Thread));
-
-        return this;
+    Thread* Thread::GetCurrent() {
+        Thread* tmp = new Thread(nullptr, nullptr, nullptr, nullptr);
+        Platform::PlatformGetCurrent(tmp);
+        return tmp;
     }
 
-    void LT_Thread_Join(const Thread* thread) { PlatformThreadJoin(thread); }
+    void Thread::Join(const Thread* thread) { Platform::PlatformThreadJoin(thread); }
 
-    void LT_Thread_Sleep(const Thread* thread, const uint64 miliseconds) {
-        PlatformThreadSleep(thread, miliseconds);
+    void Thread::Sleep(const uint64 miliseconds) {
+        Platform::PlatformThreadSleep(this, miliseconds);
     }
 
-    void LT_Thread_Exit(const int32 exit_code) { PlatformThreadExit(exit_code); }
+    void Thread::Exit(const int32 exit_code) { Platform::PlatformThreadExit(exit_code); }
 
-    void LT_Thread_ExitCode(Thread* thread) { PlatformThreadGetExitCode(thread); }
+    void Thread::CaptureExitCode() { Platform::PlatformThreadGetExitCode(this); }
 
-    void LT_Thread_SetLock(Thread* thread, ThreadLock* lock) {
-        thread->lock = lock;
+    void Thread::Destroy() {
+        Platform::PlatformThreadDestroy(this);
+        memset((void*)this->reserved, 0, PLATFORM_THREAD_SIZE);
+        this->isValid = false;
     }
 
-    void LT_Thread_Destroy(Thread* thread) {
-        PlatformThreadDestroy(thread);
-        memset(thread->reserved, 0, PLATFORM_THREAD_SIZE);
-        thread->isValid = false;
+    ThreadLock::ThreadLock() {
+        memcpy((void*)this->reserved, Platform::PlatformThreadLockCreate(), sizeof(ThreadLock));
     }
 
-    ThreadLock* LT_ThreadLock_Create() { return PlatformThreadLockCreate(); }
-
-    void LT_ThreadLock_Lock(ThreadLock* lock) { PlatformThreadLockLock(lock); }
-
-    void LT_ThreadLock_Unlock(ThreadLock* lock) { PlatformThreadLockUnock(lock); }
-
-    void LT_ThreadLock_Destroy(ThreadLock* lock) {
-        PlatformThreadLockDestroy(lock);
+    ThreadLock::~ThreadLock(void)
+    {
+        Platform::PlatformThreadLockDestroy(this);
     }
+
+    void ThreadLock::Lock() { Platform::PlatformThreadLockLock(this); }
+
+    void ThreadLock::Unlock() { Platform::PlatformThreadLockUnock(this); }
 }

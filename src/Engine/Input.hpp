@@ -126,11 +126,11 @@ namespace LT {
 	 *    @brief key was resently pressed
 	 *    @note is set when a key resently pass from up to down.
 	 **/
-	typedef enum lt_InputState {
+	typedef enum class INPUT_STATE {
 		LT_KEY_UP,
 		LT_KEY_DOWN,
 		LT_KEY_PRESSED
-	} INPUT_STATE;
+	};
 
 	/**
 	 * @func LT_InputInit

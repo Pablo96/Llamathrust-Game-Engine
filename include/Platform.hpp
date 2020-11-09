@@ -1,33 +1,41 @@
 #pragma once
 #include "Common.hpp"
 
-typedef void *(*LoadProc)(const char *name);
-typedef void (*SwapBuffersFunc)(void);
+namespace LT {
+    typedef void *(*LoadProc)(const char *name);
+    typedef void (*SwapBuffersFunc)(void);
 
-// Forward declaration
-typedef struct _Thread Thread;
-typedef struct _ThreadLock ThreadLock;
-typedef struct _NetSocket NetSocket;
-typedef struct _NetAddress NetAddress;
+    // Forward declaration
+    typedef struct Thread;
+    typedef struct ThreadLock;
+    typedef struct NetSocket;
+    typedef struct NetAddress;
+}
 
 // WINDOWS
 #ifdef LT_WINDOWS
 #define LT_EXPORT __declspec(dllexport)
-typedef uint64 (*ThreadFuncWrapper)(void *name);
 typedef struct HWND__ *HWND;
 typedef struct HDC__ *HDC;
 typedef void *HANDLE;
 
-typedef struct {
-  HANDLE handle;
-  const unsigned long id;
-} ThreadWin;
+namespace LT {
+    typedef uint64(*ThreadFuncWrapper)(void* name);
 
-typedef struct {
-  HWND handle;
-  HDC device;
-} LT_Window;
+    struct ThreadWin {
+        HANDLE handle;
+        const unsigned long id;
 
+        ThreadWin(uint32 id) : id(id), handle(nullptr) {}
+    };
+
+    struct Window {
+        HWND handle;
+        HDC device;
+
+        Window() : handle(nullptr), device(nullptr) {}
+    };
+}
 /**
  * @def LT_CREATEGAME
  * @brief Generates the entrypoint for the game library
@@ -45,17 +53,18 @@ switch( fdwReason ) {\
 } return TRUE;}
 #elif defined(LT_LINUX)
 #define LT_EXPORT __attribute__((visibility("default")))
-typedef void* (*ThreadFuncWrapper)(void *name);
-typedef struct {
-  union {
-    uint32 *id;
-    uint32 *handle;
-  }
-} ThreadLinux;
+typedef void* (*LT::ThreadFuncWrapper)(void *name);
+namespace LT {
+    typedef struct {
+        union {
+            uint32* id;
+            uint32* handle;
+        }
+    } ThreadLinux;
 
-typedef struct {
-} LT_Window;
-
+    typedef struct {
+    } Window;
+}
 /**
  * @def LT_CREATEGAME
  * @brief Generates the entrypoint for the game library
@@ -72,9 +81,9 @@ typedef struct {
   }
 
 // GRAPHICS
-extern LT_Window window;
-extern LoadProc InitOpenGL(void);
-extern SwapBuffersFunc GetPlatformSwapBuffer(void);
+extern LT::Window window;
+extern LT::LoadProc InitOpenGL(void);
+extern LT::SwapBuffersFunc GetPlatformSwapBuffer(void);
 
 // INPUT
 extern void PlatformInitInput(int32 *in_keyStates);
@@ -85,31 +94,35 @@ extern void *PlatformLoadSharedLib(const char *name);
 extern void *PlatformGetProc(const void *in_lib, const char *in_name);
 
 // NETWORKING
-extern void PlatformNetAddress(NetAddress *address);
-extern void PlatformNetAddressDestroy(NetAddress *address);
-extern void PlatformSocketCreate(NetSocket *socket);
-extern bool PlatformSocketBind(const NetSocket *socket);
-extern bool PlatformSocketListen(const NetSocket *socket);
-extern NetSocket *PlatformSocketAccept(const NetSocket *in_socket);
-extern void PlatformSocketClose(NetSocket *socket);
-extern bool PlatformSocketConnect(NetSocket *socket, const NetAddress *address);
-extern bool PlatformSocketConnClose(const NetSocket *socket);
-extern bool PlatformSocketSend(const NetSocket *socket, const char *msg,
+extern void PlatformNetAddress(LT::NetAddress *address);
+extern void PlatformNetAddressDestroy(LT::NetAddress *address);
+extern void PlatformSocketCreate(LT::NetSocket *socket);
+extern bool PlatformSocketBind(const LT::NetSocket *socket);
+extern bool PlatformSocketListen(const LT::NetSocket *socket);
+extern LT::NetSocket *PlatformSocketAccept(const LT::NetSocket *in_socket);
+extern void PlatformSocketClose(LT::NetSocket *socket);
+extern bool PlatformSocketConnect(LT::NetSocket *socket, const LT::NetAddress *address);
+extern bool PlatformSocketConnClose(const LT::NetSocket *socket);
+extern bool PlatformSocketSend(const LT::NetSocket *socket, const char *msg,
                                const uint32 msg_len);
-extern bool PlatformSocketRecieve(const NetSocket *socket, char *msg,
+extern bool PlatformSocketRecieve(const LT::NetSocket *socket, char *msg,
                                   uint32 *msg_len);
 
 // THREADING
-extern Thread *PlatformThreadCreate(const Thread *thread, ThreadFuncWrapper funcWrapper);
-extern void PlatformThreadStart(const Thread *thread);
-extern void PlatformGetCurrent(const Thread *thread);
-extern void PlatformThreadJoin(const Thread *thread);
-extern void PlatformThreadSleep(const Thread *thread, const uint64 miliseconds);
-extern void PlatformThreadExit(const int16 exit_code);
-extern void PlatformThreadGetExitCode(Thread *thread);
-extern void PlatformThreadDestroy(Thread *thread);
+namespace LT {
+    struct Platform {
+        static LT::Thread* PlatformThreadCreate(LT::Thread* thread, LT::ThreadFuncWrapper funcWrapper);
+        static void PlatformThreadStart(const LT::Thread* thread);
+        static void PlatformGetCurrent(const LT::Thread* thread);
+        static void PlatformThreadJoin(const LT::Thread* thread);
+        static void PlatformThreadSleep(const LT::Thread* thread, const uint64 miliseconds);
+        static void PlatformThreadExit(const int16 exit_code);
+        static void PlatformThreadGetExitCode(LT::Thread* thread);
+        static void PlatformThreadDestroy(LT::Thread* thread);
 
-extern ThreadLock *PlatformThreadLockCreate(void);
-extern void PlatformThreadLockLock(ThreadLock *lock);
-extern void PlatformThreadLockUnock(ThreadLock *lock);
-extern void PlatformThreadLockDestroy(ThreadLock *lock);
+        static LT::ThreadLock* PlatformThreadLockCreate(void);
+        static void PlatformThreadLockLock(LT::ThreadLock* lock);
+        static void PlatformThreadLockUnock(LT::ThreadLock* lock);
+        static void PlatformThreadLockDestroy(LT::ThreadLock* lock);
+    };
+}

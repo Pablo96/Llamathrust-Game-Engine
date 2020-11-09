@@ -7,6 +7,7 @@
 #include <Common.hpp>
 
 namespace LT {
+    struct Platform;
 #ifdef LT_WINDOWS
 #define PLATFORM_THREAD_SIZE 8 * 2
 #define LOCK_SIZE 40
@@ -34,8 +35,8 @@ namespace LT {
     public:
         ThreadLock(void);
         ~ThreadLock(void);
-        void Lock(ThreadLock* lock);
-        void Unlock(ThreadLock* lock);
+        void Lock();
+        void Unlock();
     };
 
 #undef LOCK_SIZE
@@ -67,6 +68,7 @@ namespace LT {
      *  @brief true when the thread has not been shutdown.
      **/
     typedef class Thread {
+        friend Platform;
     protected:
         byte reserved[PLATFORM_THREAD_SIZE];
         ThreadLock* lock;

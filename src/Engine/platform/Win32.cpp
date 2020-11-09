@@ -9,7 +9,7 @@
 #include <Networking.hpp>
 #include <Thread.hpp>
 
-#include <log.hpppp>
+#include <log.hpp>
 
 #include <WS2tcpip.h>
 #include <WinSock2.h>
@@ -32,7 +32,7 @@ static const uint64 win32KeyStatesSize = VK_RMENU + 1;
 static uint8 *win32KeyStates;
 
 // Windows
-LT_Window_t window;
+LT::Window window;
 static BOOL shouldClose = FALSE;
 
 // Networking
@@ -65,9 +65,9 @@ int main(int32 argc, const char **argv) {
   //-----------------------------------------------------------------
   // Parse command line arguments
   //-----------------------------------------------------------------
-  const ConfigArgs *config = NULL;
+  const LT::ConfigArgs *config = NULL;
   if (argc > 1) {
-    config = parseArgs(argv, argc);
+    config = LT::parseArgs(argv, argc);
     const char log_msg[] = "Command line arguments parsed!.";
     log_info(log_msg);
   }
@@ -115,10 +115,10 @@ int main(int32 argc, const char **argv) {
 
     // Run engine
     double deltaTime = 1.0 / t;
-    Engine_Run(deltaTime);
+    LT::Engine_Run(deltaTime);
 
     // Reset key state cache
-    memset(win32KeyStates, LT_KEY_UP, win32KeyStatesSize);
+    memset(win32KeyStates, (int32) LT::INPUT_STATE::LT_KEY_UP, win32KeyStatesSize);
 
     LT_END_TIME();
   }
@@ -127,7 +127,7 @@ int main(int32 argc, const char **argv) {
   // Cleaning at exit
   //-----------------------------------------------------------------
   // Clean up the engine resources if needed
-  Engine_Shutdown();
+  LT::Engine_Shutdown();
 
   // Networking
   WSACleanup();
@@ -210,7 +210,7 @@ void PlatformNetAddressDestroy(NetAddress *address) {
   freeaddrinfo(info);
 }
 
-void PlatformSocketCreate(NetSocket *in_socket) {
+void PlatformSocketCreate(LT::NetSocket *in_socket) {
   // convert ip name to binary address
   PADDRINFOA hints = (PADDRINFOA) in_socket->address->reserved;
   hints->ai_flags = AI_PASSIVE;
@@ -248,7 +248,7 @@ bool PlatformSocketBind(const NetSocket *in_socket) {
   return true;
 }
 
-bool PlatformSocketListen(const NetSocket *in_socket) {
+bool PlatformSocketListen(const LT::NetSocket *in_socket) {
   SOCKET sock = (SOCKET)in_socket->reserved;
   int result = listen(sock, SOMAXCONN);
   if (result != 0) {
@@ -260,7 +260,7 @@ bool PlatformSocketListen(const NetSocket *in_socket) {
   return true;
 }
 
-NetSocket *PlatformSocketAccept(const NetSocket *in_socket) {
+LT::NetSocket *PlatformSocketAccept(const LT::NetSocket *in_socket) {
   SOCKET sock = (SOCKET)in_socket->reserved;
   struct sockaddr_in addr = {0};
   SOCKET clientSocket = accept(sock, (struct sockaddr *)&addr, NULL);
@@ -285,12 +285,12 @@ NetSocket *PlatformSocketAccept(const NetSocket *in_socket) {
   return client;
 }
 
-void PlatformSocketClose(NetSocket *socket) {
+void PlatformSocketClose(LT::NetSocket *socket) {
   closesocket((SOCKET)socket->reserved);
   socket->reserved = NULL;
 }
 
-bool PlatformSocketConnect(NetSocket *in_socket, const NetAddress *address) {
+bool PlatformSocketConnect(LT::NetSocket *in_socket, const LT::NetAddress *address) {
   // Connect to server.
   PADDRINFOA ptr = (PADDRINFOA)address->reserved;
   SOCKET socket = (SOCKET)in_socket->reserved;
@@ -300,7 +300,7 @@ bool PlatformSocketConnect(NetSocket *in_socket, const NetAddress *address) {
   }
 }
 
-bool PlatformSocketConnClose(const NetSocket *socket) {
+bool PlatformSocketConnClose(const LT::NetSocket *socket) {
   // shutdown the connection since no more data will be sent
   int iResult = shutdown((SOCKET)socket->reserved, SD_SEND);
   if (iResult == SOCKET_ERROR) {
@@ -310,7 +310,7 @@ bool PlatformSocketConnClose(const NetSocket *socket) {
   return true;
 }
 
-bool PlatformSocketSend(const NetSocket *socket, const char *msg,
+bool PlatformSocketSend(const LT::NetSocket *socket, const char *msg,
                         const uint32 msg_len) {
   int iResult = send((SOCKET)socket->reserved, msg, (int)msg_len, 0);
   if (iResult == SOCKET_ERROR) {
@@ -320,7 +320,7 @@ bool PlatformSocketSend(const NetSocket *socket, const char *msg,
   return true;
 }
 
-bool PlatformSocketRecieve(const NetSocket *socket, char *msg,
+bool PlatformSocketRecieve(const LT::NetSocket *socket, char *msg,
                            uint32 *msg_len) {
   int buffer_size =
       *msg_len > MAX_PACKET_SIZE ? (int)MAX_PACKET_SIZE : (int)*msg_len;
@@ -334,81 +334,85 @@ bool PlatformSocketRecieve(const NetSocket *socket, char *msg,
   return true;
 }
 
-Thread *PlatformThreadCreate(const Thread *thread,
-                             ThreadFuncWrapper funcWrapper) {
-  DWORD threadID;
-  HANDLE threadhandle =
-      CreateThread(NULL,             // cant be inherited
-                   0,                // Default stack size
-                   funcWrapper,      // function that the thread will exec
-                   thread,           // parameter to the function
-                   CREATE_SUSPENDED, // won't start immediately
-                   &threadID);
+namespace LT {
+    LT::Thread* Platform::PlatformThreadCreate(LT::Thread* thread, LT::ThreadFuncWrapper funcWrapper) {
+        DWORD threadID;
+        HANDLE threadhandle =
+            CreateThread(NULL,             // cant be inherited
+                0,                // Default stack size
+                (LPTHREAD_START_ROUTINE)funcWrapper,      // function that the thread will exec
+                thread,           // parameter to the function
+                CREATE_SUSPENDED, // won't start immediately
+                &threadID);
 
-  if (threadhandle == NULL) {
-    log_error("Failed to create thread.");
-    Win32HandleError(ERROR_PLATFORM_THREAD_CREATE);
-  }
+        if (threadhandle == NULL) {
+            log_error("Failed to create thread.");
+            Win32HandleError(ERROR_PLATFORM_THREAD_CREATE);
+        }
 
-  ThreadWin winThd = {.id = threadID, .handle = threadhandle};
+        LT::ThreadWin winThd(threadID);
+        winThd.handle = threadhandle;
 
-  memcpy(thread->reserved, &winThd, sizeof(ThreadWin));
-  return thread;
-}
+        memcpy(thread->reserved, &winThd, sizeof(LT::ThreadWin));
+        return thread;
+    }
 
-extern void PlatformThreadStart(const Thread *thread) {
-  HANDLE handle = ((const ThreadWin *)thread)->handle;
-  ResumeThread(handle);
-}
+    void Platform::PlatformThreadStart(const LT::Thread* thread) {
+        HANDLE handle = reinterpret_cast<const LT::ThreadWin*>(thread)->handle;
+        ResumeThread(handle);
+    }
 
-void PlatformGetCurrent(const Thread *thread) {
-  HANDLE threadhandle = GetCurrentThread();
-  DWORD threadID = GetCurrentThreadId();
+    void Platform::PlatformGetCurrent(const LT::Thread* thread) {
+        HANDLE threadhandle = GetCurrentThread();
+        DWORD threadID = GetCurrentThreadId();
 
-  ThreadWin winThd = {.id = threadID, .handle = threadhandle};
+        LT::ThreadWin winThd(threadID);
+        winThd.handle = threadhandle;
 
-  memcpy(thread->reserved, &winThd, sizeof(ThreadWin));
-}
+        memcpy((void*)(thread->reserved), &winThd, sizeof(LT::ThreadWin));
+    }
 
-void PlatformThreadJoin(const Thread *thread) {
-  HANDLE handle = ((const ThreadWin *)thread)->handle;
-  WaitForSingleObject(handle, INFINITE);
-}
+    void Platform::PlatformThreadJoin(const LT::Thread* thread) {
+        HANDLE handle = reinterpret_cast<const LT::ThreadWin*>(thread)->handle;
+        WaitForSingleObject(handle, INFINITE);
+    }
 
-void PlatformThreadSleep(const Thread *thread, const uint64 miliseconds) {
-  WaitForSingleObject(((const ThreadWin *)thread)->handle, (DWORD)miliseconds);
-}
+    void Platform::PlatformThreadSleep(const LT::Thread* thread, const uint64 miliseconds) {
+        WaitForSingleObject(reinterpret_cast<const LT::ThreadWin*>(thread)->handle, (DWORD)miliseconds);
+    }
 
-void PlatformThreadExit(const int16 exit_code) { ExitThread(exit_code); }
+    void Platform::PlatformThreadExit(const int16 exit_code) { ExitThread(exit_code); }
 
-void PlatformThreadGetExitCode(Thread *thread) {
-  ThreadWin *this = (const ThreadWin *)thread;
-  DWORD exit_code;
-  if (GetExitCodeThread(this->handle, &exit_code) == STILL_ACTIVE) {
-    log_error("Thread still active.")
-  } else {
-    thread->isValid = false;
-    thread->exitCode = (int32)exit_code;
-  }
-}
+    void Platform::PlatformThreadGetExitCode(LT::Thread* thread) {
+        LT::ThreadWin* thread_win = reinterpret_cast<LT::ThreadWin*>(thread);
+        DWORD exit_code;
+        if (GetExitCodeThread(thread_win->handle, &exit_code) == STILL_ACTIVE) {
+            log_error("Thread still active.")
+        }
+        else {
+            thread->isValid = false;
+            thread->exitCode = (int32)exit_code;
+        }
+    }
 
-void PlatformThreadDestroy(Thread *thread) {
-  CloseHandle(((const ThreadWin *)thread)->handle);
-  thread->isValid = false;
-}
+    void Platform::PlatformThreadDestroy(LT::Thread* thread) {
+        CloseHandle(reinterpret_cast<LT::ThreadWin*>(thread)->handle);
+        thread->isValid = false;
+    }
 
-ThreadLock *PlatformThreadLockCreate() {
-  LPCRITICAL_SECTION lock = malloc(sizeof(CRITICAL_SECTION));
-  InitializeCriticalSection(lock);
-  return lock;
-}
+    LT::ThreadLock* Platform::PlatformThreadLockCreate() {
+        LPCRITICAL_SECTION lock = new CRITICAL_SECTION();
+        InitializeCriticalSection(lock);
+        return reinterpret_cast<LT::ThreadLock*>(lock);
+    }
 
-void PlatformThreadLockLock(ThreadLock *lock) { EnterCriticalSection(lock); }
+    void Platform::PlatformThreadLockLock(LT::ThreadLock* lock) { EnterCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(lock)); }
 
-void PlatformThreadLockUnock(ThreadLock *lock) { LeaveCriticalSection(lock); }
+    void Platform::PlatformThreadLockUnock(LT::ThreadLock* lock) { LeaveCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(lock)); }
 
-void PlatformThreadLockDestroy(ThreadLock *lock) {
-  DeleteCriticalSection(lock);
+    void Platform::PlatformThreadLockDestroy(LT::ThreadLock* lock) {
+        DeleteCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(lock));
+    }
 }
 
 //-----------------------------------------------------------------
