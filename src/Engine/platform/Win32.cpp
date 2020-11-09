@@ -335,7 +335,7 @@ bool PlatformSocketRecieve(const LT::NetSocket *socket, char *msg,
 }
 
 namespace LT {
-    LT::Thread* Platform::PlatformThreadCreate(LT::Thread* thread, LT::ThreadFuncWrapper funcWrapper) {
+    LT::Thread* Platform::ThreadCreate(LT::Thread* thread, LT::ThreadFuncWrapper funcWrapper) {
         DWORD threadID;
         HANDLE threadhandle =
             CreateThread(NULL,             // cant be inherited
@@ -357,12 +357,12 @@ namespace LT {
         return thread;
     }
 
-    void Platform::PlatformThreadStart(const LT::Thread* thread) {
+    void Platform::ThreadStart(const LT::Thread* thread) {
         HANDLE handle = reinterpret_cast<const LT::ThreadWin*>(thread)->handle;
         ResumeThread(handle);
     }
 
-    void Platform::PlatformGetCurrent(const LT::Thread* thread) {
+    void Platform::GetCurrent(const LT::Thread* thread) {
         HANDLE threadhandle = GetCurrentThread();
         DWORD threadID = GetCurrentThreadId();
 
@@ -372,18 +372,18 @@ namespace LT {
         memcpy((void*)(thread->reserved), &winThd, sizeof(LT::ThreadWin));
     }
 
-    void Platform::PlatformThreadJoin(const LT::Thread* thread) {
+    void Platform::ThreadJoin(const LT::Thread* thread) {
         HANDLE handle = reinterpret_cast<const LT::ThreadWin*>(thread)->handle;
         WaitForSingleObject(handle, INFINITE);
     }
 
-    void Platform::PlatformThreadSleep(const LT::Thread* thread, const uint64 miliseconds) {
+    void Platform::ThreadSleep(const LT::Thread* thread, const uint64 miliseconds) {
         WaitForSingleObject(reinterpret_cast<const LT::ThreadWin*>(thread)->handle, (DWORD)miliseconds);
     }
 
-    void Platform::PlatformThreadExit(const int16 exit_code) { ExitThread(exit_code); }
+    void Platform::ThreadExit(const int16 exit_code) { ExitThread(exit_code); }
 
-    void Platform::PlatformThreadGetExitCode(LT::Thread* thread) {
+    void Platform::ThreadGetExitCode(LT::Thread* thread) {
         LT::ThreadWin* thread_win = reinterpret_cast<LT::ThreadWin*>(thread);
         DWORD exit_code;
         if (GetExitCodeThread(thread_win->handle, &exit_code) == STILL_ACTIVE) {
@@ -395,155 +395,155 @@ namespace LT {
         }
     }
 
-    void Platform::PlatformThreadDestroy(LT::Thread* thread) {
+    void Platform::ThreadDestroy(LT::Thread* thread) {
         CloseHandle(reinterpret_cast<LT::ThreadWin*>(thread)->handle);
         thread->isValid = false;
     }
 
-    LT::ThreadLock* Platform::PlatformThreadLockCreate() {
+    LT::ThreadLock* Platform::ThreadLockCreate() {
         LPCRITICAL_SECTION lock = new CRITICAL_SECTION();
         InitializeCriticalSection(lock);
         return reinterpret_cast<LT::ThreadLock*>(lock);
     }
 
-    void Platform::PlatformThreadLockLock(LT::ThreadLock* lock) { EnterCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(lock)); }
+    void Platform::ThreadLockLock(LT::ThreadLock* lock) { EnterCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(lock)); }
 
-    void Platform::PlatformThreadLockUnock(LT::ThreadLock* lock) { LeaveCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(lock)); }
+    void Platform::ThreadLockUnock(LT::ThreadLock* lock) { LeaveCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(lock)); }
 
-    void Platform::PlatformThreadLockDestroy(LT::ThreadLock* lock) {
+    void Platform::ThreadLockDestroy(LT::ThreadLock* lock) {
         DeleteCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(lock));
     }
+
+
+    //-----------------------------------------------------------------
+    // Input
+    //-----------------------------------------------------------------
+    void Platform::InitInput(int32* key_states) {
+        win32KeyStates = (uint8*)malloc(win32KeyStatesSize);
+        memset(win32KeyStates, LT_KEY_UP, win32KeyStatesSize);
+
+        // Mouse Buttons
+        key_states[LT_KEY_MOUSE_BUTTON_L] = VK_LBUTTON;
+        key_states[LT_KEY_MOUSE_BUTTON_R] = VK_RBUTTON;
+        key_states[LT_KEY_MOUSE_MIDDLE] = VK_MBUTTON;
+        key_states[LT_KEY_MOUSE_BUTTON_X1] = VK_XBUTTON1;
+        key_states[LT_KEY_MOUSE_BUTTON_X2] = VK_XBUTTON2;
+
+        // Util Keys
+        key_states[LT_KEY_BACKSPACE] = VK_BACK;
+        key_states[LT_KEY_TAB] = VK_TAB;
+        key_states[LT_KEY_DEL] = VK_CLEAR;
+        key_states[LT_KEY_ENTER] = VK_RETURN;
+        key_states[LT_KEY_SHIFT] = VK_SHIFT;
+        key_states[LT_KEY_CONTROL] = VK_CONTROL;
+        key_states[LT_KEY_ALT] = VK_MENU;
+        key_states[LT_KEY_MENU] = VK_APPS;
+        key_states[LT_KEY_PAUSE] = VK_PAUSE;
+        key_states[LT_KEY_ESCAPE] = VK_ESCAPE;
+        key_states[LT_KEY_SPACEBAR] = VK_SPACE;
+        key_states[LT_KEY_PAGE_UP] = VK_PRIOR;
+        key_states[LT_KEY_PAGE_DOWN] = VK_NEXT;
+        key_states[LT_KEY_END] = VK_END;
+        key_states[LT_KEY_HOME] = VK_HOME;
+        key_states[LT_KEY_LEFT_ARROW] = VK_LEFT;
+        key_states[LT_KEY_UP_ARROW] = VK_RIGHT;
+        key_states[LT_KEY_RIGHT_ARROW] = VK_UP;
+        key_states[LT_KEY_DOWN_ARROW] = VK_DOWN;
+        key_states[LT_KEY_SELECT] = VK_SELECT;
+        key_states[LT_KEY_SCREENSHOT] = VK_SNAPSHOT;
+        key_states[LT_KEY_EXECUTE] = VK_EXECUTE;
+        key_states[LT_KEY_PRINT_SCREEN] = VK_PRINT;
+        key_states[LT_KEY_INSERT] = VK_INSERT;
+        key_states[LT_KEY_HELP] = VK_HELP;
+
+        // Numers
+        key_states[LT_KEY_NUM_0] = 0x30;
+        key_states[LT_KEY_NUM_1] = 0x31;
+        key_states[LT_KEY_NUM_2] = 0x32;
+        key_states[LT_KEY_NUM_3] = 0x33;
+        key_states[LT_KEY_NUM_4] = 0x34;
+        key_states[LT_KEY_NUM_5] = 0x35;
+        key_states[LT_KEY_NUM_6] = 0x36;
+        key_states[LT_KEY_NUM_7] = 0x37;
+        key_states[LT_KEY_NUM_8] = 0x38;
+        key_states[LT_KEY_NUM_9] = 0x39;
+
+        // Letters
+        key_states[LT_KEY_A] = 0x41;
+        key_states[LT_KEY_B] = 0x42;
+        key_states[LT_KEY_C] = 0x43;
+        key_states[LT_KEY_D] = 0x44;
+        key_states[LT_KEY_E] = 0x45;
+        key_states[LT_KEY_F] = 0x46;
+        key_states[LT_KEY_G] = 0x47;
+        key_states[LT_KEY_H] = 0x48;
+        key_states[LT_KEY_I] = 0x49;
+        key_states[LT_KEY_J] = 0x50;
+        key_states[LT_KEY_K] = 0x51;
+        key_states[LT_KEY_L] = 0x52;
+        key_states[LT_KEY_M] = 0x53;
+        key_states[LT_KEY_N] = 0x54;
+        key_states[LT_KEY_O] = 0x55;
+        key_states[LT_KEY_P] = 0x56;
+        key_states[LT_KEY_Q] = 0x57;
+        key_states[LT_KEY_R] = 0x58;
+        key_states[LT_KEY_S] = 0x59;
+        key_states[LT_KEY_T] = 0x60;
+        key_states[LT_KEY_U] = 0x61;
+        key_states[LT_KEY_V] = 0x62;
+        key_states[LT_KEY_W] = 0x63;
+        key_states[LT_KEY_X] = 0x64;
+        key_states[LT_KEY_Y] = 0x65;
+        key_states[LT_KEY_Z] = 0x66;
+
+        // NUM PAD
+        key_states[LT_KEY_NUMPAD0] = VK_NUMPAD0;
+        key_states[LT_KEY_NUMPAD1] = VK_NUMPAD1;
+        key_states[LT_KEY_NUMPAD2] = VK_NUMPAD2;
+        key_states[LT_KEY_NUMPAD3] = VK_NUMPAD3;
+        key_states[LT_KEY_NUMPAD4] = VK_NUMPAD4;
+        key_states[LT_KEY_NUMPAD5] = VK_NUMPAD5;
+        key_states[LT_KEY_NUMPAD6] = VK_NUMPAD6;
+        key_states[LT_KEY_NUMPAD7] = VK_NUMPAD7;
+        key_states[LT_KEY_NUMPAD8] = VK_NUMPAD8;
+        key_states[LT_KEY_NUMPAD9] = VK_NUMPAD9;
+        key_states[LT_KEY_MULTIPLY] = VK_MULTIPLY;
+        key_states[LT_KEY_PLUS] = VK_ADD;
+        key_states[LT_KEY_SEPARATOR] = VK_SEPARATOR;
+        key_states[LT_KEY_SUBTRACT] = VK_SUBTRACT;
+        key_states[LT_KEY_NUM_DOT] = VK_DECIMAL;
+        key_states[LT_KEY_DIVIDE] = VK_DIVIDE;
+
+        // Functions keys
+        key_states[LT_KEY_F1] = VK_F1;
+        key_states[LT_KEY_F2] = VK_F2;
+        key_states[LT_KEY_F3] = VK_F3;
+        key_states[LT_KEY_F4] = VK_F4;
+        key_states[LT_KEY_F5] = VK_F5;
+        key_states[LT_KEY_F6] = VK_F6;
+        key_states[LT_KEY_F7] = VK_F7;
+        key_states[LT_KEY_F8] = VK_F8;
+        key_states[LT_KEY_F9] = VK_F9;
+        key_states[LT_KEY_F10] = VK_F10;
+        key_states[LT_KEY_F11] = VK_F11;
+        key_states[LT_KEY_F12] = VK_F12;
+        key_states[LT_KEY_CAPS_LOCK] = VK_CAPITAL;
+        key_states[LT_KEY_NUM_LOCK] = VK_NUMLOCK;
+        key_states[LT_KEY_SCROLL_LOCK] = VK_SCROLL;
+
+        // Mods
+        key_states[LT_KEY_SUPER_L] = VK_LWIN;
+        key_states[LT_KEY_SUPER_R] = VK_RWIN;
+        key_states[LT_KEY_SHIFT_L] = VK_LSHIFT;
+        key_states[LT_KEY_SHIFT_R] = VK_RSHIFT;
+        key_states[LT_KEY_ALT_L] = VK_LMENU;
+        key_states[LT_KEY_ALT_R] = VK_RMENU;
+        key_states[LT_KEY_CONTROL_L] = VK_LCONTROL;
+        key_states[LT_KEY_CONTROL_R] = VK_RCONTROL;
+    }
+
+    uint8 Platform::GetKeyState(int32 key_state) { return win32KeyStates[key_state]; }
 }
-
-//-----------------------------------------------------------------
-// Input
-//-----------------------------------------------------------------
-void PlatformInitInput(int32 *key_states) {
-  win32KeyStates = (uint8 *)malloc(win32KeyStatesSize);
-  memset(win32KeyStates, LT_KEY_UP, win32KeyStatesSize);
-
-  // Mouse Buttons
-  key_states[LT_KEY_MOUSE_BUTTON_L] = VK_LBUTTON;
-  key_states[LT_KEY_MOUSE_BUTTON_R] = VK_RBUTTON;
-  key_states[LT_KEY_MOUSE_MIDDLE] = VK_MBUTTON;
-  key_states[LT_KEY_MOUSE_BUTTON_X1] = VK_XBUTTON1;
-  key_states[LT_KEY_MOUSE_BUTTON_X2] = VK_XBUTTON2;
-
-  // Util Keys
-  key_states[LT_KEY_BACKSPACE] = VK_BACK;
-  key_states[LT_KEY_TAB] = VK_TAB;
-  key_states[LT_KEY_DEL] = VK_CLEAR;
-  key_states[LT_KEY_ENTER] = VK_RETURN;
-  key_states[LT_KEY_SHIFT] = VK_SHIFT;
-  key_states[LT_KEY_CONTROL] = VK_CONTROL;
-  key_states[LT_KEY_ALT] = VK_MENU;
-  key_states[LT_KEY_MENU] = VK_APPS;
-  key_states[LT_KEY_PAUSE] = VK_PAUSE;
-  key_states[LT_KEY_ESCAPE] = VK_ESCAPE;
-  key_states[LT_KEY_SPACEBAR] = VK_SPACE;
-  key_states[LT_KEY_PAGE_UP] = VK_PRIOR;
-  key_states[LT_KEY_PAGE_DOWN] = VK_NEXT;
-  key_states[LT_KEY_END] = VK_END;
-  key_states[LT_KEY_HOME] = VK_HOME;
-  key_states[LT_KEY_LEFT_ARROW] = VK_LEFT;
-  key_states[LT_KEY_UP_ARROW] = VK_RIGHT;
-  key_states[LT_KEY_RIGHT_ARROW] = VK_UP;
-  key_states[LT_KEY_DOWN_ARROW] = VK_DOWN;
-  key_states[LT_KEY_SELECT] = VK_SELECT;
-  key_states[LT_KEY_SCREENSHOT] = VK_SNAPSHOT;
-  key_states[LT_KEY_EXECUTE] = VK_EXECUTE;
-  key_states[LT_KEY_PRINT_SCREEN] = VK_PRINT;
-  key_states[LT_KEY_INSERT] = VK_INSERT;
-  key_states[LT_KEY_HELP] = VK_HELP;
-
-  // Numers
-  key_states[LT_KEY_NUM_0] = 0x30;
-  key_states[LT_KEY_NUM_1] = 0x31;
-  key_states[LT_KEY_NUM_2] = 0x32;
-  key_states[LT_KEY_NUM_3] = 0x33;
-  key_states[LT_KEY_NUM_4] = 0x34;
-  key_states[LT_KEY_NUM_5] = 0x35;
-  key_states[LT_KEY_NUM_6] = 0x36;
-  key_states[LT_KEY_NUM_7] = 0x37;
-  key_states[LT_KEY_NUM_8] = 0x38;
-  key_states[LT_KEY_NUM_9] = 0x39;
-
-  // Letters
-  key_states[LT_KEY_A] = 0x41;
-  key_states[LT_KEY_B] = 0x42;
-  key_states[LT_KEY_C] = 0x43;
-  key_states[LT_KEY_D] = 0x44;
-  key_states[LT_KEY_E] = 0x45;
-  key_states[LT_KEY_F] = 0x46;
-  key_states[LT_KEY_G] = 0x47;
-  key_states[LT_KEY_H] = 0x48;
-  key_states[LT_KEY_I] = 0x49;
-  key_states[LT_KEY_J] = 0x50;
-  key_states[LT_KEY_K] = 0x51;
-  key_states[LT_KEY_L] = 0x52;
-  key_states[LT_KEY_M] = 0x53;
-  key_states[LT_KEY_N] = 0x54;
-  key_states[LT_KEY_O] = 0x55;
-  key_states[LT_KEY_P] = 0x56;
-  key_states[LT_KEY_Q] = 0x57;
-  key_states[LT_KEY_R] = 0x58;
-  key_states[LT_KEY_S] = 0x59;
-  key_states[LT_KEY_T] = 0x60;
-  key_states[LT_KEY_U] = 0x61;
-  key_states[LT_KEY_V] = 0x62;
-  key_states[LT_KEY_W] = 0x63;
-  key_states[LT_KEY_X] = 0x64;
-  key_states[LT_KEY_Y] = 0x65;
-  key_states[LT_KEY_Z] = 0x66;
-
-  // NUM PAD
-  key_states[LT_KEY_NUMPAD0] = VK_NUMPAD0;
-  key_states[LT_KEY_NUMPAD1] = VK_NUMPAD1;
-  key_states[LT_KEY_NUMPAD2] = VK_NUMPAD2;
-  key_states[LT_KEY_NUMPAD3] = VK_NUMPAD3;
-  key_states[LT_KEY_NUMPAD4] = VK_NUMPAD4;
-  key_states[LT_KEY_NUMPAD5] = VK_NUMPAD5;
-  key_states[LT_KEY_NUMPAD6] = VK_NUMPAD6;
-  key_states[LT_KEY_NUMPAD7] = VK_NUMPAD7;
-  key_states[LT_KEY_NUMPAD8] = VK_NUMPAD8;
-  key_states[LT_KEY_NUMPAD9] = VK_NUMPAD9;
-  key_states[LT_KEY_MULTIPLY] = VK_MULTIPLY;
-  key_states[LT_KEY_PLUS] = VK_ADD;
-  key_states[LT_KEY_SEPARATOR] = VK_SEPARATOR;
-  key_states[LT_KEY_SUBTRACT] = VK_SUBTRACT;
-  key_states[LT_KEY_NUM_DOT] = VK_DECIMAL;
-  key_states[LT_KEY_DIVIDE] = VK_DIVIDE;
-
-  // Functions keys
-  key_states[LT_KEY_F1] = VK_F1;
-  key_states[LT_KEY_F2] = VK_F2;
-  key_states[LT_KEY_F3] = VK_F3;
-  key_states[LT_KEY_F4] = VK_F4;
-  key_states[LT_KEY_F5] = VK_F5;
-  key_states[LT_KEY_F6] = VK_F6;
-  key_states[LT_KEY_F7] = VK_F7;
-  key_states[LT_KEY_F8] = VK_F8;
-  key_states[LT_KEY_F9] = VK_F9;
-  key_states[LT_KEY_F10] = VK_F10;
-  key_states[LT_KEY_F11] = VK_F11;
-  key_states[LT_KEY_F12] = VK_F12;
-  key_states[LT_KEY_CAPS_LOCK] = VK_CAPITAL;
-  key_states[LT_KEY_NUM_LOCK] = VK_NUMLOCK;
-  key_states[LT_KEY_SCROLL_LOCK] = VK_SCROLL;
-
-  // Mods
-  key_states[LT_KEY_SUPER_L] = VK_LWIN;
-  key_states[LT_KEY_SUPER_R] = VK_RWIN;
-  key_states[LT_KEY_SHIFT_L] = VK_LSHIFT;
-  key_states[LT_KEY_SHIFT_R] = VK_RSHIFT;
-  key_states[LT_KEY_ALT_L] = VK_LMENU;
-  key_states[LT_KEY_ALT_R] = VK_RMENU;
-  key_states[LT_KEY_CONTROL_L] = VK_LCONTROL;
-  key_states[LT_KEY_CONTROL_R] = VK_RCONTROL;
-}
-
-uint8 PlatformGetKeyState(int32 key_state) { return win32KeyStates[key_state]; }
-
 //-------------------------------------------
 // Window
 //-------------------------------------------
@@ -556,14 +556,14 @@ void Win32SwapBuffer() { SwapBuffers(window.device); }
 //-------------------------------------------
 
 
-LoadProc InitOpenGL(void) { return Win32InitOpenGL(); }
+LT::LoadProc InitOpenGL(void) { return Win32InitOpenGL(); }
 
-SwapBuffersFunc GetPlatformSwapBuffer(void) { return Win32SwapBuffer; }
+LT::SwapBuffersFunc GetPlatformSwapBuffer(void) { return Win32SwapBuffer; }
 
 //-----------------------------------------------------------------
 // HELPERS
 //-----------------------------------------------------------------
-void Win32_Helper_CreateWindow(LT_Window_t *wnd, const char *in_wndClassName,
+void Win32_Helper_CreateWindow(LT::Window *wnd, const char *in_wndClassName,
                                int width, int height, const char *title) {
   DWORD styleEx = in_wndClassName == CLASS_NAME ? WINDOW_STYLE_EX : WS_DISABLED;
   DWORD style = in_wndClassName == CLASS_NAME ? WINDOW_STYLE : 0;
@@ -653,8 +653,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       break;
     }
     // get and set the key's state
-    LT_INPUT_STATE state = (lParam & (1 << 30)) ? LT_KEY_DOWN : LT_KEY_PRESSED;
-    win32KeyStates[wParam] = state;
+    LT::INPUT_STATE state = (lParam & (1 << 30)) ? LT::INPUT_STATE::LT_KEY_DOWN : LT::INPUT_STATE::LT_KEY_PRESSED;
+    win32KeyStates[wParam] = static_cast<uint8>(state);
     break;
   }
 #ifdef LT_EDITOR
@@ -711,14 +711,14 @@ void *Win32GetProc(const char *name) {
   return proc;
 }
 
-LoadProc Win32InitOpenGL(void) {
+LT::LoadProc Win32InitOpenGL(void) {
   glInstance = LoadLibraryA("opengl32.dll");
   if (glInstance == 0) {
     log_fatal("Couldn't load opengl library.");
     Win32HandleError(ERROR_PLATFORM_OPENGL_LIB_NOT_FOUND);
   }
 
-  LT_Window_t ghostWnd;
+  LT::Window ghostWnd;
   Win32_Helper_CreateWindow(&ghostWnd, GHOST_CLASS_NAME, CW_USEDEFAULT,
                             CW_USEDEFAULT, "");
 

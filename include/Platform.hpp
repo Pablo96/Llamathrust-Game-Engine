@@ -85,44 +85,44 @@ extern LT::Window window;
 extern LT::LoadProc InitOpenGL(void);
 extern LT::SwapBuffersFunc GetPlatformSwapBuffer(void);
 
-// INPUT
-extern void PlatformInitInput(int32 *in_keyStates);
-extern uint8 PlatformGetKeyState(int32 keyState);
-
-// DYNAMIC LIB
-extern void *PlatformLoadSharedLib(const char *name);
-extern void *PlatformGetProc(const void *in_lib, const char *in_name);
-
-// NETWORKING
-extern void PlatformNetAddress(LT::NetAddress *address);
-extern void PlatformNetAddressDestroy(LT::NetAddress *address);
-extern void PlatformSocketCreate(LT::NetSocket *socket);
-extern bool PlatformSocketBind(const LT::NetSocket *socket);
-extern bool PlatformSocketListen(const LT::NetSocket *socket);
-extern LT::NetSocket *PlatformSocketAccept(const LT::NetSocket *in_socket);
-extern void PlatformSocketClose(LT::NetSocket *socket);
-extern bool PlatformSocketConnect(LT::NetSocket *socket, const LT::NetAddress *address);
-extern bool PlatformSocketConnClose(const LT::NetSocket *socket);
-extern bool PlatformSocketSend(const LT::NetSocket *socket, const char *msg,
-                               const uint32 msg_len);
-extern bool PlatformSocketRecieve(const LT::NetSocket *socket, char *msg,
-                                  uint32 *msg_len);
-
-// THREADING
 namespace LT {
     struct Platform {
-        static LT::Thread* PlatformThreadCreate(LT::Thread* thread, LT::ThreadFuncWrapper funcWrapper);
-        static void PlatformThreadStart(const LT::Thread* thread);
-        static void PlatformGetCurrent(const LT::Thread* thread);
-        static void PlatformThreadJoin(const LT::Thread* thread);
-        static void PlatformThreadSleep(const LT::Thread* thread, const uint64 miliseconds);
-        static void PlatformThreadExit(const int16 exit_code);
-        static void PlatformThreadGetExitCode(LT::Thread* thread);
-        static void PlatformThreadDestroy(LT::Thread* thread);
+        // INPUT
+        static void InitInput(int32 *in_keyStates);
+        static uint8 GetKeyState(int32 keyState);
 
-        static LT::ThreadLock* PlatformThreadLockCreate(void);
-        static void PlatformThreadLockLock(LT::ThreadLock* lock);
-        static void PlatformThreadLockUnock(LT::ThreadLock* lock);
-        static void PlatformThreadLockDestroy(LT::ThreadLock* lock);
+        // DYNAMIC LIB
+        static void *LoadSharedLib(const char *name);
+        static void *GetProc(const void *in_lib, const char *in_name);
+
+        // NETWORKING
+        static void NetAddress(LT::NetAddress *address);
+        static void NetAddressDestroy(LT::NetAddress *address);
+        static void SocketCreate(LT::NetSocket *socket);
+        static bool SocketBind(const LT::NetSocket *socket);
+        static bool SocketListen(const LT::NetSocket *socket);
+        static LT::NetSocket *SocketAccept(const LT::NetSocket *in_socket);
+        static void SocketClose(LT::NetSocket *socket);
+        static bool SocketConnect(LT::NetSocket *socket, const LT::NetAddress *address);
+        static bool SocketConnClose(const LT::NetSocket *socket);
+        static bool SocketSend(const LT::NetSocket *socket, const char *msg,
+                                const uint32 msg_len);
+        static bool SocketRecieve(const LT::NetSocket *socket, char *msg,
+                                  uint32 *msg_len);
+
+        // THREADING
+        static LT::Thread* ThreadCreate(LT::Thread* thread, LT::ThreadFuncWrapper funcWrapper);
+        static void ThreadStart(const LT::Thread* thread);
+        static void GetCurrent(const LT::Thread* thread);
+        static void ThreadJoin(const LT::Thread* thread);
+        static void ThreadSleep(const LT::Thread* thread, const uint64 miliseconds);
+        static void ThreadExit(const int16 exit_code);
+        static void ThreadGetExitCode(LT::Thread* thread);
+        static void ThreadDestroy(LT::Thread* thread);
+
+        static LT::ThreadLock* ThreadLockCreate(void);
+        static void ThreadLockLock(LT::ThreadLock* lock);
+        static void ThreadLockUnock(LT::ThreadLock* lock);
+        static void ThreadLockDestroy(LT::ThreadLock* lock);
     };
 }

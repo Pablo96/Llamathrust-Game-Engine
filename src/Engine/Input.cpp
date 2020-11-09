@@ -10,7 +10,7 @@ namespace LT {
 
     void InputInit() {
         log_trace("Initializing Input...");
-        PlatformInitInput(key_states);
+        Platform::InitInput(key_states);
         log_info("Input Initialized...");
     }
 
@@ -22,6 +22,6 @@ namespace LT {
             exit(ERROR_INPUT_KEY_INVALID_VALUE);
         }
 #endif
-        return (INPUT_STATE)PlatformGetKeyState(key_states[in_key]);
+        return (INPUT_STATE)Platform::GetKeyState(key_states[in_key]);
     }
 }
