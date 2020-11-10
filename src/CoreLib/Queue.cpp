@@ -1,43 +1,42 @@
 #include <CoreLib/Queue.hpp>
 
-Queue LT_QueueCreate(const uint64 count, const uint64 elementSize) {
-  Queue queue = {
-    .array = LT_ArrayCreate(count, elementSize),
-    .last_element_index = 0,
-    .first_element_index = 0,
-    .count = count,
-    .isEmpty = LT_TRUE
-  };
+namespace LT {
+    Queue::Queue(const uint64 in_count, const uint64 elementSize) : Array(count, elementSize),
+        last_element_index(0), first_element_index(0), count(in_count), isEmpty(true)
+    {}
 
-  return queue;
-}
+    void* Queue::Pop() {
+        void* element = GetElement(first_element_index);
+        isEmpty = first_element_index > last_element_index;
+        if (!isEmpty) {
+            first_element_index++;
+            first_element_index = first_element_index > count
+                ? 0
+                : first_element_index;
+        }
+        return element;
+    }
 
-void LT_QueueDestroy(Queue *queue) { LT_ArrayDestroy(queue); }
+    void* Queue::GetFirst() {
+        return GetElement(first_element_index);
+    }
 
-void *LT_QueuePop(Queue *queue) {
-  void *element = LT_ArrayGetElement(queue, queue->first_element_index);
-  queue->isEmpty = queue->first_element_index > queue->last_element_index;
-  if (!queue->isEmpty) {
-    queue->first_element_index++;
-    queue->first_element_index = queue->first_element_index > queue->count
-                                     ? 0
-                                     : queue->first_element_index;
-  }
-  return element;
-}
+    void Queue::Push(void* element) {
+        if (isEmpty) {
+            last_element_index = first_element_index;
+            isEmpty = false;
+        }
+        else
+            last_element_index++;
 
-void *LT_QueueFirst(Queue *queue) {
-  return LT_ArrayGetElement(queue, queue->first_element_index);
-}
+        last_element_index = last_element_index > count ?
+            0 : last_element_index;
+        SetElement(last_element_index, element);
+    }
 
-void LT_QueuePush(Queue *queue, void *element) {
-  if (queue->isEmpty) {
-    queue->last_element_index = queue->first_element_index;
-    queue->isEmpty = LT_FALSE;
-  } else
-    queue->last_element_index++;
+    bool Queue::IsEmpty()
+    {
+        return this->isEmpty;
+    }
 
-  queue->last_element_index =
-      queue->last_element_index > queue->count ? 0 : queue->last_element_index;
-  LT_ArraySetElement(queue, queue->last_element_index, element);
 }

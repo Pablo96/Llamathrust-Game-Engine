@@ -10,8 +10,6 @@
 #include <stddef.h>
 #endif
 
-
-
 namespace LT {
     /**
      * @struct ThreadPool
@@ -142,14 +140,14 @@ namespace LT {
     void ThreadPool::Initialize(const uint32 threads_count, const uint64 max_tasks) {
         ThreadLock* lock = new ThreadLock();
 
-        Pool.tasks = LT_QueueCreate(sizeof(Task) * max_tasks, sizeof(Task));
+        Pool.tasks = Queue(sizeof(Task) * max_tasks, sizeof(Task));
         Pool.threads = Array(threads_count, sizeof(Worker));
         Pool.lock = lock;
         Pool.isProcessing = false;
 
         // Spawn workers
         for (uint32 i = 0; i < threads_count; i++) {
-            Worker* worker = (Worker*) 0XF85D; // = LT_ArrayGetElement(&Pool->threads, i);
+            Worker* worker = reinterpret_cast<Worker*>(Pool.threads.GetElement(i));
             new (worker) Worker(lock);
             worker->Start();
         }
@@ -174,12 +172,12 @@ namespace LT {
 
         Task task(data, taskFunc);
 
-        LT_QueuePush(&Pool.tasks, &task);
+        Pool.tasks.Push(&task);
         Pool.isProcessing = true;
     }
 
     Task* ThreadPool::GetTask() {
-        Task* task = LT_QueuePop(&Pool.tasks);
+        Task* task = reinterpret_cast<Task*>(Pool.tasks.Pop());
         Pool.isProcessing = !Pool.tasks.isEmpty;
         return task;
     }
