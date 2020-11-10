@@ -127,7 +127,7 @@ namespace LT {
                 worker->task = NULL;
             }
 
-            if (Pool->isProcessing == true) {
+            if (Pool.isProcessing == true) {
                 worker->Lock();
                 worker->task = ThreadPool::GetTask();
                 worker->Unlock();
@@ -178,7 +178,7 @@ namespace LT {
 
     Task* ThreadPool::GetTask() {
         Task* task = reinterpret_cast<Task*>(Pool.tasks.Pop());
-        Pool.isProcessing = !Pool.tasks.isEmpty;
+        Pool.isProcessing = !Pool.tasks.IsEmpty();
         return task;
     }
 }
