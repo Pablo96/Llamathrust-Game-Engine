@@ -148,23 +148,25 @@ static LPVOID GetErrorMsg(DWORD errorCode) {
 //-----------------------------------------------------------------
 // System
 //-----------------------------------------------------------------
-void *PlatformLoadSharedLib(const char *in_name) {
-  const size_t size = strlen(in_name);
+namespace LT {
+    void* Platform::LoadSharedLib(const char* in_name) {
+        const size_t size = strlen(in_name);
 
-  char *name_dll = (char*) malloc(size + 5);
-  memcpy(name_dll, in_name, size);
-  name_dll[size] = 0;
+        char* name_dll = (char*)malloc(size + 5);
+        memcpy(name_dll, in_name, size);
+        name_dll[size] = 0;
 
-  strcat(name_dll, ".dll");
+        strcat(name_dll, ".dll");
 
-  void *lib = LoadLibrary(name_dll);
-  free(name_dll);
+        void* lib = LoadLibrary(name_dll);
+        free(name_dll);
 
-  return lib;
-}
+        return lib;
+    }
 
-void *PlatformGetProc(const void *in_lib, const char *in_name) {
-  return (void *)GetProcAddress((HMODULE)in_lib, in_name);
+    void* Platform::GetProc(const void* in_lib, const char* in_name) {
+        return (void*)GetProcAddress((HMODULE)in_lib, in_name);
+    }
 }
 
 //-----------------------------------------------------------------
@@ -540,6 +542,7 @@ namespace LT {
 
     uint8 Platform::GetKeyState(int32 key_state) { return win32KeyStates[key_state]; }
 }
+
 //-------------------------------------------
 // Window
 //-------------------------------------------
