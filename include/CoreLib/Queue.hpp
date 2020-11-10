@@ -23,7 +23,6 @@ namespace LT {
 	class Queue : public Array {
 		uint64 last_element_index;
 		uint64 first_element_index;
-		uint64 count;
 		bool isEmpty;
 
 	public:

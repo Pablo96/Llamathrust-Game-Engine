@@ -24,6 +24,9 @@ namespace LT {
 		void* data;
 		const uint64 size;
 		const uint64 typeSize;
+	
+	protected:
+		uint64 elements_count;
 
 	public:
 

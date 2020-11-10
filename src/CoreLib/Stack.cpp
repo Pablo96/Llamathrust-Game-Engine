@@ -1,29 +1,23 @@
-#include <CoreLib/Stack.h>
+#include <CoreLib/Stack.hpp>
 
-Stack LT_StackCreate(uint64 size, uint64 typeSize) {
-  Stack stack = {.array = LT_ArrayCreate(size, typeSize),
-                 .elements_count = 0,
-                 .isEmpty = LT_TRUE};
+namespace LT {
+    Stack::Stack(const uint64 size, const uint64 typeSize) : Array(size, typeSize), isEmpty(true) {}
 
-  return stack;
-}
+    void* Stack::Pop() {
+        if (!this->elements_count)
+            this->isEmpty = true;
+        else
+            this->elements_count--;
+        return GetElement(elements_count);
+    }
 
-void LT_StackDestroy(Stack *stack) { LT_ArrayDestroy(stack); }
+    void* Stack::Top() {
+        return GetElement(elements_count - 1);
+    }
 
-void *LT_StackPop(Stack *stack) {
-  if (!stack->elements_count)
-    stack->isEmpty = LT_TRUE;
-  else
-    stack->elements_count--;
-  return LT_ArrayGetElement(stack, stack->elements_count);
-}
-
-void *LT_StackTop(Stack *stack) {
-  return LT_ArrayGetElement(stack, stack->elements_count - 1);
-}
-
-void LT_StackPush(Stack *stack, void *element) {
-  LT_ArraySetElement(stack, stack->elements_count, element);
-  stack->elements_count++;
-  stack->isEmpty = LT_FALSE;
+    void Stack::Push(void* element) {
+        SetElement(elements_count, element);
+        elements_count++;
+        isEmpty = false;
+    }
 }

@@ -5,17 +5,18 @@
 #include <string> //memcpy
 
 namespace LT {
-    Array::Array(const uint64 count, const uint64 typeSize)
-        : size(count * typeSize), typeSize(typeSize) {
+    Array::Array(const uint64 in_count, const uint64 in_typeSize)
+        : size(in_count * in_typeSize), typeSize(in_typeSize), elements_count(in_count) {
 
-        this->data = malloc(count * typeSize);
+        this->data = malloc(elements_count * typeSize);
         memset(this->data, 0, this->size);
     }
 
-    Array::Array(void* dataBuffer, uint64 count, uint64 typeSize) :
+    Array::Array(void* dataBuffer, uint64 in_count, uint64 in_typeSize) :
             data(dataBuffer),
-            size(count * typeSize),
-            typeSize(typeSize)
+            size(in_count * in_typeSize),
+            typeSize(in_typeSize),
+            elements_count(in_count)
     {}
 
     Array::~Array() {
@@ -23,9 +24,8 @@ namespace LT {
         this->data = NULL;
     }
 
-    uint64 Array::Count()
-    {
-        return this->size / this->typeSize;
+    uint64 Array::Count() {
+        return this->elements_count;
     }
 
     void* Array::GetElement(const uint64 index) {
