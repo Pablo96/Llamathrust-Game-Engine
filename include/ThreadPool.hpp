@@ -7,12 +7,27 @@
 #include <Common.hpp>
 #include <Thread.hpp>
 
-#define LT_THREAD_CREATETASK(TaskName) void TaskName(void* data)
+#define LT_THREAD_CREATETASK(TaskName) void #TaskName(void* data)
+
+#ifdef LT_WINDOWS
+#define WORKER_PROC_SIGNATURE static uint64 WorkerProc(void* _worker)
+#else
+#define WORKER_PROC_SIGNATURE static void WorkerProc(void* _worker)
+#endif
 
 namespace LT {
-	void ThreadPoolInitialize(const uint32 threads, const uint64 max_tasks);
+	struct Task;
 
-	void ThreadPoolShutdown(void);
+	struct ThreadPool {
+		static void Initialize(const uint32 threads, const uint64 max_tasks);
 
-	void ThreadPoolAddTask(ThreadFuncWrapper taskFunc, void* data);
+		static void Shutdown(void);
+
+		static void AddTask(ThreadFuncWrapper taskFunc, void* data);
+
+	protected:
+		static Task* GetTask();
+
+		friend WORKER_PROC_SIGNATURE;
+	};
 }

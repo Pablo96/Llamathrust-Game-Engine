@@ -10,6 +10,8 @@
 #include <stddef.h>
 #endif
 
+
+
 namespace LT {
     /**
      * @struct ThreadPool
@@ -28,12 +30,12 @@ namespace LT {
      *	@brief if true the threads can take more tasks else they will stop
      *fetching.
      **/
-    static struct ThreadPool {
+    static struct _ThreadPool {
         Queue tasks;
         Array threads;
         ThreadLock* lock;
         volatile bool isProcessing;
-    } *Pool;
+    } Pool;
 
     /**
      * @func WorkerProc
@@ -43,7 +45,8 @@ namespace LT {
      *	@type void pointer
      *	@brief pointer to worker structure.
      **/
-    static void WorkerProc(void* _worker);
+    WORKER_PROC_SIGNATURE;
+
 
     /**
      * @struct Task
@@ -55,12 +58,14 @@ namespace LT {
      *	@type ThreadFuncWrapper
      *	@brief the task function
      **/
-    typedef struct _Task {
+    struct Task {
         void* data;
         ThreadFuncWrapper task;
-    } Task;
 
-    static Task* LT_ThreadPool_GetTask();
+        Task(void* in_data, ThreadFuncWrapper in_task)
+            : data(in_data), task(in_task) {}
+    };
+
 
     /**
      * @struct Worker
@@ -76,107 +81,106 @@ namespace LT {
      *	@type Task pointer
      *	@brief task we took from the pool.
      **/
-    typedef struct _Worker {
-        Thread base;
+    struct Worker : public Thread {
         bool running;
         Task* task;
-    } Worker;
 
-    static void LT_WorkerCreate(Worker* worker, ThreadLock* lock) {
-        worker->running = true;
-        worker->task = NULL;
+        Worker(ThreadLock* lock) : 
+            Thread(WorkerProc, NULL, "worker", lock), running(true), task(nullptr) {}
 
-        LT_Thread_Create(worker, WorkerProc, NULL, "worker", lock);
-    }
+        void Lock() {
+            this->lock->Lock();
+        }
+
+        void Unlock() {
+            this->lock->Unlock();
+        }
+    };
 
     static void LT_WorkerShutdown(Worker* worker) {
-        memset(&worker->running, 0, sizeof(Worker) - offsetof(Worker, running));
+        worker->running = false;
+        worker->task = nullptr;
 
         // Wait for worker to finsish its task
-        LT_Thread_Join(worker);
+        worker->Join();
 
         // Get exit code
-        LT_Thread_ExitCode(worker);
+        worker->CaptureExitCode();
 
         // Destroy worker thread
-        LT_Thread_Destroy(worker);
+        worker->Destroy();
+
+        delete worker;
+        worker = nullptr;
     }
 
-    static void WorkerProc(void* _worker) {
-        Worker* this = _worker;
+    WORKER_PROC_SIGNATURE {
+        Worker* worker = reinterpret_cast<Worker*>(_worker);
 
-        while (this->running) {
-            if (this->task != NULL) {
-                ThreadFuncWrapper task = this->task->task;
+        while (worker->running) {
+            if (worker->task != NULL) {
+                ThreadFuncWrapper task = worker->task->task;
                 if (task == NULL)
                     continue;
-                void* data = this->task->data;
+                void* data = worker->task->data;
 
                 task(data);
 
-                this->task = NULL;
+                worker->task = NULL;
             }
 
             if (Pool->isProcessing == true) {
-                LT_ThreadLock_Lock(this->base.lock);
-                this->task = LT_ThreadPool_GetTask();
-                LT_ThreadLock_Unlock(this->base.lock);
+                worker->Lock();
+                worker->task = ThreadPool::GetTask();
+                worker->Unlock();
             }
         }
 
-        LT_Thread_Exit(0);
+        Thread::Exit(0);
     }
 
-    void LT_ThreadPoolInitialize(const uint32 threads_count,
-        const uint64 max_tasks) {
-        ThreadLock* lock = LT_ThreadLock_Create();
-        struct ThreadPool pool = {
-            .tasks = LT_QueueCreate(sizeof(Task) * max_tasks, sizeof(Task)),
-            .threads = LT_ArrayCreate(threads_count, sizeof(Worker)),
-            .lock = lock,
-            .isProcessing = false };
+    void ThreadPool::Initialize(const uint32 threads_count, const uint64 max_tasks) {
+        ThreadLock* lock = new ThreadLock();
 
-        Pool = (struct ThreadPool*)malloc(sizeof(struct ThreadPool));
-        memcpy(Pool, &pool, sizeof(struct ThreadPool));
+        Pool.tasks = LT_QueueCreate(sizeof(Task) * max_tasks, sizeof(Task));
+        Pool.threads = Array(threads_count, sizeof(Worker));
+        Pool.lock = lock;
+        Pool.isProcessing = false;
 
         // Spawn workers
         for (uint32 i = 0; i < threads_count; i++) {
-            Worker* worker = LT_ArrayGetElement(&Pool->threads, i);
-            LT_WorkerCreate(worker, lock);
-            LT_Thread_Start(worker);
+            Worker* worker = (Worker*) 0XF85D; // = LT_ArrayGetElement(&Pool->threads, i);
+            new (worker) Worker(lock);
+            worker->Start();
         }
     }
 
-    void LT_ThreadPoolShutdown() {
+    void ThreadPool::Shutdown() {
         // Stop task retrieving
-        Pool->isProcessing = false;
+        Pool.isProcessing = false;
 
         // Stop threads
-        uint32 threads_count = (uint32)LT_ArrayCount(&Pool->threads);
+        uint32 threads_count = (uint32)Pool.threads.Count();
         for (uint32 i = 0; i < threads_count; i++) {
-            Worker* worker = LT_ArrayGetElement(&Pool->threads, i);
+            Worker* worker = reinterpret_cast<Worker*>(Pool.threads.GetElement(i));
             LT_WorkerShutdown(worker);
         }
 
-        // free the pool object and its members
-        LT_QueueDestroy(&Pool->tasks);
-        LT_ArrayDestroy(&Pool->threads);
-        LT_ThreadLock_Destroy(Pool->lock);
-        free(Pool);
+        delete Pool.lock;
     }
 
-    void LT_ThreadPoolAddTask(ThreadFuncWrapper taskFunc, void* data) {
-        LT_ASSERT(taskFunc != NULL, "A task should be provided!", ERROR_NULL_ARG)
+    void ThreadPool::AddTask(ThreadFuncWrapper taskFunc, void* data) {
+        LT_ASSERT(taskFunc != NULL, "A task should be provided!", ERROR_NULL_ARG);
 
-            Task task = { .task = taskFunc, .data = data };
+        Task task(data, taskFunc);
 
-        LT_QueuePush(&Pool->tasks, &task);
-        Pool->isProcessing = true;
+        LT_QueuePush(&Pool.tasks, &task);
+        Pool.isProcessing = true;
     }
 
-    Task* LT_ThreadPool_GetTask() {
-        Task* task = LT_QueuePop(&Pool->tasks);
-        Pool->isProcessing = !Pool->tasks.isEmpty;
+    Task* ThreadPool::GetTask() {
+        Task* task = LT_QueuePop(&Pool.tasks);
+        Pool.isProcessing = !Pool.tasks.isEmpty;
         return task;
     }
 }

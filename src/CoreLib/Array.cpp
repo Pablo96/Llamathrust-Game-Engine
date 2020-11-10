@@ -1,51 +1,51 @@
 #include <CoreLib/Array.hpp>
 #include <ErrorCodes.hpp>
-#include <log.h>
+#include <log.hpp>
 #include <stdlib.h>
 #include <string> //memcpy
 
-Array LT_ArrayCreate(uint64 count, uint64 typeSize) {
-  Array array = {
-      .size = count * typeSize,
-      .typeSize = typeSize,
-  };
+namespace LT {
+    Array::Array(const uint64 count, const uint64 typeSize)
+        : size(count * typeSize), typeSize(typeSize) {
 
-  array.data = malloc(count * typeSize);
-  memset(array.data, 0, array.size);
-  return array;
-}
+        this->data = malloc(count * typeSize);
+        memset(this->data, 0, this->size);
+    }
 
-Array LT_ArrayStackCreate(void *dataBuffer, uint64 count, uint64 typeSize) {
-  Array array = {
-      .data = dataBuffer,
-      .size = count * typeSize,
-      .typeSize = typeSize
-  };
+    Array::Array(void* dataBuffer, uint64 count, uint64 typeSize) :
+            data(dataBuffer),
+            size(count * typeSize),
+            typeSize(typeSize)
+    {}
 
-  return array;
-}
+    Array::~Array() {
+        free(this->data);
+        this->data = NULL;
+    }
 
-uint64 LT_ArrayCount(const Array *array) {
-  return array->size / array->typeSize;
-}
+    uint64 Array::Count()
+    {
+        return this->size / this->typeSize;
+    }
 
-void LT_ArrayDestroy(Array *array) {
-  free(array->data);
-  array->data = NULL;
-}
-
-void *LT_ArrayGetElement(const Array *array, const uint64 index) {
-  const uint64 actual_index = index * array->typeSize;
-  LT_ASSERT(actual_index <= (array->size - array->typeSize),
+    void* Array::GetElement(const uint64 index) {
+        const uint64 actual_index = index * this->typeSize;
+        LT_ASSERT(actual_index <= (this->size - this->typeSize),
             "Index out or range", ERROR_INDEX_OUT_OF_BOUNDS);
-  return (const byte *)array->data + actual_index;
-}
+        return (void*)((const byte*)this->data + actual_index);
+    }
 
-void LT_ArraySetElement(const Array *array, const uint64 index, void *element) {
-  const uint64 actual_index = index * array->typeSize;
+    void Array::SetElement(const uint64 index, void* element) {
+        const uint64 actual_index = index * this->typeSize;
 
-  LT_ASSERT(actual_index <= (array->size - array->typeSize),
-            "Index out or range", ERROR_INDEX_OUT_OF_BOUNDS)
+        LT_ASSERT(actual_index <= (this->size - this->typeSize), "Index out or range", ERROR_INDEX_OUT_OF_BOUNDS);
 
-  memcpy((const byte *)array->data + actual_index, element, array->typeSize);
+        memcpy((void*) (reinterpret_cast<const byte*>(this->data) + actual_index), element, this->typeSize);
+    }
+
+
+    Array Array::operator=(const Array& array)
+    {
+        return Array(array);
+    }
 }

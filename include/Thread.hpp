@@ -112,13 +112,10 @@ namespace LT {
 
         /**
          * @func LT_Thread_Join
-         * @brief waits for a thread to finish.
-         * @param thread:
-         *	@type const Thread pointer
-         *	@brief the thread to wait for.
+         * @brief waits for this thread to finish.
          * @return void
          **/
-        void Join(const Thread* thread);
+        void Join();
 
         /**
          * @func LT_ThreadExitCode
@@ -135,7 +132,7 @@ namespace LT {
          *	@brief exit code of the thread.
          * @return void
          **/
-        void Exit(const int32 exit_code);
+        static void Exit(const int32 exit_code);
 
         /**
          * @func LT_Thread_Sleep

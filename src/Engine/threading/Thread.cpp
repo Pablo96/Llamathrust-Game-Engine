@@ -9,43 +9,43 @@ namespace LT {
 
     Thread::Thread(ThreadFuncWrapper func, void* in_data, const char* in_name, ThreadLock* in_lock)
         : ID(threadIDCount++), lock(in_lock), name(in_name), data(in_data), exitCode(0), isValid(true) {
-        Platform::PlatformThreadCreate(this, func);
+        Platform::ThreadCreate(this, func);
     }
 
-    void Thread::Start() { Platform::PlatformThreadStart(this); }
+    void Thread::Start() { Platform::ThreadStart(this); }
 
     Thread* Thread::GetCurrent() {
         Thread* tmp = new Thread(nullptr, nullptr, nullptr, nullptr);
-        Platform::PlatformGetCurrent(tmp);
+        Platform::GetCurrent(tmp);
         return tmp;
     }
 
-    void Thread::Join(const Thread* thread) { Platform::PlatformThreadJoin(thread); }
+    void Thread::Join() { Platform::ThreadJoin(this); }
 
     void Thread::Sleep(const uint64 miliseconds) {
-        Platform::PlatformThreadSleep(this, miliseconds);
+        Platform::ThreadSleep(this, miliseconds);
     }
 
-    void Thread::Exit(const int32 exit_code) { Platform::PlatformThreadExit(exit_code); }
+    void Thread::Exit(const int32 exit_code) { Platform::ThreadExit(exit_code); }
 
-    void Thread::CaptureExitCode() { Platform::PlatformThreadGetExitCode(this); }
+    void Thread::CaptureExitCode() { Platform::ThreadGetExitCode(this); }
 
     void Thread::Destroy() {
-        Platform::PlatformThreadDestroy(this);
+        Platform::ThreadDestroy(this);
         memset((void*)this->reserved, 0, PLATFORM_THREAD_SIZE);
         this->isValid = false;
     }
 
     ThreadLock::ThreadLock() {
-        memcpy((void*)this->reserved, Platform::PlatformThreadLockCreate(), sizeof(ThreadLock));
+        memcpy((void*)this->reserved, Platform::ThreadLockCreate(), sizeof(ThreadLock));
     }
 
     ThreadLock::~ThreadLock(void)
     {
-        Platform::PlatformThreadLockDestroy(this);
+        Platform::ThreadLockDestroy(this);
     }
 
-    void ThreadLock::Lock() { Platform::PlatformThreadLockLock(this); }
+    void ThreadLock::Lock() { Platform::ThreadLockLock(this); }
 
-    void ThreadLock::Unlock() { Platform::PlatformThreadLockUnock(this); }
+    void ThreadLock::Unlock() { Platform::ThreadLockUnock(this); }
 }
