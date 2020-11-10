@@ -24,7 +24,7 @@ namespace LT {
     static void VK_Init();
     static void VK_SetViewport(const Rect* in_value) {}
 
-    void LT_GraphicsAPI_Init(const GRAPHIC_API in_api) {
+    void GraphicsAPI_Init(const GRAPHIC_API in_api) {
         switch (in_api) {
         case GRAPHIC_API::OPENGL: {
             LoadProc proc = InitOpenGL();

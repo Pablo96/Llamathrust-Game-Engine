@@ -67,6 +67,7 @@ src/Engine/Input.cpp
 src/Engine/Input.hpp
 src/Engine/GraphicsAPI.cpp
 src/Engine/GraphicsAPI.hpp
+src/Engine/OpenGL.cpp
 src/Engine/GameManager.cpp
 src/Engine/Performance.hpp
 src/Engine/ArgsParsing.hpp
