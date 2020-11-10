@@ -4,10 +4,18 @@
 #include <ErrorCodes.hpp>
 #include <log.hpp>
 #include <string.h> //memcpy
+#include <memory>
+#include <exception>
 
 #ifdef LT_LINUX
 // Include for offsetof
 #include <stddef.h>
+#endif
+
+#ifdef LT_WINDOWS
+#define WORKER_PROC_EXIT(code) Thread::Exit(code); return code;
+#else
+#define WORKER_PROC_EXIT(code) Thread::Exit(code);
 #endif
 
 namespace LT {
@@ -33,7 +41,9 @@ namespace LT {
         Array threads;
         ThreadLock* lock;
         volatile bool isProcessing;
-    } Pool;
+
+        _ThreadPool() = default;
+    } *Pool;
 
     /**
      * @func WorkerProc
@@ -127,27 +137,31 @@ namespace LT {
                 worker->task = NULL;
             }
 
-            if (Pool.isProcessing == true) {
+            if (Pool->isProcessing == true) {
                 worker->Lock();
                 worker->task = ThreadPool::GetTask();
                 worker->Unlock();
             }
         }
 
-        Thread::Exit(0);
+        WORKER_PROC_EXIT(0)
     }
 
     void ThreadPool::Initialize(const uint32 threads_count, const uint64 max_tasks) {
         ThreadLock* lock = new ThreadLock();
 
-        Pool.tasks = Queue(sizeof(Task) * max_tasks, sizeof(Task));
-        Pool.threads = Array(threads_count, sizeof(Worker));
-        Pool.lock = lock;
-        Pool.isProcessing = false;
+        Pool = reinterpret_cast<_ThreadPool*>(malloc(sizeof(_ThreadPool)));
+        if (Pool == nullptr)
+            throw new std::exception("couldnt allocate memory");
+
+        Pool->tasks = Queue(sizeof(Task) * max_tasks, sizeof(Task));
+        Pool->threads = Array(threads_count, sizeof(Worker));
+        Pool->lock = lock;
+        Pool->isProcessing = false;
 
         // Spawn workers
         for (uint32 i = 0; i < threads_count; i++) {
-            Worker* worker = reinterpret_cast<Worker*>(Pool.threads.GetElement(i));
+            Worker* worker = reinterpret_cast<Worker*>(Pool->threads.GetElement(i));
             new (worker) Worker(lock);
             worker->Start();
         }
@@ -155,16 +169,17 @@ namespace LT {
 
     void ThreadPool::Shutdown() {
         // Stop task retrieving
-        Pool.isProcessing = false;
+        Pool->isProcessing = false;
 
         // Stop threads
-        uint32 threads_count = (uint32)Pool.threads.Count();
+        uint32 threads_count = (uint32)Pool->threads.Count();
         for (uint32 i = 0; i < threads_count; i++) {
-            Worker* worker = reinterpret_cast<Worker*>(Pool.threads.GetElement(i));
+            Worker* worker = reinterpret_cast<Worker*>(Pool->threads.GetElement(i));
             LT_WorkerShutdown(worker);
         }
 
-        delete Pool.lock;
+        delete Pool->lock;
+        delete Pool;
     }
 
     void ThreadPool::AddTask(ThreadFuncWrapper taskFunc, void* data) {
@@ -172,13 +187,13 @@ namespace LT {
 
         Task task(data, taskFunc);
 
-        Pool.tasks.Push(&task);
-        Pool.isProcessing = true;
+        Pool->tasks.Push(&task);
+        Pool->isProcessing = true;
     }
 
     Task* ThreadPool::GetTask() {
-        Task* task = reinterpret_cast<Task*>(Pool.tasks.Pop());
-        Pool.isProcessing = !Pool.tasks.IsEmpty();
+        Task* task = reinterpret_cast<Task*>(Pool->tasks.Pop());
+        Pool->isProcessing = !Pool->tasks.IsEmpty();
         return task;
     }
 }

@@ -1,8 +1,8 @@
-#include "CoreLib.h"
-#include "Threading.h"
-#include "Networking.h"
-#include "test_framework.h"
-#include <ErrorCodes.h>
+#include "CoreLib.hpp"
+#include "Threading.hpp"
+#include "Networking.hpp"
+#include "test_framework.hpp"
+#include <ErrorCodes.hpp>
 
 int main(int argc, const char **argv) {
   log_set_level(LOG_ERROR);

@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <Common.h>
+#include <Common.hpp>
 
 #define LOG_VERSION "0.1.0"
 

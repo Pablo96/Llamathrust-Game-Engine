@@ -110,10 +110,12 @@ namespace LT {
      *    @brief Stencil buffer
      **/
     enum class BUFFER_BIT : uint8 {
+        
         LT_COLOR_BIT = 1,
         LT_DEPTH_BIT = 2,
         LT_STENCIL_BIT = 4
     };
+    LT_CREATE_ENUM_OPERATORS(BUFFER_BIT);
 
     /**
      * @struct GraphicsAPI
@@ -123,10 +125,10 @@ namespace LT {
         void (*clearScreenColor8)(const ColorRGBA8 in_value);
         void (*clearScreenColor)(const ColorRGBA* in_value);
         void (*clearScreen)(const BUFFER_BIT in_value);
-        void (*enableAlphaBlending)(const uint8 in_value);
-        void (*enableDepthTesting)(const uint8 in_value);
-        void (*enableStencilTesting)(const uint8 in_value);
-        void (*enableScissorTesting)(const uint8 in_value);
+        void (*enableAlphaBlending)(const bool in_value);
+        void (*enableDepthTesting)(const bool in_value);
+        void (*enableStencilTesting)(const bool in_value);
+        void (*enableScissorTesting)(const bool in_value);
         void (*setScissor)(const Rect* in_value);
         void (*setViewport)(const Rect* in_value);
         void (*swapBuffers)(void);

@@ -76,6 +76,10 @@ typedef float decimal;
 #define LT_ASSERT(positive_condition, msg, error_code)
 #endif
 
-#define MILISECONDS(x) x
-#define SECONDS(x) x * 1000
-#define MINUTES(x) x * 60 * 1000
+#define LT_MILISECONDS(x) x
+#define LT_SECONDS(x) x * 1000
+#define LT_MINUTES(x) x * 60 * 1000
+
+#define LT_CREATE_ENUM_OPERATORS(clazz)\
+inline int operator&(const clazz& left, const clazz& right) {\
+    return static_cast<int>(left) >= static_cast<int>(right);}

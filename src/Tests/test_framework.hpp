@@ -1,5 +1,5 @@
 #pragma once
-#include <log.h>
+#include <log.hpp>
 
 #define TEST_SUCCESS 0
 #define TEST_ASSERT(condition) !(condition)

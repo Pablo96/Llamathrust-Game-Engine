@@ -67,7 +67,7 @@ namespace LT {
      *  @type bool
      *  @brief true when the thread has not been shutdown.
      **/
-    typedef class Thread {
+    class Thread {
         friend Platform;
     protected:
         byte reserved[PLATFORM_THREAD_SIZE];

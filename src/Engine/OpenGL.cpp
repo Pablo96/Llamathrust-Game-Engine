@@ -10,21 +10,21 @@
 #include <log.hpp>
 
 namespace LT {
-    static uint8 isDepthTestingEnabled = false;
-    static uint8 isStencilTestingEnabled = false;
-    static uint8 isScissorTestingEnabled = false;
-    static uint8 isAlphaBlendingEnabled = false;
+    static bool isDepthTestingEnabled = false;
+    static bool isStencilTestingEnabled = false;
+    static bool isScissorTestingEnabled = false;
+    static bool isAlphaBlendingEnabled = false;
+
+    void GL_ClearScreenColor(const ColorRGBA* in_value) {
+        log_info("GL: Clear color.");
+        glClearColor(in_value->r, in_value->g, in_value->b, in_value->a);
+    }
 
     void GL_ClearScreenColor8(const ColorRGBA8 in_value) {
         log_info("GL: Clear color 8bits per channel.");
         ColorRGBA color = { in_value.r / 255.0f, in_value.g / 255.0f,
                            in_value.b / 255.0f, in_value.a / 255.0f };
         GL_ClearScreenColor(&color);
-    }
-
-    void GL_ClearScreenColor(const ColorRGBA* in_value) {
-        log_info("GL: Clear color.");
-        glClearColor(in_value->r, in_value->g, in_value->b, in_value->a);
     }
 
     void GL_ClearScreen(const BUFFER_BIT in_value) {
@@ -41,7 +41,7 @@ namespace LT {
         glClear(bufferBit);
     }
 
-    void GL_EnableDepthTesting(const uint8 in_value) {
+    void GL_EnableDepthTesting(const bool in_value) {
         if (in_value == false && isDepthTestingEnabled == true) {
             glDisable(GL_DEPTH);
             isDepthTestingEnabled = false;
@@ -52,7 +52,7 @@ namespace LT {
         }
     }
 
-    void GL_EnableStencilTesting(const uint8 in_value) {
+    void GL_EnableStencilTesting(const bool in_value) {
         if (in_value == false && isStencilTestingEnabled == true) {
             glDisable(GL_STENCIL_TEST);
             isStencilTestingEnabled = false;
@@ -63,7 +63,7 @@ namespace LT {
         }
     }
 
-    void GL_EnableAlphaBlending(const uint8 in_value) {
+    void GL_EnableAlphaBlending(const bool in_value) {
         if (in_value == false && isAlphaBlendingEnabled == true) {
             glDisable(GL_BLEND);
             isAlphaBlendingEnabled = false;
@@ -74,7 +74,7 @@ namespace LT {
         }
     }
 
-    void GL_EnableScissorTesting(const uint8 in_value) {
+    void GL_EnableScissorTesting(const bool in_value) {
         if (in_value == false && isScissorTestingEnabled == true) {
             glDisable(GL_SCISSOR_TEST);
             isScissorTestingEnabled = false;

@@ -11,13 +11,13 @@ namespace LT {
         log_trace("Engine is starting...");
 
         // load config file
-        Config config = {
-            .graphic_api = LT_OPENGL,
-            .networking_support = true,
-            .is_server = false,
-            .port = 27854,
-            .ip = "127.0.0.1",
-        };
+        const char* ip = "127.0.0.1";
+        Config config(ip, sizeof(ip));
+        config.graphic_api = GRAPHIC_API::OPENGL;
+        config.networking_support = true;
+        config.is_server = false;
+        config.port = 27854;
+        
 
         // override config with args
         if (args != NULL) {
@@ -29,7 +29,7 @@ namespace LT {
 
         InputInit();
 
-        LT_GraphicsAPI_Init(config.graphic_api);
+        GraphicsAPI_Init(config.graphic_api);
 
         GameStateInit("game");
 

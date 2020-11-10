@@ -15,11 +15,11 @@ LRESULT CALLBACK GhostWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 void *Win32GetProc(const char *name);
 void Win32_Helper_RegisterWindowClasses(void);
 void Win32_Helper_InitNetworking(void);
-void Win32_Helper_CreateWindow(Window *wnd, const char *in_wndClassName,
+void Win32_Helper_CreateWindow(LT::Window *wnd, const char *in_wndClassName,
                                int width, int height, const char *title);
 
 // Exported functions
-LoadProc Win32InitOpenGL(void);
+LT::LoadProc Win32InitOpenGL(void);
 void Win32SwapBuffer(void);
 Win32loadproc Win32InitOpenGL(void);
 #endif

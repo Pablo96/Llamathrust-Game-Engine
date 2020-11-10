@@ -1,4 +1,4 @@
-#include "test_framework.h"
+#include "test_framework.hpp"
 #include <stdlib.h>
 #include <string.h>
 #define WIN32_LEAN_AND_MEAN

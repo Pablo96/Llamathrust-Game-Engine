@@ -25,7 +25,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
-#include <Common.h>
+#include <Common.hpp>
 
 #ifdef LT_WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -83,7 +83,7 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
 
 #ifdef LT_WINDOWS
   if (init) {
-    CriticalSection = malloc(sizeof(CRITICAL_SECTION));
+    CriticalSection = reinterpret_cast<CRITICAL_SECTION*>(malloc(sizeof(CRITICAL_SECTION)));
     // Initialize the critical section one time only.
     InitializeCriticalSectionAndSpinCount(CriticalSection, 0x00000400);
     init = 0;
