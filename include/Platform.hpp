@@ -6,10 +6,10 @@ namespace LT {
     typedef void (*SwapBuffersFunc)(void);
 
     // Forward declaration
-    typedef struct Thread;
-    typedef struct ThreadLock;
-    typedef struct NetSocket;
-    typedef struct NetAddress;
+    class Thread;
+    class ThreadLock;
+    class NetSocket;
+    class NetAddress;
 }
 
 // WINDOWS
@@ -96,7 +96,7 @@ namespace LT {
         static void *GetProc(const void *in_lib, const char *in_name);
 
         // NETWORKING
-        static void NetAddress(LT::NetAddress *address);
+        static void NetAddressCreate(LT::NetAddress *address);
         static void NetAddressDestroy(LT::NetAddress *address);
         static void SocketCreate(LT::NetSocket *socket);
         static bool SocketBind(const LT::NetSocket *socket);

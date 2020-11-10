@@ -2,78 +2,56 @@
 #include <Platform.hpp>
 #include <string>
 
-NetAddress *LT_NetAddressCreate(NetAddress *in_mem, const char *ip,
-                                const uint16 port,
-                                const ADDRESS_VERSION version,
-                                const ADDRESS_TYPE type,
-                                const PROTOCOL protocol,
-                                const bool will_bind) {
-  if (in_mem == NULL) {
-    in_mem = malloc(sizeof(NetAddress));
-    memset(in_mem, 0, sizeof(NetAddress));
-  }
+namespace LT {
+    NetAddress::NetAddress(const char* in_ip,
+        const uint16 in_port,
+        const ADDRESS_VERSION in_version,
+        const ADDRESS_TYPE in_type,
+        const PROTOCOL in_protocol,
+        const bool in_will_bind)
+        : ip(in_ip), port(in_port), version(in_version), type(in_type),
+        protocol(in_protocol), willBind(in_will_bind) {
+        Platform::NetAddressCreate(this);
+    }
 
-  NetAddress tmp = {.ip = ip,
-                    .port = port,
-                    .version = version,
-                    .type = type,
-                    .protocol = protocol,
-                    .willBind = will_bind
-  };
-  memcpy(in_mem, &tmp, sizeof(NetAddress));
+    NetAddress::~NetAddress() {
+        Platform::NetAddressDestroy(this);
+    }
 
-  PlatformNetAddress(in_mem);
+    NetSocket::NetSocket(const NetAddress* address) : address(address) {
+        Platform::SocketCreate(this);
+    }
 
-  return in_mem;
-}
+    bool NetSocket::Bind() {
+        return Platform::SocketBind(this);
+    }
 
-void LT_NetAddressDestroy(NetAddress *address) {
-  PlatformNetAddressDestroy(address);
-}
+    bool NetSocket::Listen() {
+        return Platform::SocketListen(this);
+    }
 
-NetSocket *LT_SocketCreate(NetSocket *socket, const NetAddress *address) {
-  if (socket == NULL) {
-    socket = malloc(sizeof(NetSocket));
-    memset(socket, 0, sizeof(NetSocket));
-  }
+    NetSocket* NetSocket::Accept() {
+        return Platform::SocketAccept(this);
+    }
 
-  NetSocket tmp = {.address = address};
-  memcpy(socket, &tmp, sizeof(NetSocket));
+    bool NetSocket::Connect() {
+        return Platform::SocketConnect(this, address);
+    }
 
-  PlatformSocketCreate(socket);
-  return socket;
-}
+    bool NetSocket::CloseConnection() {
+        return Platform::SocketConnClose(this);
+    }
 
-bool LT_SocketBind(const NetSocket *socket) {
-  return PlatformSocketBind(socket);
-}
+    bool NetSocket::Read(byte* stream, uint32* streamSize) {
+        return Platform::SocketRecieve(this, reinterpret_cast<char*>(stream), streamSize);
+    }
 
-bool LT_SocketListen(const NetSocket *socket) {
-  return PlatformSocketListen(socket);
-}
+    bool NetSocket::Write(const byte* stream, const uint32 streamSize) {
+        return Platform::SocketSend(this, reinterpret_cast<const char*>(stream), streamSize);
+    }
 
-NetSocket *LT_SocketAccept(const NetSocket *socket) {
-  return PlatformSocketAccept(socket);
-}
-
-bool LT_SocketConnect(NetSocket *socket, const NetAddress *address) {
-  return PlatformSocketConnect(socket, address);
-}
-
-bool LT_SocketCloseConnection(const NetSocket *socket) {
-  return PlatformSocketConnClose(socket);
-}
-
-bool LT_SocketRead(const NetSocket *socket, byte *stream, uint32 *streamSize) {
-  return PlatformSocketRecieve(socket, stream, streamSize);
-}
-
-bool LT_SocketWrite(const NetSocket *socket, const byte *stream,
-                    const uint32 streamSize) {
-  return PlatformSocketSend(socket, stream, streamSize);
-}
-
-void LT_SocketCloseAndDestroy(NetSocket *socket) {
-  PlatformSocketClose(socket);
-  socket->isValid = false;
+    void NetSocket::CloseAndDestroy() {
+        Platform::SocketClose(this);
+        isValid = false;
+    }
 }
