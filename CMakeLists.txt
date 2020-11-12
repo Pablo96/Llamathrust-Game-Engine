@@ -111,6 +111,11 @@ endforeach()
 #link to ltstd
 target_link_libraries(${ENGINE_EXEC} ${LTSTD_LIB})
 
+# link to windows lib
+if(WIN32)
+  target_link_libraries(${ENGINE_EXEC} wsock32 ws2_32)
+endif()
+
 # find and link to opengl
 find_package(OpenGL REQUIRED)
 target_link_libraries(${ENGINE_EXEC} ${OPENGL_LIBRARY})

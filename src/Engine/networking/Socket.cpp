@@ -22,6 +22,11 @@ namespace LT {
         Platform::SocketCreate(this);
     }
 
+    NetSocket::NetSocket(const NetAddress* address, void* in_reserved)
+        : address(address), reserved(in_reserved) {
+        Platform::SocketCreate(this);
+    }
+
     bool NetSocket::Bind() {
         return Platform::SocketBind(this);
     }

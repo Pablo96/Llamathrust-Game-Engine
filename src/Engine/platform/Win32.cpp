@@ -262,7 +262,7 @@ namespace LT {
       return true;
     }
 
-    LT::NetSocket *Platform::SocketAccept(const LT::NetSocket *in_socket) {
+    LT::NetSocket* Platform::SocketAccept(const LT::NetSocket *in_socket) {
       SOCKET sock = (SOCKET)in_socket->reserved;
       struct sockaddr_in addr = {0};
       SOCKET clientSocket = accept(sock, (struct sockaddr *)&addr, NULL);
