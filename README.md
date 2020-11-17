@@ -1,5 +1,5 @@
-# LlamathrustC/C++
-Llamathrust GameEngine developed in C++17 using LLVM CLANG/GCC/VS2019.
+# Llamathrust Game Engine (LtGE)
+LtGE developed in C++17 using LLVM CLANG/GCC/VS2019.
 
 ## Motivation
 Llamathrust Engine is a personal project to learn how game engines work.
