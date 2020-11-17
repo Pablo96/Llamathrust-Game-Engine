@@ -1,5 +1,5 @@
-# LlamathrustC
-Llamathrust GameEngine developed in C18 using LLVM CLANG.
+# LlamathrustC/C++
+Llamathrust GameEngine developed in C++17 using LLVM CLANG/GCC/VS2019.
 
 ## Motivation
 Llamathrust Engine is a personal project to learn how game engines work.
@@ -30,7 +30,7 @@ https://pablonarvaja.wixsite.com/llamathrustengine
 
 ## Render API Engine
 - OpenGL 3.3+
-- Vulkan (to be supported)
+- Vulkan (WIP)
 
 
 # Build Instructions
