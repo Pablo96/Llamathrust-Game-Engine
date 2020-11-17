@@ -2,7 +2,7 @@
 LtGE developed in C++17 using LLVM CLANG/GCC/VS2019.
 
 ## Motivation
-Llamathrust Engine is a personal project to learn how game engines work.
+LtGE is a personal project to learn how game engines work.
 
 It aims to cover:
 - Custom platform API abstraction (linux and windows)
