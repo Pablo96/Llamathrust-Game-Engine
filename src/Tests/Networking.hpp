@@ -1,93 +1,87 @@
 #pragma once
-#include "../Engine/networking/Socket.h"
-#include "test_framework.h"
-#include <Common.h>
-#include <Thread.h>
+#include "../Engine/networking/Socket.hpp"
+#include "test_framework.hpp"
+#include <Common.hpp>
+#include <Thread.hpp>
 
-void ServerThread(void *this) {
+uint64 ServerThread(void *ignored_thread_ptr) {
   // start server
-  NetAddress *address = malloc(sizeof(NetAddress));
-  LT_NetAddressCreate(address, "127.0.0.1", 44754, ADDR_IPV4, ADDR_NUMERIC, PROT_UDP, LT_TRUE);
-  NetSocket *server = malloc(sizeof(NetSocket));
-  LT_SocketCreate(server, address);
-  LT_SocketBind(server);
+  LT::NetAddress *address = new LT::NetAddress("127.0.0.1", 44754, LT::ADDRESS_VERSION::ADDR_IPV4,
+                                               LT::ADDRESS_TYPE::ADDR_NUMERIC, LT::PROTOCOL::PROT_UDP, true);
+  LT::NetSocket *server = new LT::NetSocket(address);
+  server->Bind();
 
   // listen for connections
-  LT_SocketListen(server);
+  server->Listen();
 
   // accept client
-  NetSocket *client = LT_SocketAccept(server);
+  LT::NetSocket *client = server->Accept();
 
   // send msg to client
 
   // close connection
-  LT_SocketCloseConnection(server);
+  server->CloseConnection();
 
   // close server
-  LT_SocketCloseAndDestroy(server);
-  free(server);
-  LT_NetAddressDestroy(address);
-  free(address);
+  server->CloseAndDestroy();
+  delete server;
+  delete address;
+  server = nullptr;
+  address = nullptr;
 
-  LT_Thread_Exit(TEST_SUCCESS);
+  LT::Thread::Exit(TEST_SUCCESS);
 }
 
-void ClientThread(void *this) {
+uint64 ClientThread(void *ignored_thread_ptr) {
   // Get server address
-  NetAddress *server_address = LT_NetAddressCreate(
-      NULL, "127.0.0.1", 44754, ADDR_IPV4, ADDR_DOMAIN, PROT_UDP, LT_FALSE);
-  NetAddress *address = LT_NetAddressCreate(NULL, "127.0.0.1", 44755, ADDR_IPV4,
-                                            ADDR_NUMERIC, PROT_UDP, LT_FALSE);
+  LT::NetAddress *server_address =
+      new LT::NetAddress("127.0.0.1", 44754, LT::ADDRESS_VERSION::ADDR_IPV4,
+                         LT::ADDRESS_TYPE::ADDR_DOMAIN, LT::PROTOCOL::PROT_UDP, false);
+  LT::NetAddress *address = new LT::NetAddress("127.0.0.1", 44755, LT::ADDRESS_VERSION::ADDR_IPV4,
+      LT::ADDRESS_TYPE::ADDR_NUMERIC, LT::PROTOCOL::PROT_UDP, false);
   // Create the client
-  NetSocket *client = malloc(sizeof(NetSocket));
-  LT_SocketCreate(client, address);
+  LT::NetSocket *client = new LT::NetSocket(address);
 
   // Connect to the server
-  LT_SocketConnect(client, server_address);
+  client->Connect();
 
   // recieve package from server
 
   // close client
-  LT_SocketCloseConnection(client);
-  LT_SocketCloseAndDestroy(client);
+  client->CloseConnection();
+  client->CloseAndDestroy();
+  delete client;
+  delete server_address;
+  delete address;
+  client = nullptr;
+  address = nullptr;
+  server_address = nullptr;
 
-  LT_NetAddressDestroy(address);
-  LT_NetAddressDestroy(server_address);
-  free(client);
-  free(address);
-  free(server_address);
-
-  LT_Thread_Exit(TEST_SUCCESS);
+  LT::Thread::Exit(TEST_SUCCESS);
 }
 
 START_TEST(TestNetworking)
-  Thread *serverThread = malloc(sizeof(Thread));
-  LT_Thread_Create(serverThread, ServerThread, NULL, "Server Thread", NULL);
+  LT::Thread *serverThread = new LT::Thread(ServerThread, NULL, "Server Thread", NULL);
 
-  Thread *clientThread = malloc(sizeof(Thread));
-  LT_Thread_Create(clientThread, ClientThread, NULL, "Client Thread", NULL);
+  LT::Thread *clientThread = new LT::Thread(ClientThread, NULL, "Client Thread", NULL);
 
-  LT_Thread_Start(serverThread);
+  serverThread->Start();
 
-  Thread *this = LT_Thread_GetCurrent(NULL);
-  LT_Thread_Sleep(this, SECONDS(1));
+  LT::Thread *_this = LT::Thread::GetCurrent();
+  _this->Sleep(LT_SECONDS(1));
 
-  LT_Thread_Start(clientThread);
+  _this->Start();
 
-  LT_Thread_Join(serverThread);
-  LT_Thread_Join(clientThread);
+  _this->Join(serverThread);
+  _this->Join(clientThread);
 
-  LT_Thread_ExitCode(serverThread);
-  LT_Thread_ExitCode(clientThread);
+  int32 exitCodeServer = serverThread->CaptureExitCode();
+  int32 exitCodeClient = clientThread->CaptureExitCode();
 
-  int32 exitCodeServer = serverThread->exitCode;
-  int32 exitCodeClient = clientThread->exitCode;
+  delete serverThread;
+  delete clientThread;
 
-  LT_Thread_Destroy(serverThread);
-  LT_Thread_Destroy(clientThread);
-
-  free(serverThread);
-  free(clientThread);
+  serverThread = clientThread = nullptr;
 
   return TEST_ASSERT(exitCodeClient == 0 && exitCodeServer == 0);
 END_TEST
