@@ -4,7 +4,7 @@ if not exist ".\bin\tests" mkdir ".\bin\tests"
 
 :: Engine Executable
 clang ^
--std=c17 ^
+-std=c++17 ^
 -DLT_DEBUG ^
 -D_CRT_SECURE_NO_WARNINGS ^
 -DLT_NO_MAIN ^
@@ -24,12 +24,21 @@ clang ^
 -fomit-frame-pointer ^
 -fsave-optimization-record=yaml ^
 -foptimization-record-file="bin/debug/optimizations.yml" ^
--w ^
+-Weverything ^
+-Wno-c++98-compat-pedantic ^
+-Wno-microsoft-redeclare-static ^
+-Wno-old-style-cast ^
+-Wno-gnu-anonymous-struct ^
+-Wno-nested-anon-types ^
+-Wno-extra-semi-stmt ^
+-Wno-unused-parameter ^
+-Wno-documentation ^
+-Wno-documentation-unknown-command ^
 -fshow-source-location ^
 -O0 ^
-./external/glad/src/glad.c ./external/log-c/log.c ^
-./src/CoreLib/*.c ./src/Engine/*.c ^
-./src/Engine/threading/*.c ./src/Engine/platform/*.c ^
-./src/Engine/networking/*.c ./src/Tests/*.c
+./external/glad/src/glad.cpp ./external/log-c/log.cpp ^
+./src/CoreLib/*.cpp ./src/Engine/*.cpp ^
+./src/Engine/threading/*.cpp ./src/Engine/platform/Win32.cpp ^
+./src/Engine/networking/*.cpp ./src/Tests/*.cpp
 
 .\bin\tests\tests.exe
