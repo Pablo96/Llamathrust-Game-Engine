@@ -19,10 +19,12 @@ static uint64 test_count = 0;
 
 static void CreateNode(TestNode *in_mem, unsigned long (*func)(void *),
                        const char *testName, const int expected_code) {
-  TestNode test = {.func = func,
-                   .name = testName,
-                   .expected_code = expected_code,
-                   .next = nullptr};
+  TestNode test = {
+      reinterpret_cast<int (*)(void*)>(func),
+      testName,
+      nullptr,
+      expected_code
+  };
   memcpy(in_mem, &test, sizeof(TestNode));
   test_count++;
 }
@@ -62,16 +64,18 @@ int LT_TestRun() {
     log_error(log_msg, iResult);
   }
 
-  HANDLE *threads = malloc(sizeof(HANDLE) * test_count);
-  TestNode *list = malloc(sizeof(TestNode) * test_count);
+  HANDLE *threads = (HANDLE *) malloc(sizeof(HANDLE) * test_count);
+  TestNode *list = (TestNode*) malloc(sizeof(TestNode) * test_count);
 
   Prepare(list);
 
   log_test_nfunc("Spawning threads");
   // Create a thread for every test
   for (uint64 i = 0; i < test_count; i++) {
-    threads[i] =
-        CreateThread(nullptr, 0, list[i].func, nullptr, CREATE_SUSPENDED, nullptr);
+    threads[i] = CreateThread(
+        nullptr, 0,
+        reinterpret_cast<LPTHREAD_START_ROUTINE>(list[i].func),
+        nullptr, CREATE_SUSPENDED, nullptr);
   }
 
   uint64 test_failed = 0;
@@ -106,5 +110,5 @@ int LT_TestRun() {
   free(list);
   WSACleanup();
 
-  return test_failed;
+  return static_cast<uint64>(test_failed);
 }

@@ -57,7 +57,7 @@ typedef float decimal;
 
 #ifdef LT_WINDOWS
 #ifdef LT_TEST_FRAMEWORK
-#define LT_DEBUG_BREAK(error_code) ExitThread(error_code)
+#define LT_DEBUG_BREAK(error_code) LT::Thread::Exit(error_code)
 #else
 #define LT_DEBUG_BREAK(error_code) __debugbreak()
 #endif

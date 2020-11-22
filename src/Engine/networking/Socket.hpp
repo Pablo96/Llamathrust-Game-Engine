@@ -88,7 +88,7 @@ namespace LT {
         
         bool CloseConnection();
         
-        bool Read(byte* stream, uint32* streamSize);
+        bool Read(byte* buffer, uint32 bufferSize, uint32* streamSize);
         
         bool Write(const byte* stream, const uint32 streamSize);
 

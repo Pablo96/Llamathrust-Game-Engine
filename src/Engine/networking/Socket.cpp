@@ -47,8 +47,8 @@ namespace LT {
         return Platform::SocketConnClose(this);
     }
 
-    bool NetSocket::Read(byte* stream, uint32* streamSize) {
-        return Platform::SocketRecieve(this, reinterpret_cast<char*>(stream), streamSize);
+    bool NetSocket::Read(byte* buffer, uint32 bufferSize, uint32* streamSize) {
+        return Platform::SocketRecieve(this, reinterpret_cast<char*>(buffer), bufferSize, streamSize);
     }
 
     bool NetSocket::Write(const byte* stream, const uint32 streamSize) {

@@ -264,13 +264,13 @@ namespace LT {
         return nullptr;
       }
 
-      NetSocket *client = (NetSocket *)malloc(sizeof(NetSocket));
-      NetAddress *address = new NetAddress( inet_ntoa(addr.sin_addr), ntohs(addr.sin_port),
+      LT::NetSocket *client = (LT::NetSocket *)malloc(sizeof(LT::NetSocket));
+      LT::NetAddress *address = new LT::NetAddress( inet_ntoa(addr.sin_addr), ntohs(addr.sin_port),
                           in_socket->address->version, in_socket->address->type,
                           in_socket->address->protocol, false);
-      NetSocket tmp(address, (void*) clientSocket);
+      LT::NetSocket tmp(address, (void*) clientSocket);
 
-      memcpy_s(client, sizeof(NetSocket), &tmp, sizeof(NetSocket));
+      memcpy_s(client, sizeof(LT::NetSocket), &tmp, sizeof(LT::NetSocket));
       return client;
     }
 
