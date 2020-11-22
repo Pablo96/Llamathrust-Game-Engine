@@ -28,7 +28,7 @@ Array threads = LT_ArrayCreate(threads_count, sizeof(Thread));
 for (uint64 i = 0; i < threads_count; i++) {
   Thread *thread = LT_ArrayGetElement(&threads, i);
 
-  LT_Thread_Create(thread, function, thread, NULL, NULL);
+  LT_Thread_Create(thread, function, thread, nullptr, nullptr);
   LT_Thread_Start(thread);
 }
 
@@ -56,7 +56,7 @@ static void functionExit(void *param) {
 }
 
 START_TEST(TestThreadExitCode)
-Thread *thread = LT_Thread_Create(NULL, functionExit, NULL, "thread1", NULL);
+Thread *thread = LT_Thread_Create(nullptr, functionExit, nullptr, "thread1", nullptr);
 LT_Thread_Start(thread);
 
 LT_Thread_Join(thread);
@@ -98,7 +98,7 @@ for (uint32 i = 0; i < count; i++) {
   snprintf(name, 10, "Thread_%d", i);
 
   Thread *thread = LT_ArrayGetElement(&threads, i);
-  LT_Thread_Create(thread, functionLock, NULL, name, lock);
+  LT_Thread_Create(thread, functionLock, nullptr, name, lock);
   LT_Thread_Start(thread);
 }
 
@@ -129,12 +129,12 @@ static void Task4(void *_ignored) { log_test("Hello from Task4!"); }
 START_TEST(TestThreadPool)
 LT_ThreadPoolInitialize(2, 4);
 
-LT_ThreadPoolAddTask(Task1, NULL);
-LT_ThreadPoolAddTask(Task2, NULL);
-LT_ThreadPoolAddTask(Task3, NULL);
-LT_ThreadPoolAddTask(Task4, NULL);
+LT_ThreadPoolAddTask(Task1, nullptr);
+LT_ThreadPoolAddTask(Task2, nullptr);
+LT_ThreadPoolAddTask(Task3, nullptr);
+LT_ThreadPoolAddTask(Task4, nullptr);
 
-Thread *this = LT_Thread_GetCurrent(NULL);
+Thread *this = LT_Thread_GetCurrent(nullptr);
 LT_Thread_Sleep(this, SECONDS(1));
 
 LT_ThreadPoolShutdown();

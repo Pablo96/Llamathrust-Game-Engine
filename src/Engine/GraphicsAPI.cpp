@@ -1,4 +1,5 @@
 #include "GraphicsAPI.hpp"
+#include "OpenGL.hpp"
 #include <ErrorCodes.hpp>
 #include <Platform.hpp>
 #include <glad/glad.hpp>
@@ -7,18 +8,7 @@
 
 namespace LT {
 
-    GraphicsAPI api = { 0 };
-
-    // OPENGL declarations
-    extern void GL_ClearScreenColor8(const ColorRGBA8 in_value);
-    extern void GL_ClearScreenColor(const ColorRGBA* in_value);
-    extern void GL_ClearScreen(const BUFFER_BIT in_value);
-    extern void GL_EnableDepthTesting(const bool in_value);
-    extern void GL_EnableStencilTesting(const bool in_value);
-    extern void GL_EnableAlphaBlending(const bool in_value);
-    extern void GL_EnableScissorTesting(const bool in_value);
-    extern void GL_SetScissor(const Rect* in_value);
-    extern void GL_SetViewport(const Rect* in_value);
+    GraphicsAPI api = {};
 
     // VULKAN declarations
     static void VK_Init();

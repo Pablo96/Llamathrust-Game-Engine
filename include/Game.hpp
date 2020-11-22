@@ -16,6 +16,7 @@ namespace LT {
      *   @type const char pointer
      *   @brief is the id_name of the game.
      *   @note shuld never be null and most be unique on the entire application
+     *   @note this class take ownership
      * @field customData
      *   @type void pointer
      *   @brief custom data the game need between stages
@@ -42,6 +43,9 @@ namespace LT {
         Game(const char* name, void* data)
             :idName(name), customData(data) {}
 
+        virtual ~Game() {
+            delete[] idName;
+        }
         /**
          * @func OnCreate
          * @brief Called the first time the game is loaded.

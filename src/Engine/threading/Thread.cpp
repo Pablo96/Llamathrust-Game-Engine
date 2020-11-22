@@ -8,7 +8,7 @@ namespace LT {
     static uint64 threadIDCount = 1;
 
     Thread::Thread(ThreadFuncWrapper func, void* in_data, const char* in_name, ThreadLock* in_lock)
-        : ID(threadIDCount++), lock(in_lock), name(in_name), data(in_data), exitCode(0), isValid(true) {
+        : lock(in_lock), ID(threadIDCount++), name(in_name), data(in_data), exitCode(0), isValid(true) {
         Platform::ThreadCreate(this, func);
     }
 

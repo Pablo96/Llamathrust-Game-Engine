@@ -41,8 +41,6 @@ namespace LT {
         Array threads;
         ThreadLock* lock;
         volatile bool isProcessing;
-
-        _ThreadPool() = default;
     } *Pool;
 
     /**
@@ -53,7 +51,7 @@ namespace LT {
      *	@type void pointer
      *	@brief pointer to worker structure.
      **/
-    WORKER_PROC_SIGNATURE;
+    static WORKER_PROC_SIGNATURE;
 
 
     /**
@@ -93,8 +91,8 @@ namespace LT {
         bool running;
         Task* task;
 
-        Worker(ThreadLock* lock) : 
-            Thread(WorkerProc, NULL, "worker", lock), running(true), task(nullptr) {}
+        Worker(ThreadLock* in_lock) : 
+            Thread(WorkerProc, nullptr, "worker", in_lock), running(true), task(nullptr) {}
 
         void Lock() {
             this->lock->Lock();
@@ -126,15 +124,15 @@ namespace LT {
         Worker* worker = reinterpret_cast<Worker*>(_worker);
 
         while (worker->running) {
-            if (worker->task != NULL) {
+            if (worker->task != nullptr) {
                 ThreadFuncWrapper task = worker->task->task;
-                if (task == NULL)
+                if (task == nullptr)
                     continue;
                 void* data = worker->task->data;
 
                 task(data);
 
-                worker->task = NULL;
+                worker->task = nullptr;
             }
 
             if (Pool->isProcessing == true) {
@@ -183,7 +181,7 @@ namespace LT {
     }
 
     void ThreadPool::AddTask(ThreadFuncWrapper taskFunc, void* data) {
-        LT_ASSERT(taskFunc != NULL, "A task should be provided!", ERROR_NULL_ARG);
+        LT_ASSERT(taskFunc != nullptr, "A task should be provided!", ERROR_NULL_ARG)
 
         Task task(data, taskFunc);
 

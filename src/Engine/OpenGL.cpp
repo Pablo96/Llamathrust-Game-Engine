@@ -6,6 +6,7 @@
 
 #include "Common.hpp"
 #include "GraphicsAPI.hpp"
+#include "OpenGL.hpp"
 #include <glad/glad.hpp>
 #include <log.hpp>
 

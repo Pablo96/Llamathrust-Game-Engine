@@ -21,7 +21,7 @@ namespace LT {
 
     Array::~Array() {
         free(this->data);
-        this->data = NULL;
+        this->data = nullptr;
     }
 
     uint64 Array::Count() {

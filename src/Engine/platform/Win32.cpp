@@ -3,7 +3,7 @@
 #include "../Engine.hpp"
 #include "../Input.hpp"
 #include "../Performance.hpp"
-#include "../Networking/Socket.hpp"
+#include "../networking/Socket.hpp"
 #include "../ArgsParsing.hpp"
 #include <ErrorCodes.hpp>
 #include <Networking.hpp>
@@ -21,11 +21,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef LT_CLANG
-#include <stdnoreturn.h>
-#elif defined(LT_VS)
-#define noreturn
-#endif
 
 // Input
 static const uint64 win32KeyStatesSize = VK_RMENU + 1;
@@ -35,37 +30,33 @@ static uint8 *win32KeyStates;
 LT::Window window;
 static BOOL shouldClose = FALSE;
 
-// Networking
-#define DEFAULT_BUFLEN 512
-#define DEFAULT_PORT "27015"
-
 // Win32
 static HINSTANCE hInstance;
 static HINSTANCE glInstance;
 static HGLRC modernGLcontext;
 #ifdef LT_EDITOR
-static const LPTSTR CLASS_NAME = "EditorWindow";
+static const char* CLASS_NAME = "EditorWindow";
 #define WINDOW_TITLE "Editor x64"
 #define WINDOW_STYLE WS_POPUP
 #define WINDOW_STYLE_EX WS_EX_ACCEPTFILES
 #else
-static const LPTSTR CLASS_NAME = "GameWindow";
+static const char* CLASS_NAME = "GameWindow";
 #define WINDOW_TITLE "Game x64"
 #define WINDOW_STYLE WS_OVERLAPPED
 #define WINDOW_STYLE_EX 0
 #endif
-static const LPTSTR GHOST_CLASS_NAME = "GhostWindow";
-noreturn static void Win32HandleError(int32 in_exitCode);
+static const char* GHOST_CLASS_NAME = "GhostWindow";
+LT_NORETURN static void Win32HandleError(int32 in_exitCode);
 
 #ifndef LT_NO_MAIN // used for running tests
 int main(int32 argc, const char **argv) {
   // Get handle to this executable
-  hInstance = GetModuleHandle(NULL);
+  hInstance = GetModuleHandle(nullptr);
 
   //-----------------------------------------------------------------
   // Parse command line arguments
   //-----------------------------------------------------------------
-  const LT::ConfigArgs *config = NULL;
+  const LT::ConfigArgs *config = nullptr;
   if (argc > 1) {
     config = LT::parseArgs(argv, argc);
     const char log_msg[] = "Command line arguments parsed!.";
@@ -81,7 +72,7 @@ int main(int32 argc, const char **argv) {
 
   // If mutex doesnt exists create it and run the engine
   if (!hMutex)
-    hMutex = CreateMutex(NULL, FALSE, "LlamathrustMutex");
+    hMutex = CreateMutex(nullptr, FALSE, "LlamathrustMutex");
   // Else there is an instance of the engine running
   else {
     log_fatal("Instance already running");
@@ -103,12 +94,12 @@ int main(int32 argc, const char **argv) {
   //-----------------------------------------------------------------
   // Main engine loop
   //-----------------------------------------------------------------
-  MSG msg = {0};
+  MSG msg = {};
   while (shouldClose == false) {
     LT_START_TIME();
 
     // Retrieve OS messages
-    while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
+    while (PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE)) {
       TranslateMessage(&msg);
       DispatchMessage(&msg);
     }
@@ -140,8 +131,8 @@ static LPVOID GetErrorMsg(DWORD errorCode) {
   LPVOID lpMsgBuf;
   FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
                     FORMAT_MESSAGE_IGNORE_INSERTS,
-                NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                (LPSTR)&lpMsgBuf, 0, NULL);
+                nullptr, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                (LPSTR)&lpMsgBuf, 0, nullptr);
   return lpMsgBuf;
 }
 
@@ -190,10 +181,10 @@ namespace LT {
           hints.ai_socktype = address->protocol == PROTOCOL::PROT_UDP ? SOCK_DGRAM : SOCK_STREAM;
           hints.ai_protocol = address->protocol == PROTOCOL::PROT_UDP ? IPPROTO_UDP : IPPROTO_TCP;
           hints.ai_flags = address->willBind ? AI_PASSIVE : 0;
-          hints.ai_canonname = 0;
+          hints.ai_canonname = nullptr;
           hints.ai_addrlen = 0;
-          hints.ai_addr = 0;
-          hints.ai_next = 0;
+          hints.ai_addr = nullptr;
+          hints.ai_next = nullptr;
 
       PADDRINFOA result = (PADDRINFOA) malloc(sizeof(ADDRINFOA));
       char buffer[7];
@@ -242,7 +233,7 @@ namespace LT {
       PSOCKADDR hints = (PSOCKADDR) in_socket->address->reserved;
       int result = bind((SOCKET)in_socket->reserved, hints, sizeof(SOCKADDR));
       if (result != 0) {
-        const char *msgError = reinterpret_cast<const char*>(GetErrorMsg(WSAGetLastError()));
+        const char *msgError = reinterpret_cast<const char*>(GetErrorMsg((DWORD) WSAGetLastError()));
         log_error("Couldnt bind socket! Error: %s", msgError);
         LocalFree((void*) msgError);
         return false;
@@ -254,7 +245,7 @@ namespace LT {
       SOCKET sock = (SOCKET)in_socket->reserved;
       int result = listen(sock, SOMAXCONN);
       if (result != 0) {
-        const char *msgError = reinterpret_cast<const char*>(GetErrorMsg(WSAGetLastError()));
+        const char *msgError = reinterpret_cast<const char*>(GetErrorMsg((DWORD) WSAGetLastError()));
         log_error("Listen failed with error: %s", msgError);
         LocalFree((void*) msgError);
         return false;
@@ -264,17 +255,17 @@ namespace LT {
 
     LT::NetSocket* Platform::SocketAccept(const LT::NetSocket *in_socket) {
       SOCKET sock = (SOCKET)in_socket->reserved;
-      struct sockaddr_in addr = {0};
-      SOCKET clientSocket = accept(sock, (struct sockaddr *)&addr, NULL);
+      struct sockaddr_in addr = {};
+      SOCKET clientSocket = accept(sock, (struct sockaddr *)&addr, nullptr);
       if (clientSocket == INVALID_SOCKET) {
-        const char *msgError = reinterpret_cast<const char*>(GetErrorMsg(WSAGetLastError()));
+        const char *msgError = reinterpret_cast<const char*>(GetErrorMsg((DWORD) WSAGetLastError()));
         log_error("Accept failed with error: %s", msgError);
         LocalFree((void*) msgError);
-        return NULL;
+        return nullptr;
       }
 
       NetSocket *client = (NetSocket *)malloc(sizeof(NetSocket));
-      NetAddress *address = new NetAddress(inet_ntoa(addr.sin_addr), ntohs(addr.sin_port),
+      NetAddress *address = new NetAddress( inet_ntoa(addr.sin_addr), ntohs(addr.sin_port),
                           in_socket->address->version, in_socket->address->type,
                           in_socket->address->protocol, false);
       NetSocket tmp(address, (void*) clientSocket);
@@ -285,7 +276,7 @@ namespace LT {
 
     void Platform::SocketClose(LT::NetSocket *socket) {
       closesocket((SOCKET)socket->reserved);
-      socket->reserved = NULL;
+      socket->reserved = nullptr;
     }
 
     bool Platform::SocketConnect(LT::NetSocket *in_socket, const LT::NetAddress *address) {
@@ -319,31 +310,31 @@ namespace LT {
       return true;
     }
 
-    bool Platform::SocketRecieve(const LT::NetSocket *socket, char *msg,
-                               uint32 *msg_len) {
-      int buffer_size =
-          *msg_len > MAX_PACKET_SIZE ? (int)MAX_PACKET_SIZE : (int)*msg_len;
-      *msg_len = recv((SOCKET)socket->reserved, msg, buffer_size, 0);
-      if (*msg_len == 0) {
-        if (*msg_len < 0)
+    bool Platform::SocketRecieve(const LT::NetSocket *socket, char *msg, uint32 buffer_size, uint32 *msg_len) {
+      buffer_size = buffer_size > MAX_PACKET_SIZE ? (uint32)MAX_PACKET_SIZE : buffer_size;
+      int win_msg_len = recv((SOCKET)socket->reserved, msg, buffer_size, 0);
+      if (win_msg_len == 0) {
+        if (win_msg_len < 0)
           log_error("connection closed or send failed with error: %d",
                     WSAGetLastError());
+        *msg_len = 0;
         return false;
       }
+      *msg_len = (uint32) win_msg_len;
       return true;
     }
 
     LT::Thread* Platform::ThreadCreate(LT::Thread* thread, LT::ThreadFuncWrapper funcWrapper) {
         DWORD threadID;
         HANDLE threadhandle =
-            CreateThread(NULL,             // cant be inherited
+            CreateThread(nullptr,             // cant be inherited
                 0,                // Default stack size
                 (LPTHREAD_START_ROUTINE)funcWrapper,      // function that the thread will exec
                 thread,           // parameter to the function
                 CREATE_SUSPENDED, // won't start immediately
                 &threadID);
 
-        if (threadhandle == NULL) {
+        if (threadhandle == nullptr) {
             log_error("Failed to create thread.");
             Win32HandleError(ERROR_PLATFORM_THREAD_CREATE);
         }
@@ -379,7 +370,7 @@ namespace LT {
         WaitForSingleObject(reinterpret_cast<const LT::ThreadWin*>(thread)->handle, (DWORD)miliseconds);
     }
 
-    void Platform::ThreadExit(const int16 exit_code) { ExitThread(exit_code); }
+    void Platform::ThreadExit(const int32 exit_code) { ExitThread((DWORD) exit_code); }
 
     void Platform::ThreadGetExitCode(LT::Thread* thread) {
         LT::ThreadWin* thread_win = reinterpret_cast<LT::ThreadWin*>(thread);
@@ -546,7 +537,7 @@ namespace LT {
 //-------------------------------------------
 // Window
 //-------------------------------------------
-void LT_CloseWindow(void) { shouldClose = true; }
+void LT::CloseWindow(void) { shouldClose = true; }
 
 void Win32SwapBuffer() { SwapBuffers(window.device); }
 
@@ -573,13 +564,13 @@ void Win32_Helper_CreateWindow(LT::Window *wnd, const char *in_wndClassName,
                              style,           // Window style
                              CW_USEDEFAULT, CW_USEDEFAULT, // Window position
                              width, height,                // Window size
-                             NULL,                         // Parent window
-                             NULL,                         // Menu
+                             nullptr,                         // Parent window
+                             nullptr,                         // Menu
                              hInstance,                    // Instance handle
-                             NULL // Additional application data
+                             nullptr // Additional application data
   );
 
-  if (hwnd == NULL) {
+  if (hwnd == nullptr) {
     log_fatal("Error creating window of class \"%s\".", in_wndClassName);
     Win32HandleError(ERROR_PLATFORM_WINDOW_CREATION);
   }
@@ -591,7 +582,7 @@ void Win32_Helper_CreateWindow(LT::Window *wnd, const char *in_wndClassName,
 
 void Win32_Helper_RegisterWindowClasses() {
   // Register the game window class.
-  WNDCLASSEX wcGame = {0};
+  WNDCLASSEX wcGame = {};
   wcGame.cbSize = sizeof(wcGame);
   wcGame.hInstance = hInstance;
   wcGame.lpfnWndProc = WindowProc;
@@ -604,7 +595,7 @@ void Win32_Helper_RegisterWindowClasses() {
   }
 
   // Register the game window class.
-  WNDCLASSEX wcGhost = {0};
+  WNDCLASSEX wcGhost = {};
   wcGame.style = CS_OWNDC;
   wcGhost.cbSize = sizeof(wcGhost);
   wcGhost.hInstance = hInstance;
@@ -646,7 +637,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   }
   case WM_KEYDOWN:
   case WM_SYSKEYDOWN: {
-    if (win32KeyStates == 0 || wParam > VK_RMENU ||
+    if (win32KeyStates == nullptr || wParam > VK_RMENU ||
         (wParam > VK_F12 && wParam <= VK_NAVIGATION_CANCEL)) {
       log_error("Key: %u not supported.", wParam);
       break;
@@ -702,7 +693,7 @@ void *Win32GetProc(const char *name) {
 
   proc = (void *)GetProcAddress(glInstance, name);
 
-  if (proc == 0) {
+  if (proc == nullptr) {
     log_fatal("Retrieving %s failed.", name);
     Win32HandleError(ERROR_PLATFORM_OPENGL_PROC_NOT_FOUND);
   }
@@ -712,7 +703,7 @@ void *Win32GetProc(const char *name) {
 
 LT::LoadProc Win32InitOpenGL(void) {
   glInstance = LoadLibraryA("opengl32.dll");
-  if (glInstance == 0) {
+  if (glInstance == nullptr) {
     log_fatal("Couldn't load opengl library.");
     Win32HandleError(ERROR_PLATFORM_OPENGL_LIB_NOT_FOUND);
   }
@@ -722,7 +713,7 @@ LT::LoadProc Win32InitOpenGL(void) {
                             CW_USEDEFAULT, "");
 
   // IMPORTANT: before creating the contex pixel format must be set
-  PIXELFORMATDESCRIPTOR pfd = {0};
+  PIXELFORMATDESCRIPTOR pfd = {};
   pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
   pfd.nVersion = 1; // Always set to 1
   pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
@@ -743,7 +734,7 @@ LT::LoadProc Win32InitOpenGL(void) {
 
   // Create temporary legacy context
   HGLRC oldOGLcontext = wglCreateContext(ghostWnd.device);
-  if (oldOGLcontext == NULL) {
+  if (oldOGLcontext == nullptr) {
     log_fatal("Create gl context failed.");
     Win32HandleError(ERROR_PLATFORM_OPENGL_CREATE_FAILED);
   }
@@ -785,7 +776,7 @@ LT::LoadProc Win32InitOpenGL(void) {
 
   int32 pixelFormatID;
   uint32 numFormats;
-  BOOL status = wglChoosePixelFormatARB(window.device, pixelAttribs, NULL, 1,
+  BOOL status = wglChoosePixelFormatARB(window.device, pixelAttribs, nullptr, 1,
                                         &pixelFormatID, &numFormats);
 
   if (status == FALSE || numFormats == 0) {
@@ -816,14 +807,14 @@ LT::LoadProc Win32InitOpenGL(void) {
                           0};
 
   modernGLcontext =
-      wglCreateContextAttribsARB(window.device, 0, contextAttribs);
-  if (modernGLcontext == NULL) {
+      wglCreateContextAttribsARB(window.device, nullptr, contextAttribs);
+  if (modernGLcontext == nullptr) {
     log_fatal("Create modern gl context failed.");
     Win32HandleError(ERROR_PLATFORM_OPENGL_CREATE_MODERN_FAILED);
   }
 
   // Delete legacy context and ghost window
-  wglMakeCurrent(NULL, NULL);
+  wglMakeCurrent(nullptr, nullptr);
   wglDeleteContext(oldOGLcontext);
   ReleaseDC(ghostWnd.handle, ghostWnd.device);
   DestroyWindow(ghostWnd.handle);
@@ -835,13 +826,13 @@ LT::LoadProc Win32InitOpenGL(void) {
   return Win32GetProc;
 }
 
-noreturn void Win32HandleError(int32 in_exitCode) {
+LT_NORETURN void Win32HandleError(int32 in_exitCode) {
   LPTSTR msg;
   DWORD errorID = GetLastError();
   FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
                     FORMAT_MESSAGE_IGNORE_INSERTS,
-                NULL, errorID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                (LPTSTR)&msg, 0, NULL);
+                nullptr, errorID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                (LPTSTR)&msg, 0, nullptr);
 
   log_fatal("%s", msg);
   LocalFree(msg);

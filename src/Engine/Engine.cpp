@@ -20,7 +20,7 @@ namespace LT {
         
 
         // override config with args
-        if (args != NULL) {
+        if (args != nullptr) {
             config.is_server = args->isServer;
 
             // free mem after use

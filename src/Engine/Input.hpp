@@ -6,7 +6,7 @@ namespace LT {
 	 * @enum LT_INPUT_KEY
 	 * @brief Available keys and buttons.
 	 **/
-	const enum class INPUT_KEY : uint32 {
+	enum class INPUT_KEY : uint32 {
 		LT_KEY_MOUSE_BUTTON_L,
 		LT_KEY_MOUSE_BUTTON_R,
 		LT_KEY_MOUSE_MIDDLE,

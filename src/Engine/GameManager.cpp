@@ -10,9 +10,9 @@ namespace LT {
     typedef Game* (*LT_GetInitGame)(void);
 
     void GameStateInit(const char* in_gameName) {
-        gameState.callerGame = NULL;
-        gameState.customData = NULL;
-        gameState.currentGame = NULL;
+        gameState.callerGame = nullptr;
+        gameState.customData = nullptr;
+        gameState.currentGame = nullptr;
 
         SharedLib lib = LT::LoadSharedLibrary("game");
         if (!lib) {
@@ -34,7 +34,7 @@ namespace LT {
             exit(ERROR_GAME_MAIN_NOT_FOUND);
         }
 
-        GameStateLoadGame(initGame, 0);
+        GameStateLoadGame(initGame, nullptr);
     }
 
     void GameStateUpdateCurrent(const double deltaTime) {

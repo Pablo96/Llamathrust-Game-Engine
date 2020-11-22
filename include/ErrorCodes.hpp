@@ -3,6 +3,7 @@
  * @author Pablo Narvaja
  * @brief Here are all the error codes with its description.
  **/
+#pragma once
 
 #define ERROR_INSTANCE_ALREADY_RUNNING 1
 #define ERROR_INDEX_OUT_OF_BOUNDS 2

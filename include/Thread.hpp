@@ -132,7 +132,7 @@ namespace LT {
          *	@brief exit code of the thread.
          * @return void
          **/
-        static void Exit(const int32 exit_code);
+        LT_NORETURN static void Exit(const int32 exit_code);
 
         /**
          * @func LT_Thread_Sleep

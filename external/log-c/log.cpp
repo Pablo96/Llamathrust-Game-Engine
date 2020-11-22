@@ -93,7 +93,7 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
   EnterCriticalSection(CriticalSection);
 #elif defined(LT_LINUX)
   if (init) {
-    pthread_mutex_init(&mutex, NULL);
+    pthread_mutex_init(&mutex, nullptr);
     init = 0;
   }
   /* Acquire lock */
@@ -102,7 +102,7 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
 #endif
 
   /* Get current time */
-  time_t t = time(NULL);
+  time_t t = time(nullptr);
   struct tm *lt = localtime(&t);
 
   /* Log to stderr */

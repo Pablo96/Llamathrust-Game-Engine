@@ -10,9 +10,9 @@
 #define LT_THREAD_CREATETASK(TaskName) void #TaskName(void* data)
 
 #ifdef LT_WINDOWS
-#define WORKER_PROC_SIGNATURE static uint64 WorkerProc(void* _worker)
+#define WORKER_PROC_SIGNATURE uint64 WorkerProc(void* _worker)
 #else
-#define WORKER_PROC_SIGNATURE static void WorkerProc(void* _worker)
+#define WORKER_PROC_SIGNATURE void WorkerProc(void* _worker)
 #endif
 
 namespace LT {

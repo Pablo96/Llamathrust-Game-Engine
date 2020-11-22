@@ -76,6 +76,12 @@ typedef float decimal;
 #define LT_ASSERT(positive_condition, msg, error_code)
 #endif
 
+#ifdef LT_CLANG
+#define LT_NORETURN [[noreturn]]
+#elif defined(LT_VS)
+#define LT_NORETURN __declspec(noreturn)
+#endif
+
 #define LT_MILISECONDS(x) x
 #define LT_SECONDS(x) x * 1000
 #define LT_MINUTES(x) x * 60 * 1000

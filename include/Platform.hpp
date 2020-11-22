@@ -8,8 +8,8 @@ namespace LT {
     // Forward declaration
     class Thread;
     class ThreadLock;
-    class NetSocket;
-    class NetAddress;
+    struct NetAddress;
+    struct NetSocket;
 }
 
 // WINDOWS
@@ -26,7 +26,7 @@ namespace LT {
         HANDLE handle;
         const unsigned long id;
 
-        ThreadWin(uint32 id) : id(id), handle(nullptr) {}
+        ThreadWin(uint32 in_id) : handle(nullptr), id(in_id) {}
     };
 
     struct Window {
@@ -107,8 +107,8 @@ namespace LT {
         static bool SocketConnClose(const LT::NetSocket *socket);
         static bool SocketSend(const LT::NetSocket *socket, const char *msg,
                                 const uint32 msg_len);
-        static bool SocketRecieve(const LT::NetSocket *socket, char *msg,
-                                  uint32 *msg_len);
+        static bool SocketRecieve(const LT::NetSocket* socket, char* msg,
+                                uint32 buffer_size, uint32* msg_len);
 
         // THREADING
         static LT::Thread* ThreadCreate(LT::Thread* thread, LT::ThreadFuncWrapper funcWrapper);
@@ -116,7 +116,8 @@ namespace LT {
         static void GetCurrent(const LT::Thread* thread);
         static void ThreadJoin(const LT::Thread* thread);
         static void ThreadSleep(const LT::Thread* thread, const uint64 miliseconds);
-        static void ThreadExit(const int16 exit_code);
+        LT_NORETURN
+        static void ThreadExit(const int32 exit_code);
         static void ThreadGetExitCode(LT::Thread* thread);
         static void ThreadDestroy(LT::Thread* thread);
 
