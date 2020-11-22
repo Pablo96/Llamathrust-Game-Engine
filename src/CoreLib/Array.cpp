@@ -3,6 +3,7 @@
 #include <log.hpp>
 #include <stdlib.h>
 #include <string> //memcpy
+
 #ifdef LT_TEST_FRAMEWORK
 #include <Thread.hpp>
 #endif
