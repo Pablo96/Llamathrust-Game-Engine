@@ -11,7 +11,7 @@ clang ^
 -I"./external" ^
 -I"./external/log-c" ^
 -I"./external/glad/include" ^
--o "bin/debug/engine_clang.exe" ^
+-o"bin/debug/engine_clang.exe" ^
 -m64 ^
 -lOpengl32.lib ^
 -lGdi32.lib ^
