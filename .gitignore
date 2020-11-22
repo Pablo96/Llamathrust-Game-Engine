@@ -1,4 +1,5 @@
 bin/
+build/
 resources/
 .vs/
 CMakeFiles/
@@ -14,4 +15,5 @@ x64/
 *.cmake
 CMakeCache.txt
 *.ll
+*.pdb
 *.optimized

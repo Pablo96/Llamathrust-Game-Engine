@@ -19,6 +19,7 @@
             "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
             "cStandard": "c18",
             "cppStandard": "c++20",
+            "configurationProvider": "ms-vscode.cmake-tools",
             "intelliSenseMode": "clang-x64"
         },
         {

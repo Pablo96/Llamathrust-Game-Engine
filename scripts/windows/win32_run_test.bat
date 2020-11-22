@@ -19,6 +19,7 @@ clang ^
 -lGdi32.lib ^
 -lUser32.lib ^
 -lKernel32.lib ^
+-lWs2_32.lib ^
 -fcolor-diagnostics ^
 -fomit-frame-pointer ^
 -fsave-optimization-record=yaml ^
@@ -29,6 +30,6 @@ clang ^
 ./external/glad/src/glad.c ./external/log-c/log.c ^
 ./src/CoreLib/*.c ./src/Engine/*.c ^
 ./src/Engine/threading/*.c ./src/Engine/platform/*.c ^
-./src/Tests/*.c
+./src/Engine/networking/*.c ./src/Tests/*.c
 
 .\bin\tests\tests.exe

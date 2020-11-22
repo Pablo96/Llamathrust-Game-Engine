@@ -3,7 +3,8 @@
         "algorithm": "c",
         "xutility": "c",
         "*.rh": "c",
-        "utility": "cpp"
+        "cstdlib": "c",
+        "new": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
