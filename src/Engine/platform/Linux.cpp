@@ -30,8 +30,8 @@ static void inputContextDestroyCallback(XIC ic, XPointer clientData, XPointer ca
 
 #ifndef LT_NO_MAIN //used for running tests
 int main(int32 argc, const char **argv) {
-  display = XOpenDisplay(NULL);
-  if (display == NULL) {
+  display = XOpenDisplay(nullptr);
+  if (display == nullptr) {
     fprintf(stderr, "Cannot open display\n");
     exit(1);
   }
@@ -66,14 +66,14 @@ int main(int32 argc, const char **argv) {
   XMapWindow(display, window);
 
   // Input setup
-  XIM im = XOpenIM(display, 0, NULL, NULL);
+  XIM im = XOpenIM(display, 0, nullptr, nullptr);
   if (!im)
     return 0;
   
   XIMCallback callback;
   callback.callback = (XIMProc) inputMethodDestroyCallback;
-  callback.client_data = NULL;
-  XSetIMValues(im, XNDestroyCallback, &callback, NULL);
+  callback.client_data = nullptr;
+  XSetIMValues(im, XNDestroyCallback, &callback, nullptr);
 
   callback.callback = (XIMProc) inputContextDestroyCallback;
   callback.client_data = (XPointer) window;
@@ -86,13 +86,13 @@ int main(int32 argc, const char **argv) {
                     window,
                     XNDestroyCallback,
                     &callback,
-                    NULL);
+                    nullptr);
 
   if (!im)
     return 0;
   
   unsigned long filter = 0;
-  if (XGetICValues(ic, XNFilterEvents, &filter, NULL) == NULL)
+  if (XGetICValues(ic, XNFilterEvents, &filter, nullptr) == nullptr)
   {
       XSelectInput(display,
                   window,
@@ -152,7 +152,7 @@ void X11ProcEvent(Window window, XEvent* event, int32 screen) {
 //-------------------------------------------
 
 LT::LoadProc InitOpenGL(void) {
-  return NULL;
+  return nullptr;
 }
 
 LT::SwapBuffersFunc GetPlatformSwapBuffer(void) {
@@ -208,7 +208,7 @@ LT::Thread* Platform::ThreadCreate(LT::Thread *thread, LT::ThreadFuncWrapper fun
   pthread_t *threadID;
   int32 result = pthread_create(
           threadID,
-          NULL,
+          nullptr,
           funcWrapper,
           &threadID);
 
@@ -252,7 +252,7 @@ void Platform::ThreadSleep(const LT::Thread* thread, const uint64 miliseconds) {
   } while (res && errno == EINTR);
 }
 
-void Platform::ThreadExit(const int16 exit_code) {
+LT_NORETURN void Platform::ThreadExit(const int32 exit_code) {
   void *exitCode = (void*) exit_code;
   pthread_exit(exitCode);
 }
@@ -269,13 +269,14 @@ void Platform::ThreadDestroy(LT::Thread* thread) {
   thread->isValid = false;
 }
 }
+
 //-------------------------------------------
 // Threading Locks
 //-------------------------------------------
 namespace LT {
 LT::ThreadLock* PlatformThreadLockCreate() {
   pthread_mutex_t* lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
-  pthread_mutex_init(lock, NULL);
+  pthread_mutex_init(lock, nullptr);
   return (LT::ThreadLock*)lock;
 }
 
