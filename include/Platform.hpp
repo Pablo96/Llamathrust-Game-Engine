@@ -53,13 +53,14 @@ switch( fdwReason ) {\
 } return TRUE;}
 #elif defined(LT_LINUX)
 #define LT_EXPORT __attribute__((visibility("default")))
-typedef void* (*LT::ThreadFuncWrapper)(void *name);
 namespace LT {
+    typedef void* (*ThreadFuncWrapper)(void *name);
+    
     typedef struct {
         union {
             uint32* id;
             uint32* handle;
-        }
+        };
     } ThreadLinux;
 
     typedef struct {

@@ -2,23 +2,19 @@
 #include <CoreLib/Array.hpp>
 #include <CoreLib/Queue.hpp>
 #include <ErrorCodes.hpp>
-#include <exception>
+#include <stdexcept>
 #include <log.hpp>
 #include <memory>
-#include <string.h> //memcpy
 
 #ifdef LT_LINUX
 // Include for offsetof
 #include <stddef.h>
 #endif
 
-#ifdef LT_WINDOWS
 #define WORKER_PROC_EXIT(code)                                                 \
   Thread::Exit(code);                                                          \
   return code;
-#else
-#define WORKER_PROC_EXIT(code) Thread::Exit(code);
-#endif
+
 
 namespace LT {
 /**
@@ -53,7 +49,7 @@ static struct _ThreadPool {
  *	@type void pointer
  *	@brief pointer to worker structure.
  **/
-static WORKER_PROC_SIGNATURE;
+WORKER_PROC_SIGNATURE;
 
 /**
  * @struct Task
@@ -92,8 +88,7 @@ struct Worker : public Thread {
   Task *task;
 
   Worker(ThreadLock *in_lock)
-      : Thread(WorkerProc, nullptr, "worker", in_lock), running(true),
-        task(nullptr) {}
+      : Thread(WorkerProc, nullptr, "worker", in_lock), running(true), task(nullptr) {}
 
   void Lock() { this->lock->Lock(); }
 
@@ -155,7 +150,7 @@ void ThreadPool::Initialize(const uint32 threads_count,
 
   Pool = reinterpret_cast<_ThreadPool *>(malloc(sizeof(_ThreadPool)));
   if (Pool == nullptr)
-    throw new std::exception("couldnt allocate memory");
+    throw new std::runtime_error("couldn't allocate memory for thread pool!");
 
   Pool->tasks = Queue(sizeof(Task) * max_tasks, sizeof(Task));
   Pool->threads = Array(threads_count, sizeof(Worker));

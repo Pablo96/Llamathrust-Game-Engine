@@ -136,10 +136,10 @@ if (UNIX)
   set(OpenGL_GL_PREFERENCE GLVND)
 endif()
 
-find_package(OpenGL)
+find_package(OpenGL COMPONENTS GL OpenGL GLX)
 
 if (NOT OpenGL_FOUND AND UNIX)
-  message(STATUS "OpenGL not found. Make sure to have installed mesa-common-dev.")
+  message(STATUS "OpenGL not found. Make sure to have installed libgl1-mesa-dev.")
   return()
 endif()
 

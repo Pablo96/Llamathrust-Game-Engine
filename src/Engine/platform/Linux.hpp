@@ -1,8 +1,8 @@
 #pragma once
-#include "Common.h"
-#include "Platform.h"
+#include "Common.hpp"
+#include "Platform.hpp"
 #include <stdnoreturn.h>
-#include "../Input.h"
+#include "../Input.hpp"
 
 noreturn void LinuxHandleError(int32 in_exitCode);
 

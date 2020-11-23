@@ -2,7 +2,7 @@
 #include <ErrorCodes.hpp>
 #include <log.hpp>
 #include <stdlib.h>
-#include <string> //memcpy
+#include <cstring> //memcpy
 
 #ifdef LT_TEST_FRAMEWORK
 #include <Thread.hpp>
@@ -14,7 +14,7 @@ Array::Array(const uint64 in_count, const uint64 in_typeSize)
       elements_count(in_count) {
 
   this->data = malloc(elements_count * typeSize);
-  memset(this->data, 0, this->size);
+  std::memset(this->data, 0, this->size);
 }
 
 Array::Array(void *dataBuffer, uint64 in_count, uint64 in_typeSize)
@@ -41,7 +41,7 @@ void Array::SetElement(const uint64 index, void *element) {
   LT_ASSERT(actual_index <= (this->size - this->typeSize), "Index out of range",
             ERROR_INDEX_OUT_OF_BOUNDS);
 
-  memcpy((void *)(reinterpret_cast<const byte *>(this->data) + actual_index),
+  std::memcpy((void *)(reinterpret_cast<const byte *>(this->data) + actual_index),
          element, this->typeSize);
 }
 

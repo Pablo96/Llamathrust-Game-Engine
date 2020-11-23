@@ -2,8 +2,7 @@
 #include <Platform.hpp>
 #include <ErrorCodes.hpp>
 #include <log.hpp>
-#include <stdlib.h>
-#include <string> // memset
+#include <cstring>
 
 namespace LT {
 // ID 0 is reserved for current thread
@@ -41,7 +40,7 @@ uint64 Thread::CaptureExitCode() {
 
 void Thread::Destroy() {
   Platform::ThreadDestroy(this);
-  memset((void *)this->reserved, 0, PLATFORM_THREAD_SIZE);
+  std::memset((void *)this->reserved, 0, PLATFORM_THREAD_SIZE);
   this->isValid = false;
 }
 

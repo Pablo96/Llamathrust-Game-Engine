@@ -5,7 +5,8 @@
  **/
 #pragma once
 #include "Common.hpp"
-#include <memory>
+#include <cstring>
+#include <stdexcept>
 
 namespace LT {
 	// forward declarations
@@ -40,7 +41,9 @@ namespace LT {
 		char ip[16];
 
 		Config(const char* in_ip, const uint64 in_ipSize) {
-			memcpy_s(ip, 16, in_ip, in_ipSize);
+			if (in_ipSize < sizeof(this->ip))
+				throw new std::runtime_error("in_ip size is less than " + std::to_string(sizeof(this->ip)) + " bytes!");
+			std::memcpy(this->ip, in_ip, sizeof(this->ip));
 		}
 	};
 }

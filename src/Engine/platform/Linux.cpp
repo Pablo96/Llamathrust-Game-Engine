@@ -1,22 +1,22 @@
-#include "Linux.h"
+#include "Linux.hpp"
+#include <log.hpp>
+#include <Thread.hpp>
+#include <ErrorCodes.hpp>
+#include "../Performance.hpp"
+#include "../Engine.hpp"
+
 #include <dlfcn.h>
 #include <pthread.h>
 #include <time.h>
 #include <errno.h>
-#include <log.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
-#include <GL/glu.h>
-#include "Thread.h"
-#include "ErrorCodes.h"
-#include "../Performance.h"
-#include "../Engine.h"
 
 // Windowing
 LT_Window window;
-static bool shouldClose = LT_FALSE;
+static bool shouldClose = false;
 
 // Linux
 static Display *display;
@@ -98,7 +98,7 @@ int main(int32 argc, const char **argv) {
 
   // Opengl Context
 
-  while (shouldClose == LT_FALSE) {
+  while (shouldClose == false) {
     LT_START_TIME();
 
     // Retrieve OS messages
@@ -124,7 +124,7 @@ int main(int32 argc, const char **argv) {
 //-------------------------------------------
 // Window
 //-------------------------------------------
-void LT_CloseWindow(void) { shouldClose = LT_TRUE; }
+void LT_CloseWindow(void) { shouldClose = true; }
 
 void LinuxSwapBuffer(void) {
 
@@ -255,12 +255,12 @@ void PlatformThreadGetExitCode(Thread* thread) {
   if (!pthread_tryjoin_np(thread->reserved, &thread->exitCode)) {
     log_error("Thread still active");
   } else {
-    thread->isValid = LT_FALSE;
+    thread->isValid = false;
   }
 }
 
 void PlatformThreadDestroy(Thread* thread) {
-  thread->isValid = LT_FALSE;
+  thread->isValid = false;
 }
 
 //-------------------------------------------
@@ -285,6 +285,6 @@ void PlatformThreadLockDestroy(ThreadLock* lock) {
   pthread_mutex_destroy(lock);
 }
 
-noreturn void LinuxHandleError(int32 in_exitCode) {
+LT_NORETURN void LinuxHandleError(int32 in_exitCode) {
   exit(in_exitCode);
 }

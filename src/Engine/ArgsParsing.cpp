@@ -1,5 +1,4 @@
 #include "ArgsParsing.hpp"
-#include <memory>
 #include <string>
 
 namespace LT {
@@ -7,8 +6,8 @@ namespace LT {
         ConfigArgs* config = new ConfigArgs();
 
         for (int32 i = 0; i < size; i++) {
-            const char* string = argsv[i];
-            if (strcmp(string, "server") == 0) {
+            std::string string = argsv[i];
+            if (string == "server") {
                 config->isServer = true;
             }
         }

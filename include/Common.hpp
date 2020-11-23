@@ -78,6 +78,8 @@ typedef float decimal;
 
 #ifdef LT_CLANG
 #define LT_NORETURN [[noreturn]]
+#elif defined(LT_GCC)
+#define LT_NORETURN __attribute__ ((__noreturn__))
 #elif defined(LT_VS)
 #define LT_NORETURN __declspec(noreturn)
 #endif
