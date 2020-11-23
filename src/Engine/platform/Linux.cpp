@@ -13,14 +13,18 @@
 #include <X11/Xlib.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
+#include <stdlib.h> // exit(code)
+#include <cstring>
 
 // Windowing
-LT_Window window;
+LT::Window window;
 static bool shouldClose = false;
+#define WIDTH 720
+#define HEIGHT 480
 
 // Linux
 static Display *display;
-
+static LT_NORETURN void LinuxHandleError(int32 in_exitCode);
 static void inputMethodDestroyCallback(XIM im, XPointer clientData, XPointer callData) {}
 static void inputContextDestroyCallback(XIC ic, XPointer clientData, XPointer callData) {}
 
@@ -64,7 +68,7 @@ int main(int32 argc, const char **argv) {
   // Input setup
   XIM im = XOpenIM(display, 0, NULL, NULL);
   if (!im)
-    return;
+    return 0;
   
   XIMCallback callback;
   callback.callback = (XIMProc) inputMethodDestroyCallback;
@@ -85,7 +89,7 @@ int main(int32 argc, const char **argv) {
                     NULL);
 
   if (!im)
-    return;
+    return 0;
   
   unsigned long filter = 0;
   if (XGetICValues(ic, XNFilterEvents, &filter, NULL) == NULL)
@@ -135,7 +139,7 @@ void X11ProcEvent(Window window, XEvent* event, int32 screen) {
 
   if (event->type == Expose) {
     XFillRectangle(display, window, DefaultGC(display, screen), 20, 20, 10, 10);
-    XDrawString(display, window, DefaultGC(display, screen), 10, 50, msg, strlen(msg));
+    XDrawString(display, window, DefaultGC(display, screen), 10, 50, msg, std::strlen(msg));
   }
   if (event->type == KeyPress) {
     if (event->xkey.keycode == 9)
@@ -147,10 +151,11 @@ void X11ProcEvent(Window window, XEvent* event, int32 screen) {
 // Graphics
 //-------------------------------------------
 
-LoadProc InitOpenGL(void) {
+LT::LoadProc InitOpenGL(void) {
   return NULL;
 }
-SwapBuffersFunc GetPlatformSwapBuffer(void) {
+
+LT::SwapBuffersFunc GetPlatformSwapBuffer(void) {
   return LinuxSwapBuffer;
 }
 
@@ -178,27 +183,28 @@ uint8 PlatformGetKeyState(int32 keyState) {
   return 0;
 }
 
-LT_INPUT_KEY X11TranslateKeys(int32 key) {
+LT::INPUT_KEY X11TranslateKeys(int32 key) {
   log_info("KeyCode %p", key);
   return 0;
 }
 //-------------------------------------------
 // Shared libs
 //-------------------------------------------
-
-void* PlatformLoadSharedLib(const char* name) {
+namespace LT {
+void* Platform::LoadSharedLib(const char* name) {
   return dlopen(name, RTLD_LAZY);
 }
 
-void* PlatformGetProc(const void* in_lib, const char* in_name) {
+void* Platform::GetProc(const void* in_lib, const char* in_name) {
   return dlsym(in_lib, in_name);
+}
 }
 
 //-------------------------------------------
 // Threads
 //-------------------------------------------
-
-Thread *PlatformThreadCreate(const Thread *thread, ThreadFuncWrapper funcWrapper) {
+namespace LT {
+LT::Thread* Platform::ThreadCreate(LT::Thread *thread, LT::ThreadFuncWrapper funcWrapper) {
   pthread_t *threadID;
   int32 result = pthread_create(
           threadID,
@@ -213,25 +219,25 @@ Thread *PlatformThreadCreate(const Thread *thread, ThreadFuncWrapper funcWrapper
   }
 
   ThreadLinux nixThread = { .id = threadID };
-  memcpy(thread->reserved, &nixThread, sizeof(ThreadLinux));
+  std::memcpy(thread->reserved, &nixThread, sizeof(ThreadLinux));
   return thread;
 }
 
-void PlatformThreadStart(const Thread *thread) {
+void Platform::ThreadStart(const LT::Thread *thread) {
   //Does nothing
 }
 
-void PlatformGetCurrent(const Thread *thread) {
+void Platform::GetCurrent(const LT::Thread *thread) {
   pthread_t threadID = pthread_self();
-  ThreadLinux nixThd = {.id = threadID };
-  memcpy(thread->reserved, &nixThd, sizeof(ThreadLinux));
+  LT::ThreadLinux nixThd = {.id = threadID };
+  std::memcpy(thread->reserved, &nixThd, sizeof(LT::ThreadLinux));
 }
 
-void PlatformThreadJoin(const Thread* thread) {
+void Platform::ThreadJoin(const LT::Thread* thread) {
   pthread_join(thread->reserved, &thread->exitCode);
 }
 
-void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds) {
+void Platform::ThreadSleep(const LT::Thread* thread, const uint64 miliseconds) {
   struct timespec ts;
   int res;
 
@@ -246,12 +252,12 @@ void PlatformThreadSleep(const Thread* thread, const uint64 miliseconds) {
   } while (res && errno == EINTR);
 }
 
-void PlatformThreadExit(const int16 exit_code) {
+void Platform::ThreadExit(const int16 exit_code) {
   void *exitCode = (void*) exit_code;
   pthread_exit(exitCode);
 }
 
-void PlatformThreadGetExitCode(Thread* thread) {
+void Platform::ThreadGetExitCode(LT::Thread* thread) {
   if (!pthread_tryjoin_np(thread->reserved, &thread->exitCode)) {
     log_error("Thread still active");
   } else {
@@ -259,32 +265,33 @@ void PlatformThreadGetExitCode(Thread* thread) {
   }
 }
 
-void PlatformThreadDestroy(Thread* thread) {
+void Platform::ThreadDestroy(LT::Thread* thread) {
   thread->isValid = false;
 }
-
+}
 //-------------------------------------------
 // Threading Locks
 //-------------------------------------------
-
-ThreadLock* PlatformThreadLockCreate() {
+namespace LT {
+LT::ThreadLock* PlatformThreadLockCreate() {
   pthread_mutex_t* lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
   pthread_mutex_init(lock, NULL);
-  return (ThreadLock*)lock;
+  return (LT::ThreadLock*)lock;
 }
 
-void PlatformThreadLockLock(ThreadLock* lock) {
+void PlatformThreadLockLock(LT::ThreadLock* lock) {
   pthread_mutex_lock(lock);
 }
 
-void PlatformThreadLockUnock(ThreadLock* lock) {
+void PlatformThreadLockUnock(LT::ThreadLock* lock) {
   pthread_mutex_unlock(lock);
 }
 
-void PlatformThreadLockDestroy(ThreadLock* lock) {
+void PlatformThreadLockDestroy(LT::ThreadLock* lock) {
   pthread_mutex_destroy(lock);
 }
+}
 
-LT_NORETURN void LinuxHandleError(int32 in_exitCode) {
+static LT_NORETURN void LinuxHandleError(int32 in_exitCode) {
   exit(in_exitCode);
 }
