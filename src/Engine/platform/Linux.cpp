@@ -75,7 +75,7 @@ int main(int32 argc, const char **argv) {
   callback.client_data = nullptr;
   XSetIMValues(im, XNDestroyCallback, &callback, nullptr);
 
-  callback.callback = inputContextDestroyCallback;
+  callback.callback = reinterpret_cast<XIMProc>(inputContextDestroyCallback);
   callback.client_data = reinterpret_cast<XPointer>(&window);
   XIC ic = XCreateIC(im,
                     XNInputStyle,
