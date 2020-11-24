@@ -162,8 +162,8 @@ LT::SwapBuffersFunc GetPlatformSwapBuffer(void) {
 //-------------------------------------------
 // Input
 //-------------------------------------------
-
-void PlatformInitInput(int32* in_keyStates) {
+namespace LT {
+void Platform::InitInput(int32* in_keyStates) {
   int32 scanCodeMin, scanCodeMax, width;
   XDisplayKeycodes(display, &scanCodeMin, &scanCodeMax);
   KeySym* keysyms = XGetKeyboardMapping(display,
@@ -179,10 +179,10 @@ void PlatformInitInput(int32* in_keyStates) {
   }
 }
 
-uint8 PlatformGetKeyState(int32 keyState) {
+uint8 Platform::GetKeyState(int32 keyState) {
   return 0;
 }
-
+}
 LT::INPUT_KEY X11TranslateKeys(uint64* key) {
   log_info("KeyCode %p", key);
   return LT::INPUT_KEY::KEYS_COUNT;
@@ -275,21 +275,21 @@ void Platform::ThreadDestroy(LT::Thread* thread) {
 // Threading Locks
 //-------------------------------------------
 namespace LT {
-LT::ThreadLock* PlatformThreadLockCreate() {
+LT::ThreadLock* Platform::ThreadLockCreate() {
   pthread_mutex_t* lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
   pthread_mutex_init(lock, nullptr);
   return reinterpret_cast<LT::ThreadLock*>(lock);
 }
 
-void PlatformThreadLockLock(LT::ThreadLock* lock) {
+void Platform::ThreadLockLock(LT::ThreadLock* lock) {
   pthread_mutex_lock(reinterpret_cast<pthread_mutex_t*>(lock));
 }
 
-void PlatformThreadLockUnock(LT::ThreadLock* lock) {
+void Platform::ThreadLockUnock(LT::ThreadLock* lock) {
   pthread_mutex_unlock(reinterpret_cast<pthread_mutex_t*>(lock));
 }
 
-void PlatformThreadLockDestroy(LT::ThreadLock* lock) {
+void Platform::ThreadLockDestroy(LT::ThreadLock* lock) {
   pthread_mutex_destroy(reinterpret_cast<pthread_mutex_t*>(lock));
 }
 }
