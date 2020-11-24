@@ -10,6 +10,7 @@ set(CMAKE_SHARED_LINKER_FLAGS_RELEASE_ASSERTS ${CMAKE_SHARED_LINKER_FLAGS_RELEAS
 # set c++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS c)
 
 # set the project/solution name
 project("Llamathrust Engine"
@@ -136,7 +137,7 @@ if (UNIX)
   set(OpenGL_GL_PREFERENCE GLVND)
 endif()
 
-find_package(OpenGL COMPONENTS GL OpenGL GLX)
+find_package(OpenGL COMPONENTS OpenGL GLX)
 
 if (NOT OpenGL_FOUND AND UNIX)
   message(STATUS "OpenGL not found. Make sure to have installed libgl1-mesa-dev.")
@@ -159,9 +160,18 @@ if (UNIX)
   if (NOT X11_Xkb_INCLUDE_PATH)
     message(FATAL_ERROR "XKB headers not found; install X11 development package")
   endif()
+
+  set(THREADS_PREFER_PTHREAD_FLAG ON)
+  find_package(Threads)
+  if (NOT Threads_FOUND)
+    message(STATUS "Pthread not found. Make sure to have installed libgl1-mesa-dev.")
+    return()
+  endif()
   
   target_include_directories(${ENGINE_EXEC} PRIVATE "${X11_X11_INCLUDE_PATH}")
+  target_link_libraries(${ENGINE_EXEC} ${X11_LIBRARIES})
   target_link_libraries(${ENGINE_EXEC} ${CMAKE_DL_LIBS})
+  target_link_libraries(${ENGINE_EXEC} Threads::Threads)
 endif()
 
 
