@@ -15,8 +15,6 @@ uint64 LT_TestRun() {
 
   NodeListPrepare(list);
 
-  log_test_nfunc("Spawning threads");
-
   uint64 test_failed = 0;
   // Execute tests
   for (uint64 i = 0; i < test_count; i++) {

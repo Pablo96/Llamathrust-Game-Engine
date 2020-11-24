@@ -4,7 +4,7 @@
 #include <CoreLib/Stack.hpp>
 #include <CoreLib/String.hpp>
 
-#include "test_framework.hpp"
+#include "framework/test_framework.hpp"
 
 START_TEST(TestArray)
 uint64 count = 10;

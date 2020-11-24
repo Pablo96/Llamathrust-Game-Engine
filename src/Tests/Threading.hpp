@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <new>
 
-#include "test_framework.hpp"
+#include "framework/test_framework.hpp"
 
 // in milliseconds
 #define WAIT_TIME 1000

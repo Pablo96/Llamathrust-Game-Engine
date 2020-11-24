@@ -3,7 +3,7 @@
 #include <Thread.hpp>
 
 #include "../Engine/networking/Socket.hpp"
-#include "test_framework.hpp"
+#include "framework/test_framework.hpp"
 
 PROC_RETURN_T ServerThread(void *ignored_thread_ptr) {
   // start server

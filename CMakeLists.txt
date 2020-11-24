@@ -193,15 +193,15 @@ set_property(TARGET ${ENGINE_EXEC} APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFI
 
 set(Test_SRC
 src/Tests/main.cpp
-src/Tests/test_framework_common.cpp
+src/Tests/framework/test_framework_common.cpp
 )
 
 if (WIN32)
-  list(APPEND Llamathrust_SRC src/Tests/test_framework_win32.cpp)
+  list(APPEND Llamathrust_SRC src/Tests/framework/test_framework_win32.cpp)
 endif()
 
 if (UNIX)
-  list(APPEND Llamathrust_SRC src/Tests/test_framework_linux.cpp)
+  list(APPEND Llamathrust_SRC src/Tests/framework/test_framework_linux.cpp)
 endif()
 
 # Test executable name
