@@ -3,8 +3,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdexcept>
+
 #include "test_framework.hpp"
 #include "test_framwork_common.hpp"
+
+PROC_RETURN_T thread_tester(void *test) {
+  TestNode *testNode = reinterpret_cast<TestNode *>(test);
+  PROC_RETURN_T exit_code;
+  try {
+    exit_code = testNode->func(nullptr);
+  } catch (std::exception &e) {
+    exit_code = e.what();
+  }
+  return exit_code;
+}
 
 uint64 LT_TestRun() {
   uint64 test_count = GetTestCount();
@@ -21,7 +34,7 @@ uint64 LT_TestRun() {
     const char *name = list[i].name;
     log_test_nfunc("Running test %s", name);
 
-    pthread_create(&threads[i], nullptr, (list[i].func), nullptr);
+    pthread_create(&threads[i], nullptr, thread_tester, &list[i]);
 
     void *exitCode;
     pthread_join(threads[i], &exitCode);
