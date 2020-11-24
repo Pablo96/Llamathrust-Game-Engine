@@ -1,4 +1,3 @@
-#include "test_framework.hpp"
 #include <stdlib.h>
 #include <string.h>
 #define WIN32_LEAN_AND_MEAN
@@ -7,54 +6,10 @@
 #include <Windows.h>
 #include <malloc.h>
 
-typedef struct _TestNode {
-  int (*func)(void *);
-  const char *name;
-  struct _TestNode *next;
-  const int expected_code;
-} TestNode;
+#include "test_framework.hpp"
+#include "test_framwork_common.hpp"
 
-static TestNode *test_list = nullptr;
-static uint64 test_count = 0;
-
-static void CreateNode(TestNode *in_mem, unsigned long (*func)(void *),
-                       const char *testName, const int expected_code) {
-  TestNode test = {
-      reinterpret_cast<int (*)(void*)>(func),
-      testName,
-      nullptr,
-      expected_code
-  };
-  memcpy(in_mem, &test, sizeof(TestNode));
-  test_count++;
-}
-
-void __TestAdd(unsigned long (*func)(void *), const char *testName,
-               const int expected_code) {
-  TestNode *mem;
-  if (test_list != nullptr) {
-    TestNode *current = test_list;
-    while (current->next != nullptr) {
-      current = current->next;
-    }
-
-    mem = current->next = (TestNode *)malloc(sizeof(TestNode));
-  } else {
-    mem = test_list = (TestNode *)malloc(sizeof(TestNode));
-  }
-
-  CreateNode(mem, func, testName, expected_code);
-}
-
-static void Prepare(TestNode *list) {
-  TestNode *current = test_list;
-  for (uint64 i = 0; current != nullptr; i++) {
-    memcpy(&list[i], current, sizeof(TestNode));
-    current = current->next;
-  }
-}
-
-int LT_TestRun() {
+uint64 LT_TestRun() {
   log_test_nfunc("Preparing %u Tests", test_count);
 
   WSADATA wsaData;
@@ -64,8 +19,8 @@ int LT_TestRun() {
     log_error(log_msg, iResult);
   }
 
-  HANDLE *threads = (HANDLE *) malloc(sizeof(HANDLE) * test_count);
-  TestNode *list = (TestNode*) malloc(sizeof(TestNode) * test_count);
+  HANDLE *threads = (HANDLE *)malloc(sizeof(HANDLE) * test_count);
+  TestNode *list = (TestNode *)malloc(sizeof(TestNode) * test_count);
 
   Prepare(list);
 
@@ -73,8 +28,7 @@ int LT_TestRun() {
   // Create a thread for every test
   for (uint64 i = 0; i < test_count; i++) {
     threads[i] = CreateThread(
-        nullptr, 0,
-        reinterpret_cast<LPTHREAD_START_ROUTINE>(list[i].func),
+        nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(list[i].func),
         nullptr, CREATE_SUSPENDED, nullptr);
   }
 
@@ -110,5 +64,5 @@ int LT_TestRun() {
   free(list);
   WSACleanup();
 
-  return static_cast<uint64>(test_failed);
+  return test_failed;
 }

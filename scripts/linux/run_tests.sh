@@ -5,4 +5,4 @@ make tests
 
 # run test
 cd ..
-./bin/debug/tests
+./bin/tests

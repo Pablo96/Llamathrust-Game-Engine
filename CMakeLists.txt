@@ -1,16 +1,17 @@
 cmake_minimum_required(VERSION 3.1)
 cmake_policy(SET "CMP0079"  NEW)
 
+# set c++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS c)
+
 # set configuration types and make them advanced option on cmake.
 mark_as_advanced(CMAKE_INSTALL_PREFIX)
 set(CMAKE_CONFIGURATION_TYPES Release Debug)
 set(CMAKE_CXX_FLAGS_RELEASE_ASSERTS ${CMAKE_CXX_FLAGS_RELEASE})
 set(CMAKE_SHARED_LINKER_FLAGS_RELEASE_ASSERTS ${CMAKE_SHARED_LINKER_FLAGS_RELEASE})
 
-# set c++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS c)
 
 # set the project/solution name
 project("Llamathrust Engine"
@@ -192,9 +193,7 @@ set_property(TARGET ${ENGINE_EXEC} APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFI
 
 set(Test_SRC
 src/Tests/main.cpp
-src/Tests/test_framework.hpp
-src/Tests/CoreLib.hpp
-src/Tests/Threading.hpp
+src/Tests/test_framework_common.cpp
 )
 
 if (WIN32)
@@ -212,3 +211,8 @@ target_include_directories(${TEST_EXEC} PUBLIC "${CMAKE_SOURCE_DIR}/include" "${
 set_property(TARGET ${TEST_EXEC} APPEND PROPERTY COMPILE_DEFINITIONS LT_TEST_FRAMEWORK LT_NO_MAIN LT_DEBUG)
 target_link_libraries(${TEST_EXEC} ${OPENGL_LIBRARY})
 target_link_libraries(${TEST_EXEC} ${LTSTD_LIB})
+if (UNIX)
+  target_link_libraries(${TEST_EXEC} ${X11_LIBRARIES})
+  target_link_libraries(${TEST_EXEC} ${CMAKE_DL_LIBS})
+  target_link_libraries(${TEST_EXEC} Threads::Threads) 
+endif()

@@ -1,12 +1,15 @@
 #pragma once
-#include "test_framework.hpp"
+#include <stdio.h>
+#include <string.h>
+
 #include <Common.hpp>
 #include <CoreLib/Array.hpp>
 #include <Thread.hpp>
 #include <ThreadPool.hpp>
+#include <cstdlib>
 #include <new>
-#include <stdio.h>
-#include <string.h>
+
+#include "test_framework.hpp"
 
 // in milliseconds
 #define WAIT_TIME 1000
@@ -14,7 +17,7 @@
 //--------------------------------------------------------------------------
 // SIMPLE THREAD SPAWN
 //--------------------------------------------------------------------------
-static uint64 function(void *param) {
+static PROC_RETURN_T function(void *param) {
   LT::Thread *_this = reinterpret_cast<LT::Thread *>(param);
   log_test("Initialized thread");
 
@@ -50,7 +53,7 @@ END_TEST
 //--------------------------------------------------------------------------
 #define EXIT_CODE_TEST 22
 
-static uint64 functionExit(void *param) {
+static PROC_RETURN_T functionExit(void *param) {
   LT::Thread *_this = reinterpret_cast<LT::Thread *>(param);
 
   _this->Sleep(WAIT_TIME);
@@ -78,9 +81,8 @@ END_TEST
 //--------------------------------------------------------------------------
 // LOCKING
 //--------------------------------------------------------------------------
-static uint64 functionLock(void *param) {
+static PROC_RETURN_T functionLock(void *param) {
   LT::Thread *_this = reinterpret_cast<LT::Thread *>(param);
-  
 
   _this->Sleep(LT_SECONDS(1));
   _this->Lock();
@@ -97,13 +99,12 @@ LT::Array threads = LT::Array(count, sizeof(LT::Thread));
 LT::ThreadLock *lock = new LT::ThreadLock();
 
 for (uint32 i = 0; i < count; i++) {
-  if (i > 99)
-    break;
+  if (i > 99) break;
 
-  char *name = static_cast<char *>(malloc(10));
+  char *name = static_cast<char *>(std::malloc(10));
   snprintf(name, 10, "Thread_%d", i);
 
-  LT::Thread *thread = reinterpret_cast<LT::Thread*>(threads.GetElement(i));
+  LT::Thread *thread = reinterpret_cast<LT::Thread *>(threads.GetElement(i));
   new (thread) LT::Thread(functionLock, nullptr, name, lock);
   thread->Start();
 }
@@ -125,22 +126,22 @@ END_TEST
 //--------------------------------------------------------------------------
 // THREADPOOL
 //--------------------------------------------------------------------------
-static uint64 Task1(void *_ignored) {
+static PROC_RETURN_T Task1(void *_ignored) {
   log_test("Hello from Task1!");
   return TEST_SUCCESS;
 }
 
-static uint64 Task2(void *_ignored) {
+static PROC_RETURN_T Task2(void *_ignored) {
   log_test("Hello from Task2!");
   return TEST_SUCCESS;
 }
 
-static uint64 Task3(void *_ignored) {
+static PROC_RETURN_T Task3(void *_ignored) {
   log_test("Hello from Task3!");
   return TEST_SUCCESS;
 }
 
-static uint64 Task4(void *_ignored) {
+static PROC_RETURN_T Task4(void *_ignored) {
   log_test("Hello from Task4!");
   return TEST_SUCCESS;
 }
