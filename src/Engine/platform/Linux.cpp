@@ -45,7 +45,7 @@ int main(int32 argc, const char **argv) {
   
   // Create a colormap based on the visual used by the current context
   windowAttributes.colormap = XCreateColormap(display, root, visual, AllocNone);
-  windowAttributes.your_event_mask = StructureNotifyMask | KeyPressMask | KeyReleaseMask |
+  windowAttributes.event_mask = StructureNotifyMask | KeyPressMask | KeyReleaseMask |
                                 PointerMotionMask | ButtonPressMask | ButtonReleaseMask |
                                 ExposureMask | FocusChangeMask | VisibilityChangeMask |
                                 EnterWindowMask | LeaveWindowMask | PropertyChangeMask;
@@ -96,7 +96,7 @@ int main(int32 argc, const char **argv) {
   {
       XSelectInput(display,
                   xWindow,
-                  windowAttributes.your_event_mask | filter);
+                  windowAttributes.event_mask | filter);
   }
 
 
