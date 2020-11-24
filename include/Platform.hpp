@@ -56,12 +56,13 @@ switch( fdwReason ) {\
 namespace LT {
     typedef void* (*ThreadFuncWrapper)(void *name);
     
-    typedef struct {
+    struct ThreadLinux {
         union {
-            uint32* id;
-            uint32* handle;
+            uint64* handle;
+            uint64 id;
         };
-    } ThreadLinux;
+        ThreadLinux(const uint64 in_id): id(in_id) {}
+    };
 
     typedef struct {
     } Window;
@@ -94,7 +95,7 @@ namespace LT {
 
         // DYNAMIC LIB
         static void *LoadSharedLib(const char *name);
-        static void *GetProc(const void *in_lib, const char *in_name);
+        static void *GetProc(void *in_lib, const char *in_name);
 
         // NETWORKING
         static void NetAddressCreate(LT::NetAddress *address);

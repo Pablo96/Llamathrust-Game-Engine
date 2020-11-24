@@ -6,7 +6,7 @@
 
 void LinuxSwapBuffer(void);
 
-LT::INPUT_KEY X11TranslateKeys(int32 key);
+LT::INPUT_KEY X11TranslateKeys(uint64* key);
 
 typedef union _XEvent XEvent;
 typedef unsigned long XID;

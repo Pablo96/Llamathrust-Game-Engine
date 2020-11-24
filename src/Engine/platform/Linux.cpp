@@ -41,7 +41,7 @@ int main(int32 argc, const char **argv) {
   int depth = DefaultDepth(display, screen);
   Visual* visual = DefaultVisual(display, screen);
   Window root = RootWindow(display, screen);
-  XWindowAttributes windowAttributes = { 0 };
+  XSetWindowAttributes windowAttributes = { 0 };
   
   // Create a colormap based on the visual used by the current context
   windowAttributes.colormap = XCreateColormap(display, root, visual, AllocNone);
@@ -50,7 +50,7 @@ int main(int32 argc, const char **argv) {
                                 ExposureMask | FocusChangeMask | VisibilityChangeMask |
                                 EnterWindowMask | LeaveWindowMask | PropertyChangeMask;
   
-  Window window = XCreateWindow(
+  Window xWindow = XCreateWindow(
     display,        // server connection
     root,           // root window
     0, 0,           // position
@@ -63,7 +63,7 @@ int main(int32 argc, const char **argv) {
     &windowAttributes);
   
   // Show window
-  XMapWindow(display, window);
+  XMapWindow(display, xWindow);
 
   // Input setup
   XIM im = XOpenIM(display, 0, nullptr, nullptr);
@@ -71,19 +71,19 @@ int main(int32 argc, const char **argv) {
     return 0;
   
   XIMCallback callback;
-  callback.callback = (XIMProc) inputMethodDestroyCallback;
+  callback.callback = inputMethodDestroyCallback;
   callback.client_data = nullptr;
   XSetIMValues(im, XNDestroyCallback, &callback, nullptr);
 
-  callback.callback = (XIMProc) inputContextDestroyCallback;
-  callback.client_data = (XPointer) window;
+  callback.callback = inputContextDestroyCallback;
+  callback.client_data = reinterpret_cast<XPointer>(&window);
   XIC ic = XCreateIC(im,
                     XNInputStyle,
                     XIMPreeditNothing | XIMStatusNothing,
                     XNClientWindow,
-                    window,
+                    xWindow,
                     XNFocusWindow,
-                    window,
+                    xWindow,
                     XNDestroyCallback,
                     &callback,
                     nullptr);
@@ -95,7 +95,7 @@ int main(int32 argc, const char **argv) {
   if (XGetICValues(ic, XNFilterEvents, &filter, nullptr) == nullptr)
   {
       XSelectInput(display,
-                  window,
+                  xWindow,
                   windowAttributes.your_event_mask | filter);
   }
 
@@ -111,7 +111,7 @@ int main(int32 argc, const char **argv) {
     {
       XEvent e;
       XNextEvent(display, &e);
-      X11ProcEvent(window, &e, screen);
+      X11ProcEvent(xWindow, &e, screen);
     }
     XFlush(display);
 
@@ -134,12 +134,12 @@ void LinuxSwapBuffer(void) {
 
 }
 
-void X11ProcEvent(Window window, XEvent* event, int32 screen) {
+void X11ProcEvent(Window xWindow, XEvent* event, int32 screen) {
   static const char *msg = "Hello, World!";
 
   if (event->type == Expose) {
-    XFillRectangle(display, window, DefaultGC(display, screen), 20, 20, 10, 10);
-    XDrawString(display, window, DefaultGC(display, screen), 10, 50, msg, std::strlen(msg));
+    XFillRectangle(display, xWindow, DefaultGC(display, screen), 20, 20, 10, 10);
+    XDrawString(display, xWindow, DefaultGC(display, screen), 10, 50, msg, std::strlen(msg));
   }
   if (event->type == KeyPress) {
     if (event->xkey.keycode == 9)
@@ -183,9 +183,9 @@ uint8 PlatformGetKeyState(int32 keyState) {
   return 0;
 }
 
-LT::INPUT_KEY X11TranslateKeys(int32 key) {
+LT::INPUT_KEY X11TranslateKeys(uint64* key) {
   log_info("KeyCode %p", key);
-  return 0;
+  return LT::INPUT_KEY::KEYS_COUNT;
 }
 //-------------------------------------------
 // Shared libs
@@ -195,7 +195,7 @@ void* Platform::LoadSharedLib(const char* name) {
   return dlopen(name, RTLD_LAZY);
 }
 
-void* Platform::GetProc(const void* in_lib, const char* in_name) {
+void* Platform::GetProc(void* in_lib, const char* in_name) {
   return dlsym(in_lib, in_name);
 }
 }
@@ -205,12 +205,13 @@ void* Platform::GetProc(const void* in_lib, const char* in_name) {
 //-------------------------------------------
 namespace LT {
 LT::Thread* Platform::ThreadCreate(LT::Thread *thread, LT::ThreadFuncWrapper funcWrapper) {
-  pthread_t *threadID;
+  pthread_t threadID;
+  void* threadArg = nullptr;
   int32 result = pthread_create(
-          threadID,
+          &threadID,
           nullptr,
           funcWrapper,
-          &threadID);
+          threadArg);
 
 
   if (result != 0) {
@@ -218,8 +219,8 @@ LT::Thread* Platform::ThreadCreate(LT::Thread *thread, LT::ThreadFuncWrapper fun
     LinuxHandleError(ERROR_PLATFORM_THREAD_CREATE);
   }
 
-  ThreadLinux nixThread = { .id = threadID };
-  std::memcpy(thread->reserved, &nixThread, sizeof(ThreadLinux));
+  LT::ThreadLinux nixThd = LT::ThreadLinux(threadID);
+  std::memcpy(thread->reserved, &nixThd, sizeof(LT::ThreadLinux));
   return thread;
 }
 
@@ -229,12 +230,12 @@ void Platform::ThreadStart(const LT::Thread *thread) {
 
 void Platform::GetCurrent(const LT::Thread *thread) {
   pthread_t threadID = pthread_self();
-  LT::ThreadLinux nixThd = {.id = threadID };
-  std::memcpy(thread->reserved, &nixThd, sizeof(LT::ThreadLinux));
+  LT::ThreadLinux nixThd = LT::ThreadLinux(threadID);
+  std::memcpy(const_cast<void*>(reinterpret_cast<const void*>(thread->reserved)), &nixThd, sizeof(LT::ThreadLinux));
 }
 
 void Platform::ThreadJoin(const LT::Thread* thread) {
-  pthread_join(thread->reserved, &thread->exitCode);
+  pthread_join(reinterpret_cast<uint64>(thread->reserved), const_cast<void**>(reinterpret_cast<void* const*>(&thread->exitCode)));
 }
 
 void Platform::ThreadSleep(const LT::Thread* thread, const uint64 miliseconds) {
@@ -253,12 +254,12 @@ void Platform::ThreadSleep(const LT::Thread* thread, const uint64 miliseconds) {
 }
 
 LT_NORETURN void Platform::ThreadExit(const int32 exit_code) {
-  void *exitCode = (void*) exit_code;
+  void *exitCode = reinterpret_cast<void*>(exit_code);
   pthread_exit(exitCode);
 }
 
 void Platform::ThreadGetExitCode(LT::Thread* thread) {
-  if (!pthread_tryjoin_np(thread->reserved, &thread->exitCode)) {
+  if (!pthread_tryjoin_np(reinterpret_cast<uint64>(thread->reserved), reinterpret_cast<void**>(&thread->exitCode) )) {
     log_error("Thread still active");
   } else {
     thread->isValid = false;
@@ -277,19 +278,19 @@ namespace LT {
 LT::ThreadLock* PlatformThreadLockCreate() {
   pthread_mutex_t* lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
   pthread_mutex_init(lock, nullptr);
-  return (LT::ThreadLock*)lock;
+  return reinterpret_cast<LT::ThreadLock*>(lock);
 }
 
 void PlatformThreadLockLock(LT::ThreadLock* lock) {
-  pthread_mutex_lock(lock);
+  pthread_mutex_lock(reinterpret_cast<pthread_mutex_t*>(lock));
 }
 
 void PlatformThreadLockUnock(LT::ThreadLock* lock) {
-  pthread_mutex_unlock(lock);
+  pthread_mutex_unlock(reinterpret_cast<pthread_mutex_t*>(lock));
 }
 
 void PlatformThreadLockDestroy(LT::ThreadLock* lock) {
-  pthread_mutex_destroy(lock);
+  pthread_mutex_destroy(reinterpret_cast<pthread_mutex_t*>(lock));
 }
 }
 
