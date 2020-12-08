@@ -4,6 +4,7 @@
 #include <GL/glx.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <dlfcn.h>
 #include <errno.h>
 #include <pthread.h>
@@ -19,6 +20,12 @@
 #include "../Engine.hpp"
 #include "../Performance.hpp"
 
+#ifdef LT_EDITOR
+#define WINDOW_TITLE "Llamathrust GE (x64)"
+#else
+#define WINDOW_TITLE "Game LtGE (x64)"
+#endif
+
 // Windowing
 LT::Window window;
 static bool shouldClose = false;
@@ -33,11 +40,46 @@ static uint64 xInputStatesSize = XK_Escape;
 static Display* display;
 static Window xWindow;
 static int32 screenId;
+static Atom atomWmDeleteWindow;
 static LT_NORETURN void LinuxHandleError(int32 in_exitCode);
 static void inputMethodDestroyCallback(XIM im, XPointer clientData,
                                        XPointer callData) {}
 static void inputContextDestroyCallback(XIC ic, XPointer clientData,
                                         XPointer callData) {}
+
+typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig,
+                                                     GLXContext, Bool,
+                                                     const int*);
+
+static bool isExtensionSupported(const char* extList, const char* extension) {
+  const char* start;
+  const char *where, *terminator;
+
+  where = strchr(extension, ' ');
+  if (where || *extension == '\0') {
+    return false;
+  }
+
+  for (start = extList;;) {
+    where = strstr(start, extension);
+
+    if (!where) {
+      break;
+    }
+
+    terminator = where + strlen(extension);
+
+    if (where == start || *(where - 1) == ' ') {
+      if (*terminator == ' ' || *terminator == '\0') {
+        return true;
+      }
+    }
+
+    start = terminator;
+  }
+
+  return false;
+}
 
 #ifndef LT_NO_MAIN  // used for running tests
 int main(int32 argc, const char** argv) {
@@ -80,6 +122,7 @@ int main(int32 argc, const char** argv) {
   }
 
   XCloseDisplay(display);
+  log_info("LtGE: engine shutted down.");
   return 0;
 }
 #endif
@@ -89,20 +132,21 @@ int main(int32 argc, const char** argv) {
 //-------------------------------------------
 void LT_CloseWindow(void) { shouldClose = true; }
 
-void LinuxSwapBuffer(void) {}
+void LinuxSwapBuffer(void) { glXSwapBuffers(display, xWindow); }
 
 void X11ProcEvent(XEvent* event) {
-  static const char* msg = "Hello, World!";
   static char str[25];
   static KeySym keySym = 0;
 
   switch (event->type) {
     // SHOW WINDOW
     case Expose: {
-      XFillRectangle(display, xWindow, DefaultGC(display, screenId), 20, 20, 10,
-                     10);
-      XDrawString(display, xWindow, DefaultGC(display, screenId), 10, 50, msg,
-                  std::strlen(msg));
+      break;
+    }
+    case ClientMessage:
+      if (event->xclient.data.l[0] != atomWmDeleteWindow) break;
+    case DestroyNotify: {
+      shouldClose = true;
       break;
     }
     // KEYS EVENTS
@@ -157,39 +201,53 @@ void X11ProcEvent(XEvent* event) {
 //-------------------------------------------
 LT::LoadProc InitOpenGL(void) {
   GLint majorGLX, minorGLX = 0;
-
   glXQueryVersion(display, &majorGLX, &minorGLX);
-
-  /*
-  if (majorGLX < 3 || (majorGLX == 3 && minorGLX < 3)) {
-    XCloseDisplay(display);
-    std::string msg = GET_ERROR_MSG(ERROR_PLATFORM_OPENGL_WRONG_VERSION);
+  if (majorGLX <= 1 && minorGLX < 2) {
+    log_warn("GLX 1.2 or greater is required.");
+    std::string msg = GET_ERROR_MSG(ERROR_PLATFORM_OPENGL_GLX_VERSION);
     log_fatal(msg.c_str());
     throw new std::runtime_error(msg);
   }
-  */
- 
+
   log_info("GLX version: %d.%d", majorGLX, minorGLX);
 
-  GLint glxAttribs[] = {GLX_RGBA,
-                        GLX_DOUBLEBUFFER,
-                        GLX_DEPTH_SIZE,
-                        24,
-                        GLX_STENCIL_SIZE,
-                        8,
+  GLint glxAttribs[] = {GLX_X_RENDERABLE,
+                        True,
+                        GLX_DRAWABLE_TYPE,
+                        GLX_WINDOW_BIT,
+                        GLX_RENDER_TYPE,
+                        GLX_RGBA_BIT,
+                        GLX_X_VISUAL_TYPE,
+                        GLX_TRUE_COLOR,
                         GLX_RED_SIZE,
                         8,
                         GLX_GREEN_SIZE,
                         8,
                         GLX_BLUE_SIZE,
                         8,
-                        GLX_SAMPLE_BUFFERS,
-                        0,
-                        GLX_SAMPLES,
-                        0,
+                        GLX_ALPHA_SIZE,
+                        8,
+                        GLX_DEPTH_SIZE,
+                        24,
+                        GLX_STENCIL_SIZE,
+                        8,
+                        GLX_DOUBLEBUFFER,
+                        True,
                         None};
-  XVisualInfo* visual = glXChooseVisual(display, screenId, glxAttribs);
 
+  int fbcount;
+  GLXFBConfig* fbc =
+      glXChooseFBConfig(display, DefaultScreen(display), glxAttribs, &fbcount);
+  if (fbc == nullptr) {
+    XCloseDisplay(display);
+    std::string msg = GET_ERROR_MSG(ERROR_PLATFORM_OPENGL_CREATE_MODERN_FAILED);
+    log_fatal(msg.c_str());
+    throw new std::runtime_error(msg);
+  }
+  GLXFBConfig bestFbc = fbc[0];
+  XFree(fbc);
+
+  XVisualInfo* visual = glXGetVisualFromFBConfig(display, bestFbc);
   if (visual == nullptr) {
     XCloseDisplay(display);
     std::string msg = GET_ERROR_MSG(ERROR_PLATFORM_OPENGL_CREATE_FAILED);
@@ -211,19 +269,58 @@ LT::LoadProc InitOpenGL(void) {
       InputOutput, visual->visual,
       CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, &windowAttribs);
 
+  // Redirect close window
+  atomWmDeleteWindow = XInternAtom(display, "WM_DELETE_WINDOW", False);
+  XSetWMProtocols(display, xWindow, &atomWmDeleteWindow, 1);
+
+  // Set title
+  XStoreName(display, xWindow, WINDOW_TITLE);
+
+  glXCreateContextAttribsARBProc glXCreateContextAttribsARB =
+      (glXCreateContextAttribsARBProc)glXGetProcAddressARB(
+          (const GLubyte*)"glXCreateContextAttribsARB");
+
+  int context_attribs[] = {GLX_CONTEXT_MAJOR_VERSION_ARB,
+                           3,
+                           GLX_CONTEXT_MINOR_VERSION_ARB,
+                           2,
+                           GLX_CONTEXT_FLAGS_ARB,
+                           GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+                           None};
+
+  const char* glxExts = glXQueryExtensionsString(display, screenId);
+  GLXContext context = 0;
+  if (!isExtensionSupported(glxExts, "GLX_ARB_create_context")) {
+    context = glXCreateNewContext(display, bestFbc, GLX_RGBA_TYPE, 0, True);
+  } else {
+    context =
+        glXCreateContextAttribsARB(display, bestFbc, 0, true, context_attribs);
+  }
+  XSync(display, False);
+
+  // Verifying that context is a direct context
+  if (!glXIsDirect(display, context)) {
+    log_warn("Indirect GLX context obtained");
+    XCloseDisplay(display);
+    std::string msg = GET_ERROR_MSG(ERROR_PLATFORM_OPENGL_CONTEXT_INDIRECT);
+    log_fatal(msg.c_str());
+    throw new std::runtime_error(msg);
+  }
+
+  glXMakeCurrent(display, xWindow, context);
+
+  log_info(
+      "\nOPENGL info:\n"
+      "\tVendor: %s\n"
+      "\tRenderer: %s\n"
+      "\tVersion: %s\n"
+      "\tShading Language: %s",
+      glGetString(GL_VENDOR), glGetString(GL_RENDERER), glGetString(GL_VERSION),
+      glGetString(GL_SHADING_LANGUAGE_VERSION));
+
   // Show window
   XMapWindow(display, xWindow);
 
-  // Set title
-  XStoreName(display, xWindow, "Llamathrust GE (x64)");
-
-  GLXContext context = glXCreateContext(display, visual, NULL, GL_TRUE);
-  glXMakeCurrent(display, xWindow, context);
-
-  log_info("GL Vendor: %s", glGetString(GL_VENDOR));
-  log_info("GL Renderer: %s", glGetString(GL_RENDERER));
-  log_info("GL Version: %s", glGetString(GL_VERSION));
-  log_info("GL Shading Language: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
   return nullptr;
 }
 
