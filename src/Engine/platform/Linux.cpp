@@ -41,6 +41,7 @@ static Display* display;
 static Window xWindow;
 static int32 screenId;
 static Atom atomWmDeleteWindow;
+static void* glInstance;
 static LT_NORETURN void LinuxHandleError(int32 in_exitCode);
 static void inputMethodDestroyCallback(XIM im, XPointer clientData,
                                        XPointer callData) {}
@@ -90,8 +91,7 @@ int main(int32 argc, const char** argv) {
   }
   screenId = DefaultScreen(display);
 
-  // Opengl Context
-  InitOpenGL();
+  LT::Platform::InitOpenGL();
 
   // Events
   static uint32 keyEventsMask = KeyPressMask | KeyReleaseMask | KeymapStateMask;
@@ -103,7 +103,7 @@ int main(int32 argc, const char** argv) {
                                    PropertyChangeMask;
 
   // Suscribe to events
-  XSelectInput(display, xWindow,
+  XSelectInput(display, RootWindow(display, DefaultScreen(display)),
                keyEventsMask | mouseEventsMask | windowEventsMask);
 
   while (shouldClose == false) {
@@ -199,7 +199,25 @@ void X11ProcEvent(XEvent* event) {
 //-------------------------------------------
 // Graphics
 //-------------------------------------------
-LT::LoadProc InitOpenGL(void) {
+void* x11GetProc(const char* name) {
+  void* proc =
+      (void*)glXGetProcAddressARB(reinterpret_cast<const GLubyte*>(name));
+  if (proc) return proc;
+
+  proc = (void*)dlsym(glInstance, name);
+
+  if (proc == nullptr) {
+    std::string msg = GET_ERROR_MSG(ERROR_PLATFORM_OPENGL_PROC_NOT_FOUND);
+    log_fatal(msg.c_str());
+    log_fatal("Retrieving %s failed.", name);
+    throw new std::runtime_error(msg);
+  }
+
+  return proc;
+}
+
+namespace LT {
+LT::LoadProc Platform::InitOpenGL(void) {
   GLint majorGLX, minorGLX = 0;
   glXQueryVersion(display, &majorGLX, &minorGLX);
   if (majorGLX <= 1 && minorGLX < 2) {
@@ -208,8 +226,8 @@ LT::LoadProc InitOpenGL(void) {
     log_fatal(msg.c_str());
     throw new std::runtime_error(msg);
   }
-
   log_info("GLX version: %d.%d", majorGLX, minorGLX);
+  glInstance = LT::Platform::LoadSharedLib("libopengl32.a");
 
   GLint glxAttribs[] = {GLX_X_RENDERABLE,
                         True,
@@ -277,8 +295,7 @@ LT::LoadProc InitOpenGL(void) {
   XStoreName(display, xWindow, WINDOW_TITLE);
 
   glXCreateContextAttribsARBProc glXCreateContextAttribsARB =
-      (glXCreateContextAttribsARBProc)glXGetProcAddressARB(
-          (const GLubyte*)"glXCreateContextAttribsARB");
+      (glXCreateContextAttribsARBProc)x11GetProc("glXCreateContextAttribsARB");
 
   int context_attribs[] = {GLX_CONTEXT_MAJOR_VERSION_ARB,
                            3,
@@ -319,12 +336,16 @@ LT::LoadProc InitOpenGL(void) {
       glGetString(GL_SHADING_LANGUAGE_VERSION));
 
   // Show window
-  XMapWindow(display, xWindow);
+  XClearWindow(display, xWindow);
+  XMapRaised(display, xWindow);
 
-  return nullptr;
+  return x11GetProc;
 }
 
-LT::SwapBuffersFunc GetPlatformSwapBuffer(void) { return LinuxSwapBuffer; }
+LT::SwapBuffersFunc Platform::GetPlatformSwapBuffer(void) {
+  return LinuxSwapBuffer;
+}
+}  // namespace LT
 
 //-------------------------------------------
 // Input
