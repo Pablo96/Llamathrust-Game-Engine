@@ -31,6 +31,8 @@ static uint64 xInputStatesSize = XK_Escape;
 
 // Linux
 static Display* display;
+static Window xWindow;
+static int32 screenId;
 static LT_NORETURN void LinuxHandleError(int32 in_exitCode);
 static void inputMethodDestroyCallback(XIM im, XPointer clientData,
                                        XPointer callData) {}
@@ -44,49 +46,23 @@ int main(int32 argc, const char** argv) {
     fprintf(stderr, "Cannot open display\n");
     exit(1);
   }
+  screenId = DefaultScreen(display);
 
-  int screen = DefaultScreen(display);
-  int depth = DefaultDepth(display, screen);
-  Visual* visual = DefaultVisual(display, screen);
-  Window root = RootWindow(display, screen);
-  XSetWindowAttributes windowAttributes = {0};
-
-  // Create a colormap based on the visual used by the current context
-  windowAttributes.colormap = XCreateColormap(display, root, visual, AllocNone);
-  windowAttributes.event_mask = StructureNotifyMask | FocusChangeMask |
-                                VisibilityChangeMask | PropertyChangeMask;
-
-  Window xWindow = XCreateWindow(display,  // server connection
-                                 root,     // root window
-                                 0,
-                                 0,  // position
-                                 WIDTH,
-                                 HEIGHT,  // size
-                                 0,       // border size
-                                 depth,   // color depth (bits per pixel)
-                                 InputOutput, visual,
-                                 CWBorderPixel | CWColormap | CWEventMask,
-                                 &windowAttributes);
-
-  // Show window
-  XMapWindow(display, xWindow);
-
-  // Set title
-  XStoreName(display, xWindow, "Llamathrust GE (x64)");
+  // Opengl Context
+  InitOpenGL();
 
   // Events
   static uint32 keyEventsMask = KeyPressMask | KeyReleaseMask | KeymapStateMask;
   static uint32 mouseEventsMask = PointerMotionMask | ButtonPressMask |
                                   ButtonReleaseMask | EnterWindowMask |
                                   LeaveWindowMask;
-  static uint32 windowEventsMask = ExposureMask;
+  static uint32 windowEventsMask = ExposureMask | StructureNotifyMask |
+                                   FocusChangeMask | VisibilityChangeMask |
+                                   PropertyChangeMask;
 
   // Suscribe to events
   XSelectInput(display, xWindow,
                keyEventsMask | mouseEventsMask | windowEventsMask);
-
-  // Opengl Context
-  InitOpenGL();
 
   while (shouldClose == false) {
     LT_START_TIME();
@@ -96,7 +72,7 @@ int main(int32 argc, const char** argv) {
     while (QLength(display)) {
       XEvent e;
       XNextEvent(display, &e);
-      X11ProcEvent(xWindow, &e, screen);
+      X11ProcEvent(&e);
     }
     XFlush(display);
 
@@ -115,7 +91,7 @@ void LT_CloseWindow(void) { shouldClose = true; }
 
 void LinuxSwapBuffer(void) {}
 
-void X11ProcEvent(Window xWindow, XEvent* event, int32 screen) {
+void X11ProcEvent(XEvent* event) {
   static const char* msg = "Hello, World!";
   static char str[25];
   static KeySym keySym = 0;
@@ -123,9 +99,9 @@ void X11ProcEvent(Window xWindow, XEvent* event, int32 screen) {
   switch (event->type) {
     // SHOW WINDOW
     case Expose: {
-      XFillRectangle(display, xWindow, DefaultGC(display, screen), 20, 20, 10,
+      XFillRectangle(display, xWindow, DefaultGC(display, screenId), 20, 20, 10,
                      10);
-      XDrawString(display, xWindow, DefaultGC(display, screen), 10, 50, msg,
+      XDrawString(display, xWindow, DefaultGC(display, screenId), 10, 50, msg,
                   std::strlen(msg));
       break;
     }
@@ -181,13 +157,18 @@ void X11ProcEvent(Window xWindow, XEvent* event, int32 screen) {
 //-------------------------------------------
 LT::LoadProc InitOpenGL(void) {
   GLint majorGLX, minorGLX = 0;
+
   glXQueryVersion(display, &majorGLX, &minorGLX);
+
+  /*
   if (majorGLX < 3 || (majorGLX == 3 && minorGLX < 3)) {
     XCloseDisplay(display);
-    std::string msg = GET_ERROR_MSG(ERROR_PLATFORM_OPENGL_CREATE_FAILED);
+    std::string msg = GET_ERROR_MSG(ERROR_PLATFORM_OPENGL_WRONG_VERSION);
     log_fatal(msg.c_str());
     throw new std::runtime_error(msg);
   }
+  */
+ 
   log_info("GLX version: %d.%d", majorGLX, minorGLX);
 
   GLint glxAttribs[] = {GLX_RGBA,
@@ -216,6 +197,33 @@ LT::LoadProc InitOpenGL(void) {
     throw new std::runtime_error(msg);
   }
 
+  XSetWindowAttributes windowAttribs;
+  windowAttribs.border_pixel = BlackPixel(display, screenId);
+  windowAttribs.background_pixel = WhitePixel(display, screenId);
+  windowAttribs.override_redirect = True;
+  windowAttribs.colormap = XCreateColormap(
+      display, RootWindow(display, screenId), visual->visual, AllocNone);
+  windowAttribs.event_mask = ExposureMask | StructureNotifyMask |
+                             FocusChangeMask | VisibilityChangeMask |
+                             PropertyChangeMask;
+  xWindow = XCreateWindow(
+      display, RootWindow(display, screenId), 0, 0, 320, 200, 0, visual->depth,
+      InputOutput, visual->visual,
+      CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, &windowAttribs);
+
+  // Show window
+  XMapWindow(display, xWindow);
+
+  // Set title
+  XStoreName(display, xWindow, "Llamathrust GE (x64)");
+
+  GLXContext context = glXCreateContext(display, visual, NULL, GL_TRUE);
+  glXMakeCurrent(display, xWindow, context);
+
+  log_info("GL Vendor: %s", glGetString(GL_VENDOR));
+  log_info("GL Renderer: %s", glGetString(GL_RENDERER));
+  log_info("GL Version: %s", glGetString(GL_VERSION));
+  log_info("GL Shading Language: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
   return nullptr;
 }
 

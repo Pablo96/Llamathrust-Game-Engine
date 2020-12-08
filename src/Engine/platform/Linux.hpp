@@ -11,4 +11,4 @@ LT::INPUT_KEY X11TranslateKeys(uint64* key);
 typedef union _XEvent XEvent;
 typedef unsigned long XID;
 typedef XID Window;
-void X11ProcEvent(Window window, XEvent* event, int32 screen);
+void X11ProcEvent(XEvent* event);
