@@ -14,6 +14,7 @@
 #include <Thread.hpp>
 #include <cstring>
 #include <log.hpp>
+#include <stdexcept>
 
 #include "../Engine.hpp"
 #include "../Performance.hpp"
@@ -23,6 +24,10 @@ LT::Window window;
 static bool shouldClose = false;
 #define WIDTH 720
 #define HEIGHT 480
+
+// Input
+static uint64* xInputKeyStates = nullptr;
+static uint64 xInputStatesSize = XK_Escape;
 
 // Linux
 static Display* display;
@@ -48,11 +53,8 @@ int main(int32 argc, const char** argv) {
 
   // Create a colormap based on the visual used by the current context
   windowAttributes.colormap = XCreateColormap(display, root, visual, AllocNone);
-  windowAttributes.event_mask =
-      StructureNotifyMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
-      ButtonPressMask | ButtonReleaseMask | ExposureMask | FocusChangeMask |
-      VisibilityChangeMask | EnterWindowMask | LeaveWindowMask |
-      PropertyChangeMask;
+  windowAttributes.event_mask = StructureNotifyMask | FocusChangeMask |
+                                VisibilityChangeMask | PropertyChangeMask;
 
   Window xWindow = XCreateWindow(display,  // server connection
                                  root,     // root window
@@ -69,29 +71,22 @@ int main(int32 argc, const char** argv) {
   // Show window
   XMapWindow(display, xWindow);
 
-  // Input setup
-  XIM im = XOpenIM(display, 0, nullptr, nullptr);
-  if (!im) return 0;
+  // Set title
+  XStoreName(display, xWindow, "Llamathrust GE (x64)");
 
-  XIMCallback callback;
-  callback.callback = inputMethodDestroyCallback;
-  callback.client_data = nullptr;
-  XSetIMValues(im, XNDestroyCallback, &callback, nullptr);
+  // Events
+  static uint32 keyEventsMask = KeyPressMask | KeyReleaseMask | KeymapStateMask;
+  static uint32 mouseEventsMask = PointerMotionMask | ButtonPressMask |
+                                  ButtonReleaseMask | EnterWindowMask |
+                                  LeaveWindowMask;
+  static uint32 windowEventsMask = ExposureMask;
 
-  callback.callback = reinterpret_cast<XIMProc>(inputContextDestroyCallback);
-  callback.client_data = reinterpret_cast<XPointer>(&window);
-  XIC ic = XCreateIC(im, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-                     XNClientWindow, xWindow, XNFocusWindow, xWindow,
-                     XNDestroyCallback, &callback, nullptr);
-
-  if (!im) return 0;
-
-  unsigned long filter = 0;
-  if (XGetICValues(ic, XNFilterEvents, &filter, nullptr) == nullptr) {
-    XSelectInput(display, xWindow, windowAttributes.event_mask | filter);
-  }
+  // Suscribe to events
+  XSelectInput(display, xWindow,
+               keyEventsMask | mouseEventsMask | windowEventsMask);
 
   // Opengl Context
+  InitOpenGL();
 
   while (shouldClose == false) {
     LT_START_TIME();
@@ -122,23 +117,107 @@ void LinuxSwapBuffer(void) {}
 
 void X11ProcEvent(Window xWindow, XEvent* event, int32 screen) {
   static const char* msg = "Hello, World!";
+  static char str[25];
+  static KeySym keySym = 0;
 
-  if (event->type == Expose) {
-    XFillRectangle(display, xWindow, DefaultGC(display, screen), 20, 20, 10,
-                   10);
-    XDrawString(display, xWindow, DefaultGC(display, screen), 10, 50, msg,
-                std::strlen(msg));
-  }
-  if (event->type == KeyPress) {
-    if (event->xkey.keycode == 9) LT_CloseWindow();
+  switch (event->type) {
+    // SHOW WINDOW
+    case Expose: {
+      XFillRectangle(display, xWindow, DefaultGC(display, screen), 20, 20, 10,
+                     10);
+      XDrawString(display, xWindow, DefaultGC(display, screen), 10, 50, msg,
+                  std::strlen(msg));
+      break;
+    }
+    // KEYS EVENTS
+    case KeymapNotify: {
+      XRefreshKeyboardMapping(&event->xmapping);
+      break;
+    }
+    case KeyPress:
+    case KeyRelease: {
+      int32 len = XLookupString(&event->xkey, str, 25, &keySym, nullptr);
+      if (len > 0) {
+        log_error("key test %d", XK_KP_Divide);
+        log_info("key pressed/released: %s - %d - %d", str, len, keySym);
+      }
+      if (keySym == XK_Escape) shouldClose = true;
+      break;
+    }
+    // MOUSE EVENTS
+    case ButtonPress: {
+      if (event->xbutton.button == 1) {
+        log_info("Left mouse\n");
+      } else if (event->xbutton.button == 2) {
+        log_info("Middle mouse down\n");
+      } else if (event->xbutton.button == 3) {
+        log_info("Right mouse down\n");
+      } else if (event->xbutton.button == 4) {
+        log_info("Mouse scroll up\n");
+      } else if (event->xbutton.button == 5) {
+        log_info("Mouse scroll down\n");
+      }
+      break;
+    }
+    case MotionNotify: {
+      int32 x = event->xmotion.x;
+      int32 y = event->xmotion.y;
+      log_info("Mouse X: %d, Y: %d\n", x, y);
+      break;
+    }
+    case EnterNotify: {
+      log_info("Mouse Enter");
+      break;
+    }
+    case LeaveNotify: {
+      log_info("Mouse Leave");
+      break;
+    }
   }
 }
 
 //-------------------------------------------
 // Graphics
 //-------------------------------------------
+LT::LoadProc InitOpenGL(void) {
+  GLint majorGLX, minorGLX = 0;
+  glXQueryVersion(display, &majorGLX, &minorGLX);
+  if (majorGLX < 3 || (majorGLX == 3 && minorGLX < 3)) {
+    XCloseDisplay(display);
+    std::string msg = GET_ERROR_MSG(ERROR_PLATFORM_OPENGL_CREATE_FAILED);
+    log_fatal(msg.c_str());
+    throw new std::runtime_error(msg);
+  }
+  log_info("GLX version: %d.%d", majorGLX, minorGLX);
 
-LT::LoadProc InitOpenGL(void) { return nullptr; }
+  GLint glxAttribs[] = {GLX_RGBA,
+                        GLX_DOUBLEBUFFER,
+                        GLX_DEPTH_SIZE,
+                        24,
+                        GLX_STENCIL_SIZE,
+                        8,
+                        GLX_RED_SIZE,
+                        8,
+                        GLX_GREEN_SIZE,
+                        8,
+                        GLX_BLUE_SIZE,
+                        8,
+                        GLX_SAMPLE_BUFFERS,
+                        0,
+                        GLX_SAMPLES,
+                        0,
+                        None};
+  XVisualInfo* visual = glXChooseVisual(display, screenId, glxAttribs);
+
+  if (visual == nullptr) {
+    XCloseDisplay(display);
+    std::string msg = GET_ERROR_MSG(ERROR_PLATFORM_OPENGL_CREATE_FAILED);
+    log_fatal(msg.c_str());
+    throw new std::runtime_error(msg);
+  }
+
+  return nullptr;
+}
 
 LT::SwapBuffersFunc GetPlatformSwapBuffer(void) { return LinuxSwapBuffer; }
 
@@ -146,17 +225,127 @@ LT::SwapBuffersFunc GetPlatformSwapBuffer(void) { return LinuxSwapBuffer; }
 // Input
 //-------------------------------------------
 namespace LT {
-void Platform::InitInput(int32* in_keyStates) {
-  int32 scanCodeMin, scanCodeMax, width;
-  XDisplayKeycodes(display, &scanCodeMin, &scanCodeMax);
-  KeySym* keysyms = XGetKeyboardMapping(display, scanCodeMin,
-                                        scanCodeMax - scanCodeMin + 1, &width);
-  for (int32 scancode = scanCodeMin; scancode <= scanCodeMax; scancode++) {
-    // Translate the un-translated key codes using traditional X11 KeySym
-    // lookups
-    const size_t base = (scancode - scanCodeMin) * width;
-    X11TranslateKeys(&keysyms[base]);
-  }
+void Platform::InitInput(int32* key_states) {
+  xInputKeyStates = new uint64[xInputStatesSize];
+  memset(xInputKeyStates, static_cast<int>(INPUT_STATE::LT_KEY_UP),
+         xInputStatesSize);
+
+  // Mouse Buttons
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_BUTTON_L)] = 1;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_BUTTON_R)] = 3;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_MIDDLE)] = 2;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_BUTTON_X1)] = 0;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_BUTTON_X2)] = 0;
+
+  // Util Keys
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_BACKSPACE)] = XK_BackSpace;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_TAB)] = XK_Tab;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_DEL)] = XK_Clear;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_ENTER)] = XK_Return;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MENU)] = XK_Menu;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_PAUSE)] = XK_Pause;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_ESCAPE)] = XK_Escape;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SPACEBAR)] = XK_space;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_PAGE_UP)] = XK_Prior;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_PAGE_DOWN)] = XK_Next;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_END)] = XK_End;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_HOME)] = XK_Home;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_LEFT_ARROW)] = XK_Left;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_UP_ARROW)] = XK_Right;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_RIGHT_ARROW)] = XK_Up;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_DOWN_ARROW)] = XK_Down;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SELECT)] = XK_Select;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SCREENSHOT)] = XK_Sys_Req;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_EXECUTE)] = XK_Execute;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_PRINT_SCREEN)] = XK_Print;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_INSERT)] = XK_Insert;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_HELP)] = XK_Help;
+
+  // Numers
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_0)] = XK_0;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_1)] = XK_1;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_2)] = XK_2;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_3)] = XK_3;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_4)] = XK_4;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_5)] = XK_5;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_6)] = XK_6;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_7)] = XK_7;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_8)] = XK_8;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_9)] = XK_9;
+
+  // Letters
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_A)] = XK_A;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_B)] = XK_B;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_C)] = XK_C;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_D)] = XK_D;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_E)] = XK_E;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F)] = XK_F;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_G)] = XK_G;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_H)] = XK_H;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_I)] = XK_I;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_J)] = XK_J;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_K)] = XK_K;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_L)] = XK_L;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_M)] = XK_M;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_N)] = XK_N;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_O)] = XK_O;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_P)] = XK_P;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_Q)] = XK_Q;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_R)] = XK_R;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_S)] = XK_S;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_T)] = XK_T;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_U)] = XK_U;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_V)] = XK_V;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_W)] = XK_W;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_X)] = XK_X;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_Y)] = XK_Y;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_Z)] = XK_Z;
+
+  // NUM PAD
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD0)] = XK_KP_0;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD1)] = XK_KP_1;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD2)] = XK_KP_2;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD3)] = XK_KP_3;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD4)] = XK_KP_4;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD5)] = XK_KP_5;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD6)] = XK_KP_6;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD7)] = XK_KP_7;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD8)] = XK_KP_8;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD9)] = XK_KP_9;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MULTIPLY)] = XK_KP_Multiply;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_PLUS)] = XK_KP_Add;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SEPARATOR)] = XK_KP_Separator;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SUBTRACT)] = XK_KP_Subtract;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_DOT)] = XK_KP_Decimal;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_DIVIDE)] = XK_KP_Divide;
+
+  // Functions keys
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F1)] = XK_F1;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F2)] = XK_F2;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F3)] = XK_F3;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F4)] = XK_F4;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F5)] = XK_F5;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F6)] = XK_F6;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F7)] = XK_F7;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F8)] = XK_F8;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F9)] = XK_F9;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F10)] = XK_F10;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F11)] = XK_F11;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F12)] = XK_F12;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_CAPS_LOCK)] = XK_Caps_Lock;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_LOCK)] = XK_Num_Lock;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SCROLL_LOCK)] =
+      XK_Scroll_Lock;
+
+  // Mods
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SUPER_L)] = XK_Super_L;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SUPER_R)] = XK_Super_R;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SHIFT_L)] = XK_Shift_L;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SHIFT_R)] = XK_Shift_R;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_ALT_L)] = XK_Alt_L;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_ALT_R)] = XK_Alt_R;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_CONTROL_L)] = XK_Control_L;
+  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_CONTROL_R)] = XK_Control_R;
 }
 
 uint8 Platform::GetKeyState(int32 keyState) { return 0; }

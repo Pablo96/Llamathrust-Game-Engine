@@ -9,7 +9,8 @@
         "cstring": "cpp",
         "exception": "cpp",
         "stdexcept": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "system_error": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
