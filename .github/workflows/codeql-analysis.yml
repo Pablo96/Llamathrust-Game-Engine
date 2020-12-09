@@ -60,8 +60,10 @@ jobs:
     #    uses a compiled language
 
     - run: |
+       mkdir -p ./project_files
+       cd "project_files"
+       cmake ..
        make llamathrust
-       make release
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
