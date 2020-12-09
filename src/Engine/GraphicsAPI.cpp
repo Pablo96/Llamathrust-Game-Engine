@@ -17,10 +17,10 @@ namespace LT {
     void GraphicsAPI_Init(const GRAPHIC_API in_api) {
         switch (in_api) {
         case GRAPHIC_API::OPENGL: {
-            LoadProc proc = InitOpenGL();
-            if (gladLoadGLLoader(proc) == 0) {
-                log_fatal("Could not initialize glad.");
-                exit(ERROR_GRAPHICS_API_INITIALIZATION);
+          LoadProc proc = Platform::InitOpenGL();
+          if (gladLoadGLLoader(proc) == 0) {
+            log_fatal("Could not initialize glad.");
+            exit(ERROR_GRAPHICS_API_INITIALIZATION);
             }
             api.clearScreenColor8 = GL_ClearScreenColor8;
             api.clearScreenColor = GL_ClearScreenColor;
@@ -39,7 +39,7 @@ namespace LT {
             api.setViewport = VK_SetViewport;
         }
         }
-        api.swapBuffers = GetPlatformSwapBuffer();
+        api.swapBuffers = Platform::GetPlatformSwapBuffer();
 
         log_info("GraphicsAPI initialized.");
     }

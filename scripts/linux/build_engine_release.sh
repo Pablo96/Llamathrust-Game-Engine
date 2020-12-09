@@ -1,3 +1,3 @@
 cd ../../project_files
 
-make llamathrust
+make llamathrust/fast

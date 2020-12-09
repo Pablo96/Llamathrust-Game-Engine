@@ -1,9 +1,10 @@
 #pragma once
-#include "test_framework.hpp"
 #include <CoreLib/Array.hpp>
 #include <CoreLib/Queue.hpp>
 #include <CoreLib/Stack.hpp>
 #include <CoreLib/String.hpp>
+
+#include "framework/test_framework.hpp"
 
 START_TEST(TestArray)
 uint64 count = 10;

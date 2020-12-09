@@ -1,8 +1,9 @@
+#include <stdlib.h>
+
 #include <CoreLib/Array.hpp>
 #include <ErrorCodes.hpp>
+#include <cstring>  //memcpy
 #include <log.hpp>
-#include <stdlib.h>
-#include <string> //memcpy
 
 #ifdef LT_TEST_FRAMEWORK
 #include <Thread.hpp>
@@ -10,15 +11,17 @@
 
 namespace LT {
 Array::Array(const uint64 in_count, const uint64 in_typeSize)
-    : size(in_count * in_typeSize), typeSize(in_typeSize),
+    : size(in_count * in_typeSize),
+      typeSize(in_typeSize),
       elements_count(in_count) {
-
   this->data = malloc(elements_count * typeSize);
-  memset(this->data, 0, this->size);
+  std::memset(this->data, 0, this->size);
 }
 
 Array::Array(void *dataBuffer, uint64 in_count, uint64 in_typeSize)
-    : data(dataBuffer), size(in_count * in_typeSize), typeSize(in_typeSize),
+    : data(dataBuffer),
+      size(in_count * in_typeSize),
+      typeSize(in_typeSize),
       elements_count(in_count) {}
 
 Array::~Array() {
@@ -41,9 +44,10 @@ void Array::SetElement(const uint64 index, void *element) {
   LT_ASSERT(actual_index <= (this->size - this->typeSize), "Index out of range",
             ERROR_INDEX_OUT_OF_BOUNDS);
 
-  memcpy((void *)(reinterpret_cast<const byte *>(this->data) + actual_index),
-         element, this->typeSize);
+  std::memcpy(
+      (void *)(reinterpret_cast<const byte *>(this->data) + actual_index),
+      element, this->typeSize);
 }
 
 Array Array::operator=(const Array &array) { return Array(array); }
-} // namespace LT
+}  // namespace LT

@@ -155,7 +155,7 @@ namespace LT {
         return lib;
     }
 
-    void* Platform::GetProc(const void* in_lib, const char* in_name) {
+    void* Platform::GetProc(void* in_lib, const char* in_name) {
         return (void*)GetProcAddress((HMODULE)in_lib, in_name);
     }
 }

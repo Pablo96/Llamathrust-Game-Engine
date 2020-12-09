@@ -1,13 +1,15 @@
 #pragma once
-#include "../Engine/networking/Socket.hpp"
-#include "test_framework.hpp"
 #include <Common.hpp>
 #include <Thread.hpp>
 
-uint64 ServerThread(void *ignored_thread_ptr) {
+#include "../Engine/networking/Socket.hpp"
+#include "framework/test_framework.hpp"
+
+PROC_RETURN_T ServerThread(void *ignored_thread_ptr) {
   // start server
-  LT::NetAddress *address = new LT::NetAddress("127.0.0.1", 44754, LT::ADDRESS_VERSION::ADDR_IPV4,
-                                               LT::ADDRESS_TYPE::ADDR_NUMERIC, LT::PROTOCOL::PROT_UDP, true);
+  LT::NetAddress *address = new LT::NetAddress(
+      "127.0.0.1", 44754, LT::ADDRESS_VERSION::ADDR_IPV4,
+      LT::ADDRESS_TYPE::ADDR_NUMERIC, LT::PROTOCOL::PROT_UDP, true);
   LT::NetSocket *server = new LT::NetSocket(address);
   server->Bind();
 
@@ -29,15 +31,16 @@ uint64 ServerThread(void *ignored_thread_ptr) {
   server = nullptr;
   address = nullptr;
 
-  LT::Thread::Exit(TEST_SUCCESS);
+  LT::Thread::Exit(reinterpret_cast<int64>(TEST_SUCCESS));
 }
 
-uint64 ClientThread(void *ignored_thread_ptr) {
+PROC_RETURN_T ClientThread(void *ignored_thread_ptr) {
   // Get server address
-  LT::NetAddress *server_address =
-      new LT::NetAddress("127.0.0.1", 44754, LT::ADDRESS_VERSION::ADDR_IPV4,
-                         LT::ADDRESS_TYPE::ADDR_DOMAIN, LT::PROTOCOL::PROT_UDP, false);
-  LT::NetAddress *address = new LT::NetAddress("127.0.0.1", 44755, LT::ADDRESS_VERSION::ADDR_IPV4,
+  LT::NetAddress *server_address = new LT::NetAddress(
+      "127.0.0.1", 44754, LT::ADDRESS_VERSION::ADDR_IPV4,
+      LT::ADDRESS_TYPE::ADDR_DOMAIN, LT::PROTOCOL::PROT_UDP, false);
+  LT::NetAddress *address = new LT::NetAddress(
+      "127.0.0.1", 44755, LT::ADDRESS_VERSION::ADDR_IPV4,
       LT::ADDRESS_TYPE::ADDR_NUMERIC, LT::PROTOCOL::PROT_UDP, false);
   // Create the client
   LT::NetSocket *client = new LT::NetSocket(address);
@@ -57,31 +60,33 @@ uint64 ClientThread(void *ignored_thread_ptr) {
   address = nullptr;
   server_address = nullptr;
 
-  LT::Thread::Exit(TEST_SUCCESS);
+  LT::Thread::Exit(reinterpret_cast<int64>(TEST_SUCCESS));
 }
 
 START_TEST(TestNetworking)
-  LT::Thread *serverThread = new LT::Thread(ServerThread, NULL, "Server Thread", NULL);
+LT::Thread *serverThread =
+    new LT::Thread(ServerThread, NULL, "Server Thread", NULL);
 
-  LT::Thread *clientThread = new LT::Thread(ClientThread, NULL, "Client Thread", NULL);
+LT::Thread *clientThread =
+    new LT::Thread(ClientThread, NULL, "Client Thread", NULL);
 
-  serverThread->Start();
+serverThread->Start();
 
-  LT::Thread *_this = LT::Thread::GetCurrent();
-  _this->Sleep(LT_SECONDS(1));
+LT::Thread *_this = LT::Thread::GetCurrent();
+_this->Sleep(LT_SECONDS(1));
 
-  _this->Start();
+_this->Start();
 
-  _this->Join(serverThread);
-  _this->Join(clientThread);
+_this->Join(serverThread);
+_this->Join(clientThread);
 
-  int32 exitCodeServer = serverThread->CaptureExitCode();
-  int32 exitCodeClient = clientThread->CaptureExitCode();
+int32 exitCodeServer = serverThread->CaptureExitCode();
+int32 exitCodeClient = clientThread->CaptureExitCode();
 
-  delete serverThread;
-  delete clientThread;
+delete serverThread;
+delete clientThread;
 
-  serverThread = clientThread = nullptr;
+serverThread = clientThread = nullptr;
 
-  return TEST_ASSERT(exitCodeClient == 0 && exitCodeServer == 0);
+return TEST_ASSERT(exitCodeClient == 0 && exitCodeServer == 0);
 END_TEST

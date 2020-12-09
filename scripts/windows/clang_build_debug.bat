@@ -1,6 +1,6 @@
-cls
 cd ../..
 if not exist ".\bin\debug" mkdir ".\bin\debug"
+cls
 
 :: Engine Executable
 clang ^

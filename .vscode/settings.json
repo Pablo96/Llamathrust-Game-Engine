@@ -4,7 +4,13 @@
         "xutility": "c",
         "*.rh": "c",
         "cstdlib": "c",
-        "new": "c"
+        "new": "c",
+        "memory": "cpp",
+        "cstring": "cpp",
+        "exception": "cpp",
+        "stdexcept": "cpp",
+        "*.tcc": "cpp",
+        "system_error": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
