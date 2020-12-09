@@ -60,9 +60,7 @@ jobs:
     #    uses a compiled language
 
     - run: |
-       mkdir -p ./project_files
-       cd "project_files"
-       cmake ..
+       cmake .
        make llamathrust
 
     - name: Perform CodeQL Analysis
