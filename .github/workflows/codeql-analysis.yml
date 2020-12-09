@@ -60,8 +60,10 @@ jobs:
     #    uses a compiled language
 
     - run: |
-       cmake .
-       make llamathrust
+        pwd
+        ls
+        cmake .
+        make llamathrust
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
