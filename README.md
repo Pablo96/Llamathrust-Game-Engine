@@ -38,10 +38,10 @@ https://pablonarvaja.wixsite.com/llamathrustengine
 - Clone the repository
 - Install visual studio 2019
 - Run the script ```./scripts/windows/vs_build_debug.bat```
-- Run ```./bin/{debug/editor_release/release}/*.exe```
+- Run ```./bin/{debug/editor_release/release}/engine.exe```
 
 ## Linux
 - Clone the repository
 - Install gcc and libgl1-mesa-dev
 - Run the script ```./scripts/linux/build_engine_debug.sh```
-- Run ```./bin/{debug/editor_release/release}/engine_linux```
+- Run ```./bin/llamathrust```
