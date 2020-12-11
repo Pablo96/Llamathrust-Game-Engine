@@ -6,12 +6,12 @@
 #include <stdlib.h>
 
 namespace LT {
-    static int32 key_states[static_cast<uint64>(INPUT_KEY::KEYS_COUNT)];
+static int32 key_codes[static_cast<uint64>(INPUT_KEY::KEYS_COUNT)];
 
-    void InputInit() {
-        log_trace("Initializing Input...");
-        Platform::InitInput(key_states);
-        log_info("Input Initialized...");
+void InputInit() {
+  log_trace("Initializing Input...");
+  Platform::InitInput(key_codes);
+  log_info("Input Initialized...");
     }
 
     INPUT_STATE GetKeyState(const INPUT_KEY in_key) {
@@ -22,6 +22,7 @@ namespace LT {
             exit(ERROR_INPUT_KEY_INVALID_VALUE);
         }
 #endif
-        return (INPUT_STATE)Platform::GetKeyState(key_states[*reinterpret_cast<const uint64*>(&in_key)]);
+        return (INPUT_STATE)Platform::GetKeyState(
+            key_codes[*reinterpret_cast<const uint64*>(&in_key)]);
     }
 }

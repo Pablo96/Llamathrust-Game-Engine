@@ -4,46 +4,49 @@
  * @brief Here you'll find the configuration struct for storing config data.
  **/
 #pragma once
-#include "Common.hpp"
 #include <cstring>
 #include <stdexcept>
 
+#include "Common.hpp"
+
 namespace LT {
-	// forward declarations
-	enum class SERVER_TYPE;
-	enum class GRAPHIC_API : uint8;
+// forward declarations
+enum class SERVER_TYPE;
+enum class GRAPHIC_API : uint8;
 
-	/**
-	 * @struct Config
-	 * @brief Represents the config file.
-	 * @field graphic_api:
-	 *	@type API enum
-	 *	@brief the graphic api to use.
-	 *  @note ignored if is_server is true
-	 * @field networking_support
-	 *  @type boolean
-	 *  @brief if networking is enabled
-	 * @field is_server
-	 *  @type boolean
-	 *  @brief if this is an instance server(true) or a client(false)
-	 * @field port
-	 *  @type uint16
-	 *  @brief port of the networking socket
-	 * @field ip
-	 *  @type char array [16]
-	 *  @brief ip of the networking socket
-	 **/
-	struct Config {
-		GRAPHIC_API graphic_api;
-		bool networking_support;
-		bool is_server;
-		uint16 port;
-		char ip[16];
+/**
+ * @struct Config
+ * @brief Represents the config file.
+ * @field graphic_api:
+ *	@type API enum
+ *	@brief the graphic api to use.
+ *  @note ignored if is_server is true
+ * @field networking_support
+ *  @type boolean
+ *  @brief if networking is enabled
+ * @field is_server
+ *  @type boolean
+ *  @brief if this is an instance server(true) or a client(false)
+ * @field port
+ *  @type uint16
+ *  @brief port of the networking socket
+ * @field ip
+ *  @type char array [16]
+ *  @brief ip of the networking socket
+ **/
+struct Config {
+  GRAPHIC_API graphic_api;
+  bool networking_support;
+  bool is_server;
+  uint16 port;
+  char ip[16];
 
-		Config(const char* in_ip, const uint64 in_ipSize) {
-			if (in_ipSize < sizeof(this->ip))
-				throw new std::runtime_error("in_ip size is less than " + std::to_string(sizeof(this->ip)) + " bytes!");
-			std::memcpy(this->ip, in_ip, sizeof(this->ip));
-		}
-	};
-}
+  Config(const char* in_ip, const uint64 in_ipSize) {
+    if (in_ipSize >= sizeof(this->ip))
+      throw new std::runtime_error("in_ip size is less than " +
+                                   std::to_string(sizeof(this->ip)) +
+                                   " bytes!");
+    std::memcpy(this->ip, in_ip, sizeof(this->ip));
+  }
+};
+}  // namespace LT

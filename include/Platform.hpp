@@ -72,15 +72,17 @@ struct ThreadLinux {
 };
 
 typedef struct {
+  unsigned long xWindow;
 } Window;
 }  // namespace LT
-   /**
-    * @def LT_CREATEGAME
-    * @brief Generates the entrypoint for the game library
-    * @note Only needed in one .c file per shared library of a game
-    * @note A Game is soposed to be in one library but it could be in multiple ones
-    *if that lib loads another
-    **/
+
+/**
+ * @def LT_CREATEGAME
+ * @brief Generates the entrypoint for the game library
+ * @note Only needed in one .c file per shared library of a game
+ * @note A Game is soposed to be in one library but it could be in multiple ones
+ *if that lib loads another
+ **/
 #define LT_CREATEGAME()
 #endif
 

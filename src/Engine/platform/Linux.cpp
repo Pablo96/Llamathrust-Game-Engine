@@ -33,12 +33,11 @@ static bool shouldClose = false;
 #define HEIGHT 480
 
 // Input
-static uint64* xInputKeyStates = nullptr;
+static uint8* xInputKeyStates = nullptr;
 static uint64 xInputStatesSize = XK_Escape;
 
 // Linux
 static Display* display;
-static Window xWindow;
 static int32 screenId;
 static Atom atomWmDeleteWindow;
 static void* glInstance;
@@ -91,38 +90,76 @@ int main(int32 argc, const char** argv) {
   }
   screenId = DefaultScreen(display);
 
-  LT::Platform::InitOpenGL();
+  //-----------------------------------------------------------------
+  // Parse command line arguments
+  //-----------------------------------------------------------------
+  const LT::ConfigArgs* config = nullptr;
+  if (argc > 1) {
+    config = LT::parseArgs(argv, argc);
+    const char log_msg[] =
+        "\nCommand line arguments parsed!:"
+        "\n\t-isServer:%d";
+    log_info(log_msg, config->isServer);
+  }
 
-  // Events
-  static uint32 keyEventsMask = KeyPressMask | KeyReleaseMask | KeymapStateMask;
-  static uint32 mouseEventsMask = PointerMotionMask | ButtonPressMask |
-                                  ButtonReleaseMask | EnterWindowMask |
-                                  LeaveWindowMask;
-  static uint32 windowEventsMask = ExposureMask | StructureNotifyMask |
-                                   FocusChangeMask | VisibilityChangeMask |
-                                   PropertyChangeMask;
+  //-----------------------------------------------------------------
+  // Check if is the only instance running
+  //-----------------------------------------------------------------
 
-  // Suscribe to events
-  XSelectInput(display, RootWindow(display, DefaultScreen(display)),
-               keyEventsMask | mouseEventsMask | windowEventsMask);
+  // Try to open the mutex.
+  pthread_mutex_t ptMutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_mutexattr_t attr;
+  int mutexError = pthread_mutex_init(&ptMutex, attr);
 
-  while (shouldClose == false) {
+  /*
+    // If mutex doesnt exists create it and run the engine
+    if (!hMutex) hMutex = CreateMutex(nullptr, FALSE, "LlamathrustMutex");
+    // Else there is an instance of the engine running
+   el se {
+      log_fatal("Instance already running");
+      return ERROR_INSTANCE_ALREADY_RUNNING;
+    }
+ */
+
+  //-----------------------------------------------------------------
+  // Start the engine
+  //-----------------------------------------------------------------
+  LT_MEASURE_FUNC(Engine_Start(config));
+
+  //-----------------------------------------------------------------
+  // Main engine loop
+  //-----------------------------------------------------------------
+  wh ile(shouldClose == false) {
     LT_START_TIME();
 
     // Retrieve OS messages
     XPending(display);
-    while (QLength(display)) {
+    wh ile(QLength(display)) {
       XEvent e;
       XNextEvent(display, &e);
       X11ProcEvent(&e);
     }
     XFlush(display);
 
+    // Run engine step
+    double deltaTime = 1.0 / t;
+    LT::Engine_Run(deltaTime);
+
+    // Reset input states
+    memset(xInputKeyStates, static_cast<int32>(LT::INPUT_STATE::LT_KEY_UP),
+           xInputStatesSize);
+
     LT_END_TIME();
   }
 
+  //-----------------------------------------------------------------
+  // Cleaning at exit
+  //-----------------------------------------------------------------
+  // Clean up the engine resources if needed
+  LT::Engine_Shutdown();
+
+  // close X11 connection
   XCloseDisplay(display);
-  log_info("LtGE: engine shutted down.");
   return 0;
 }
 #endif
@@ -132,7 +169,7 @@ int main(int32 argc, const char** argv) {
 //-------------------------------------------
 void LT_CloseWindow(void) { shouldClose = true; }
 
-void LinuxSwapBuffer(void) { glXSwapBuffers(display, xWindow); }
+void LinuxSwapBuffer(void) { glXSwapBuffers(display, window.xWindow); }
 
 void X11ProcEvent(XEvent* event) {
   static char str[25];
@@ -158,7 +195,7 @@ void X11ProcEvent(XEvent* event) {
     case KeyRelease: {
       int32 len = XLookupString(&event->xkey, str, 25, &keySym, nullptr);
       if (len > 0) {
-        log_error("key test %d", XK_KP_Divide);
+        log_info("key test %d", XK_KP_Divide);
         log_info("key pressed/released: %s - %d - %d", str, len, keySym);
       }
       if (keySym == XK_Escape) shouldClose = true;
@@ -282,17 +319,17 @@ LT::LoadProc Platform::InitOpenGL(void) {
   windowAttribs.event_mask = ExposureMask | StructureNotifyMask |
                              FocusChangeMask | VisibilityChangeMask |
                              PropertyChangeMask;
-  xWindow = XCreateWindow(
+  window.xWindow = XCreateWindow(
       display, RootWindow(display, screenId), 0, 0, 320, 200, 0, visual->depth,
       InputOutput, visual->visual,
       CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, &windowAttribs);
 
   // Redirect close window
   atomWmDeleteWindow = XInternAtom(display, "WM_DELETE_WINDOW", False);
-  XSetWMProtocols(display, xWindow, &atomWmDeleteWindow, 1);
+  XSetWMProtocols(display, window.xWindow, &atomWmDeleteWindow, 1);
 
   // Set title
-  XStoreName(display, xWindow, WINDOW_TITLE);
+  XStoreName(display, window.xWindow, WINDOW_TITLE);
 
   glXCreateContextAttribsARBProc glXCreateContextAttribsARB =
       (glXCreateContextAttribsARBProc)x11GetProc("glXCreateContextAttribsARB");
@@ -324,7 +361,7 @@ LT::LoadProc Platform::InitOpenGL(void) {
     throw new std::runtime_error(msg);
   }
 
-  glXMakeCurrent(display, xWindow, context);
+  glXMakeCurrent(display, window.xWindow, context);
 
   log_info(
       "\nOPENGL info:\n"
@@ -336,8 +373,8 @@ LT::LoadProc Platform::InitOpenGL(void) {
       glGetString(GL_SHADING_LANGUAGE_VERSION));
 
   // Show window
-  XClearWindow(display, xWindow);
-  XMapRaised(display, xWindow);
+  XClearWindow(display, window.xWindow);
+  XMapRaised(display, window.xWindow);
 
   return x11GetProc;
 }
@@ -351,135 +388,165 @@ LT::SwapBuffersFunc Platform::GetPlatformSwapBuffer(void) {
 // Input
 //-------------------------------------------
 namespace LT {
-void Platform::InitInput(int32* key_states) {
-  xInputKeyStates = new uint64[xInputStatesSize];
-  memset(xInputKeyStates, static_cast<int>(INPUT_STATE::LT_KEY_UP),
-         xInputStatesSize);
+void Platform::InitInput(int32* key_codes) {
+  // Events
+  {
+    uint32 keyEventsMask = KeyPressMask | KeyReleaseMask | KeymapStateMask;
+    uint32 mouseEventsMask = PointerMotionMask | ButtonPressMask |
+                             ButtonReleaseMask | EnterWindowMask |
+                             LeaveWindowMask;
+    uint32 windowEventsMask = ExposureMask | StructureNotifyMask |
+                              FocusChangeMask | VisibilityChangeMask |
+                              PropertyChangeMask;
+
+    // Suscribe to events
+    XSelectInput(display, window.xWindow,
+                 keyEventsMask | mouseEventsMask | windowEventsMask);
+  }
+
+  // Reset the state of the keys to UP
+  {
+    xInputKeyStates = new uint8[xInputStatesSize];
+    memset(xInputKeyStates, static_cast<int>(INPUT_STATE::LT_KEY_UP),
+           xInputStatesSize);
+  }
 
   // Mouse Buttons
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_BUTTON_L)] = 1;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_BUTTON_R)] = 3;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_MIDDLE)] = 2;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_BUTTON_X1)] = 0;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_BUTTON_X2)] = 0;
+  {
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_BUTTON_L)] = 1;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_BUTTON_R)] = 3;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_MIDDLE)] = 2;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_BUTTON_X1)] = 0;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_MOUSE_BUTTON_X2)] = 0;
+  }
 
   // Util Keys
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_BACKSPACE)] = XK_BackSpace;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_TAB)] = XK_Tab;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_DEL)] = XK_Clear;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_ENTER)] = XK_Return;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MENU)] = XK_Menu;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_PAUSE)] = XK_Pause;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_ESCAPE)] = XK_Escape;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SPACEBAR)] = XK_space;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_PAGE_UP)] = XK_Prior;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_PAGE_DOWN)] = XK_Next;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_END)] = XK_End;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_HOME)] = XK_Home;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_LEFT_ARROW)] = XK_Left;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_UP_ARROW)] = XK_Right;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_RIGHT_ARROW)] = XK_Up;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_DOWN_ARROW)] = XK_Down;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SELECT)] = XK_Select;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SCREENSHOT)] = XK_Sys_Req;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_EXECUTE)] = XK_Execute;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_PRINT_SCREEN)] = XK_Print;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_INSERT)] = XK_Insert;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_HELP)] = XK_Help;
+  {
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_BACKSPACE)] = XK_BackSpace;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_TAB)] = XK_Tab;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_DEL)] = XK_Clear;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_ENTER)] = XK_Return;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_MENU)] = XK_Menu;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_PAUSE)] = XK_Pause;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_ESCAPE)] = XK_Escape;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_SPACEBAR)] = XK_space;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_PAGE_UP)] = XK_Prior;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_PAGE_DOWN)] = XK_Next;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_END)] = XK_End;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_HOME)] = XK_Home;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_LEFT_ARROW)] = XK_Left;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_UP_ARROW)] = XK_Right;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_RIGHT_ARROW)] = XK_Up;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_DOWN_ARROW)] = XK_Down;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_SELECT)] = XK_Select;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_SCREENSHOT)] = XK_Sys_Req;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_EXECUTE)] = XK_Execute;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_PRINT_SCREEN)] = XK_Print;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_INSERT)] = XK_Insert;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_HELP)] = XK_Help;
+  }
 
-  // Numers
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_0)] = XK_0;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_1)] = XK_1;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_2)] = XK_2;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_3)] = XK_3;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_4)] = XK_4;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_5)] = XK_5;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_6)] = XK_6;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_7)] = XK_7;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_8)] = XK_8;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_9)] = XK_9;
+  // Numbers
+  {
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_0)] = XK_0;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_1)] = XK_1;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_2)] = XK_2;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_3)] = XK_3;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_4)] = XK_4;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_5)] = XK_5;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_6)] = XK_6;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_7)] = XK_7;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_8)] = XK_8;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_9)] = XK_9;
+  }
 
   // Letters
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_A)] = XK_A;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_B)] = XK_B;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_C)] = XK_C;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_D)] = XK_D;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_E)] = XK_E;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F)] = XK_F;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_G)] = XK_G;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_H)] = XK_H;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_I)] = XK_I;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_J)] = XK_J;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_K)] = XK_K;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_L)] = XK_L;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_M)] = XK_M;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_N)] = XK_N;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_O)] = XK_O;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_P)] = XK_P;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_Q)] = XK_Q;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_R)] = XK_R;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_S)] = XK_S;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_T)] = XK_T;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_U)] = XK_U;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_V)] = XK_V;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_W)] = XK_W;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_X)] = XK_X;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_Y)] = XK_Y;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_Z)] = XK_Z;
+  {
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_A)] = XK_A;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_B)] = XK_B;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_C)] = XK_C;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_D)] = XK_D;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_E)] = XK_E;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_F)] = XK_F;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_G)] = XK_G;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_H)] = XK_H;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_I)] = XK_I;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_J)] = XK_J;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_K)] = XK_K;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_L)] = XK_L;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_M)] = XK_M;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_N)] = XK_N;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_O)] = XK_O;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_P)] = XK_P;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_Q)] = XK_Q;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_R)] = XK_R;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_S)] = XK_S;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_T)] = XK_T;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_U)] = XK_U;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_V)] = XK_V;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_W)] = XK_W;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_X)] = XK_X;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_Y)] = XK_Y;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_Z)] = XK_Z;
+  }
 
   // NUM PAD
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD0)] = XK_KP_0;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD1)] = XK_KP_1;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD2)] = XK_KP_2;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD3)] = XK_KP_3;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD4)] = XK_KP_4;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD5)] = XK_KP_5;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD6)] = XK_KP_6;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD7)] = XK_KP_7;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD8)] = XK_KP_8;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD9)] = XK_KP_9;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_MULTIPLY)] = XK_KP_Multiply;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_PLUS)] = XK_KP_Add;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SEPARATOR)] = XK_KP_Separator;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SUBTRACT)] = XK_KP_Subtract;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_DOT)] = XK_KP_Decimal;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_DIVIDE)] = XK_KP_Divide;
+  {
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD0)] = XK_KP_0;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD1)] = XK_KP_1;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD2)] = XK_KP_2;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD3)] = XK_KP_3;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD4)] = XK_KP_4;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD5)] = XK_KP_5;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD6)] = XK_KP_6;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD7)] = XK_KP_7;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD8)] = XK_KP_8;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUMPAD9)] = XK_KP_9;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_MULTIPLY)] = XK_KP_Multiply;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_PLUS)] = XK_KP_Add;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_SEPARATOR)] =
+        XK_KP_Separator;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_SUBTRACT)] = XK_KP_Subtract;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_DOT)] = XK_KP_Decimal;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_DIVIDE)] = XK_KP_Divide;
+  }
 
   // Functions keys
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F1)] = XK_F1;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F2)] = XK_F2;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F3)] = XK_F3;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F4)] = XK_F4;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F5)] = XK_F5;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F6)] = XK_F6;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F7)] = XK_F7;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F8)] = XK_F8;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F9)] = XK_F9;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F10)] = XK_F10;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F11)] = XK_F11;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_F12)] = XK_F12;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_CAPS_LOCK)] = XK_Caps_Lock;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_LOCK)] = XK_Num_Lock;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SCROLL_LOCK)] =
-      XK_Scroll_Lock;
+  {
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_F1)] = XK_F1;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_F2)] = XK_F2;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_F3)] = XK_F3;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_F4)] = XK_F4;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_F5)] = XK_F5;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_F6)] = XK_F6;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_F7)] = XK_F7;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_F8)] = XK_F8;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_F9)] = XK_F9;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_F10)] = XK_F10;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_F11)] = XK_F11;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_F12)] = XK_F12;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_CAPS_LOCK)] = XK_Caps_Lock;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_NUM_LOCK)] = XK_Num_Lock;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_SCROLL_LOCK)] =
+        XK_Scroll_Lock;
+  }
 
   // Mods
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SUPER_L)] = XK_Super_L;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SUPER_R)] = XK_Super_R;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SHIFT_L)] = XK_Shift_L;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_SHIFT_R)] = XK_Shift_R;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_ALT_L)] = XK_Alt_L;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_ALT_R)] = XK_Alt_R;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_CONTROL_L)] = XK_Control_L;
-  key_states[static_cast<int64>(INPUT_KEY::LT_KEY_CONTROL_R)] = XK_Control_R;
+  {
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_SUPER_L)] = XK_Super_L;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_SUPER_R)] = XK_Super_R;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_SHIFT_L)] = XK_Shift_L;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_SHIFT_R)] = XK_Shift_R;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_ALT_L)] = XK_Alt_L;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_ALT_R)] = XK_Alt_R;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_CONTROL_L)] = XK_Control_L;
+    key_codes[static_cast<int64>(INPUT_KEY::LT_KEY_CONTROL_R)] = XK_Control_R;
+  }
 }
 
-uint8 Platform::GetKeyState(int32 keyState) { return 0; }
+uint8 Platform::GetKeyState(int32 keyCode) { return xInputKeyStates[keyCode]; }
 }  // namespace LT
-LT::INPUT_KEY X11TranslateKeys(uint64* key) {
-  log_info("KeyCode %p", key);
-  return LT::INPUT_KEY::KEYS_COUNT;
-}
+
 //-------------------------------------------
 // Shared libs
 //-------------------------------------------
