@@ -83,10 +83,14 @@ static bool isExtensionSupported(const char* extList, const char* extension) {
 
 #ifndef LT_NO_MAIN  // used for running tests
 int main(int32 argc, const char** argv) {
+  //-----------------------------------------------------------------
+  // Get X11 connection
+  //-----------------------------------------------------------------
   display = XOpenDisplay(nullptr);
   if (display == nullptr) {
-    fprintf(stderr, "Cannot open display\n");
-    exit(1);
+    std::string msg = GET_ERROR_MSG(ERROR_NO_GRAPHICAL_ENVIRONMENT);
+    log_fatal(msg.c_str());
+    throw new std::runtime_error(msg);
   }
   screenId = DefaultScreen(display);
 
@@ -97,7 +101,7 @@ int main(int32 argc, const char** argv) {
   if (argc > 1) {
     config = LT::parseArgs(argv, argc);
     const char log_msg[] =
-        "\nCommand line arguments parsed!:"
+        "\nCommand line arguments parsed:"
         "\n\t-isServer:%d";
     log_info(log_msg, config->isServer);
   }
@@ -106,20 +110,17 @@ int main(int32 argc, const char** argv) {
   // Check if is the only instance running
   //-----------------------------------------------------------------
 
-  // Try to open the mutex.
-  pthread_mutex_t ptMutex = PTHREAD_MUTEX_INITIALIZER;
-  pthread_mutexattr_t attr;
-  int mutexError = pthread_mutex_init(&ptMutex, attr);
-
   /*
+    // Try to open the mutex.
     // If mutex doesnt exists create it and run the engine
     if (!hMutex) hMutex = CreateMutex(nullptr, FALSE, "LlamathrustMutex");
     // Else there is an instance of the engine running
-   el se {
-      log_fatal("Instance already running");
-      return ERROR_INSTANCE_ALREADY_RUNNING;
+   else {
+      std::string msg = GET_ERROR_MESSAGE(ERROR_INSTANCE_ALREADY_RUNNING);
+      log_fatal(msg);
+      throw new std::runtime_error(msg);
     }
- */
+  */
 
   //-----------------------------------------------------------------
   // Start the engine
@@ -129,12 +130,12 @@ int main(int32 argc, const char** argv) {
   //-----------------------------------------------------------------
   // Main engine loop
   //-----------------------------------------------------------------
-  wh ile(shouldClose == false) {
+  while (shouldClose == false) {
     LT_START_TIME();
 
     // Retrieve OS messages
     XPending(display);
-    wh ile(QLength(display)) {
+    while (QLength(display)) {
       XEvent e;
       XNextEvent(display, &e);
       X11ProcEvent(&e);

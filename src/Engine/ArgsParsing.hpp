@@ -7,28 +7,35 @@
 #include <Common.hpp>
 
 namespace LT {
-	/**
-	 * @struct ConfigArgs
-	 * @brief has the engine configuration data from execution params.
-	 * @field isServer:
-	 *	@type bool
-	 *	@brief If this is a server application for a game.
-	 **/
-	struct ConfigArgs {
-		bool isServer;
-	};
+/**
+ * @enum CONFIG_ARGS
+ * @brief has the engine configuration execution params.
+ * @note remember to add the value to the array in parseArgs
+ **/
+enum CONFIG_ARGS { SERVER, COUNT };
 
-	/**
-	 * @func parseArgs
-	 * @brief parse the executable args.
-	 * @param argsv:
-	 *	@type char double pointer
-	 *	@brief vector of strings
-	 * @param size:
-	 *	@type const int
-	 *	@brief strings count
-	 * @return Config
-	 *  @brief configuration struct
-	 **/
-	const ConfigArgs* parseArgs(const char** argsv, const int size);
-}
+/**
+ * @struct ConfigArgs
+ * @brief has the engine configuration data from execution params.
+ * @field isServer:
+ *	@type bool
+ *	@brief If this is a server application for a game.
+ **/
+struct ConfigArgs {
+  bool isServer;
+};
+
+/**
+ * @func parseArgs
+ * @brief parse the executable args.
+ * @param argsv:
+ *	@type char double pointer
+ *	@brief vector of strings
+ * @param size:
+ *	@type const int
+ *	@brief strings count
+ * @return Config
+ *  @brief configuration struct
+ **/
+const ConfigArgs* parseArgs(const char** argsv, const int size);
+}  // namespace LT
