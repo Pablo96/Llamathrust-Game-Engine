@@ -84,7 +84,7 @@ static bool isExtensionSupported(const char* extList, const char* extension) {
   return false;
 }
 
-#ifndef LT_NO_MAIN  // used for running tests
+#ifndef LT_NO_MAIN  // used for runni ng tests
 int main(int32 argc, const char** argv) {
   //-----------------------------------------------------------------
   // Get X11 connection
@@ -112,47 +112,49 @@ int main(int32 argc, const char** argv) {
   //-----------------------------------------------------------------
   // Check if is the only instance running
   //-----------------------------------------------------------------
+  try {
+    int mutexError = shm_open(LT_INSTANCE_MUTEX_NAME, O_CREAT | O_EXCL, 0);
 
-  int mutexError = shm_open(LT_INSTANCE_MUTEX_NAME, O_CREAT | O_EXCL, 0);
-
-  // If mutex exists then there is an instance of the engine running
-  if (mutexError == -1) {
-    std::string msg = GET_ERROR_MSG(ERROR_INSTANCE_ALREADY_RUNNING);
-    log_fatal(msg.c_str());
-    throw new std::runtime_error(msg);
-  }
-
-  //-----------------------------------------------------------------
-  // Start the engine
-  //-----------------------------------------------------------------
-  LT_MEASURE_FUNC(Engine_Start(config));
-
-  //-----------------------------------------------------------------
-  // Main engine loop
-  //-----------------------------------------------------------------
-  while (shouldClose == false) {
-    LT_START_TIME();
-
-    // Retrieve OS messages
-    XPending(display);
-    while (QLength(display)) {
-      XEvent e;
-      XNextEvent(display, &e);
-      X11ProcEvent(&e);
+    // If mutex exists then there is an instance of the engine running
+    if (mutexError == -1) {
+      std::string msg = GET_ERROR_MSG(ERROR_INSTANCE_ALREADY_RUNNING);
+      log_fatal(msg.c_str());
+      throw new std::runtime_error(msg);
     }
-    XFlush(display);
 
-    // Run engine step
-    double deltaTime = 1.0 / t;
-    LT::Engine_Run(deltaTime);
+    //-----------------------------------------------------------------
+    // Start the engine
+    //-----------------------------------------------------------------
+    LT_MEASURE_FUNC(Engine_Start(config));
 
-    // Reset input states
-    memset(xInputKeyStates, static_cast<int32>(LT::INPUT_STATE::LT_KEY_UP),
-           xInputStatesSize);
+    //-----------------------------------------------------------------
+    // Main engine loop
+    //-----------------------------------------------------------------
+    while (shouldClose == false) {
+      LT_START_TIME();
 
-    LT_END_TIME();
+      // Retrieve OS messages
+      XPending(display);
+      while (QLength(display)) {
+        XEvent e;
+        XNextEvent(display, &e);
+        X11ProcEvent(&e);
+      }
+      XFlush(display);
+
+      // Run engine step
+      double deltaTime = 1.0 / t;
+      LT::Engine_Run(deltaTime);
+
+      // Reset input states
+      memset(xInputKeyStates, static_cast<int32>(LT::INPUT_STATE::LT_KEY_UP),
+             xInputStatesSize);
+
+      LT_END_TIME();
+    }
+  } catch (std::runtime_error& ignored) {
   }
-
+  
   //-----------------------------------------------------------------
   // Cleaning at exit
   //-----------------------------------------------------------------
@@ -199,11 +201,10 @@ void X11ProcEvent(XEvent* event) {
     case KeyPress:
     case KeyRelease: {
       int32 len = XLookupString(&event->xkey, str, 25, &keySym, nullptr);
-      if (len > 0) {
-        log_info("key test %d", XK_KP_Divide);
-        log_info("key pressed/released: %s - %d - %d", str, len, keySym);
-      }
-      if (keySym == XK_Escape) shouldClose = true;
+      xInputKeyStates[keySym] =
+          event->type == KeyRelease
+              ? static_cast<uint8>(LT::INPUT_STATE::LT_KEY_UP)
+              : static_cast<uint8>(LT::INPUT_STATE::LT_KEY_PRESSED);
       break;
     }
     // MOUSE EVENTS
@@ -387,6 +388,8 @@ LT::LoadProc Platform::InitOpenGL(void) {
 LT::SwapBuffersFunc Platform::GetPlatformSwapBuffer(void) {
   return LinuxSwapBuffer;
 }
+
+void CloseWindow(void) { shouldClose = true; }
 }  // namespace LT
 
 //-------------------------------------------

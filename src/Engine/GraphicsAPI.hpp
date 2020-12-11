@@ -71,6 +71,13 @@ struct ColorRGBA8 {
     };
     uint32 hash;
   };
+
+ public:
+  ColorRGBA8(uint8 greyScale, uint8 alpha = 255)
+      : r(greyScale), g(greyScale), b(greyScale), a(alpha) {}
+
+  ColorRGBA8(uint8 red, uint8 green, uint8 blue, uint8 alpha = 255)
+      : r(red), g(green), b(blue), a(alpha) {}
 };
 
 /**
@@ -94,6 +101,12 @@ struct ColorRGBA {
   float g;
   float b;
   float a;
+
+  ColorRGBA(float greyScale, float alpha = 1.0f)
+      : r(greyScale), g(greyScale), b(greyScale), a(alpha) {}
+
+  ColorRGBA(float red, float green, float blue, float alpha = 1.0f)
+      : r(red), g(green), b(blue), a(alpha) {}
 };
 
 /**
@@ -120,14 +133,14 @@ LT_CREATE_ENUM_OPERATORS(BUFFER_BIT);
  **/
 struct GraphicsAPI {
   void (*clearScreenColor8)(const ColorRGBA8 in_value);
-  void (*clearScreenColor)(const ColorRGBA* in_value);
+  void (*clearScreenColor)(const ColorRGBA& in_value);
   void (*clearScreen)(const BUFFER_BIT in_value);
   void (*enableAlphaBlending)(const bool in_value);
   void (*enableDepthTesting)(const bool in_value);
   void (*enableStencilTesting)(const bool in_value);
   void (*enableScissorTesting)(const bool in_value);
-  void (*setScissor)(const Rect* in_value);
-  void (*setViewport)(const Rect* in_value);
+  void (*setScissor)(const Rect& in_value);
+  void (*setViewport)(const Rect& in_value);
   void (*swapBuffers)(void);
 };
 
