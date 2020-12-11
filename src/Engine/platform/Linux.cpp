@@ -7,8 +7,11 @@
 #include <X11/Xutil.h>
 #include <dlfcn.h>
 #include <errno.h>
+#include <fcntl.h> /* For O_* constants */
 #include <pthread.h>
 #include <stdlib.h>  // exit(code)
+#include <sys/mman.h>
+#include <sys/stat.h> /* For mode constants */
 #include <time.h>
 
 #include <ErrorCodes.hpp>
@@ -37,11 +40,11 @@ static uint8* xInputKeyStates = nullptr;
 static uint64 xInputStatesSize = XK_Escape;
 
 // Linux
+#define SHARED_MEMORY_ID 19625
 static Display* display;
 static int32 screenId;
 static Atom atomWmDeleteWindow;
 static void* glInstance;
-static LT_NORETURN void LinuxHandleError(int32 in_exitCode);
 static void inputMethodDestroyCallback(XIM im, XPointer clientData,
                                        XPointer callData) {}
 static void inputContextDestroyCallback(XIC ic, XPointer clientData,
@@ -110,17 +113,14 @@ int main(int32 argc, const char** argv) {
   // Check if is the only instance running
   //-----------------------------------------------------------------
 
-  /*
-    // Try to open the mutex.
-    // If mutex doesnt exists create it and run the engine
-    if (!hMutex) hMutex = CreateMutex(nullptr, FALSE, "LlamathrustMutex");
-    // Else there is an instance of the engine running
-   else {
-      std::string msg = GET_ERROR_MESSAGE(ERROR_INSTANCE_ALREADY_RUNNING);
-      log_fatal(msg);
-      throw new std::runtime_error(msg);
-    }
-  */
+  int mutexError = shm_open(LT_INSTANCE_MUTEX_NAME, O_CREAT | O_EXCL, 0);
+
+  // If mutex exists then there is an instance of the engine running
+  if (mutexError == -1) {
+    std::string msg = GET_ERROR_MSG(ERROR_INSTANCE_ALREADY_RUNNING);
+    log_fatal(msg.c_str());
+    throw new std::runtime_error(msg);
+  }
 
   //-----------------------------------------------------------------
   // Start the engine
@@ -161,6 +161,10 @@ int main(int32 argc, const char** argv) {
 
   // close X11 connection
   XCloseDisplay(display);
+
+  // delete mutex
+  shm_unlink(LT_INSTANCE_MUTEX_NAME);
+
   return 0;
 }
 #endif
@@ -572,8 +576,9 @@ LT::Thread* Platform::ThreadCreate(LT::Thread* thread,
   int32 result = pthread_create(&threadID, nullptr, funcWrapper, threadArg);
 
   if (result != 0) {
-    log_error("Failed to create thread.");
-    LinuxHandleError(ERROR_PLATFORM_THREAD_CREATE);
+    std::string msg = GET_ERROR_MSG(ERROR_INSTANCE_ALREADY_RUNNING);
+    log_fatal(msg.c_str());
+    throw new std::runtime_error(msg);
   }
 
   LT::ThreadLinux nixThd = LT::ThreadLinux(threadID);
@@ -691,7 +696,3 @@ bool Platform::SocketRecieve(const LT::NetSocket* socket, char* msg,
   return false;
 }
 }  // namespace LT
-
-static LT_NORETURN void LinuxHandleError(int32 in_exitCode) {
-  exit(in_exitCode);
-}

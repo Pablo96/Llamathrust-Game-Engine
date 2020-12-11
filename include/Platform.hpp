@@ -12,6 +12,8 @@ struct NetAddress;
 struct NetSocket;
 }  // namespace LT
 
+#define LT_INSTANCE_MUTEX_NAME "/llamathrust_mutex"
+
 // WINDOWS
 #ifdef LT_WINDOWS
 #define LT_EXPORT __declspec(dllexport)

@@ -169,10 +169,12 @@ if (UNIX)
     return()
   endif()
   
+  
   target_include_directories(${ENGINE_EXEC} PRIVATE "${X11_X11_INCLUDE_PATH}")
   target_link_libraries(${ENGINE_EXEC} ${X11_LIBRARIES})
   target_link_libraries(${ENGINE_EXEC} ${CMAKE_DL_LIBS})
   target_link_libraries(${ENGINE_EXEC} Threads::Threads)
+  target_link_libraries(${ENGINE_EXEC} rt)
 endif()
 
 

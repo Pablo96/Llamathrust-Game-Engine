@@ -68,11 +68,10 @@ int main(int32 argc, const char **argv) {
   //-----------------------------------------------------------------
 
   // Try to open the mutex.
-  HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, "LlamathrustMutex");
+  HANDLE hMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, LT_INSTANCE_MUTEX_NAME);
 
   // If mutex doesnt exists create it and run the engine
-  if (!hMutex)
-    hMutex = CreateMutex(nullptr, FALSE, "LlamathrustMutex");
+  if (!hMutex) hMutex = CreateMutex(nullptr, FALSE, LT_INSTANCE_MUTEX_NAME);
   // Else there is an instance of the engine running
   else {
     log_fatal("Instance already running");
