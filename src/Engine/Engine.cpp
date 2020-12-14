@@ -43,11 +43,9 @@ void Engine_Start(const ConfigArgs* args) {
 
 void Engine_Run(const double deltaTime) {
   // GameStateUpdateCurrent(deltaTime);
-  /*
   if (LT::GetKeyState(LT::INPUT_KEY::KEYS_COUNT) ==
       LT::INPUT_STATE::LT_KEY_PRESSED)
     LT::CloseWindow();
-    */
   api.clearScreen(LT::BUFFER_BIT::LT_COLOR_BIT);
 
   api.swapBuffers();
